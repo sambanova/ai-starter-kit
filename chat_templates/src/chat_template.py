@@ -361,7 +361,7 @@ class ChatTemplateManager:
                     except Exception as e:
                         raise ValueError(
                             f"Function arguments couldn't be loaded as json {type(args)} in item {i} "
-                            f"of custom code parser output. \n{e}"
+                            f'of custom code parser output. \n{e}'
                         )
 
                     # Enforce proper OpenAI tool-call schema via Pydantic

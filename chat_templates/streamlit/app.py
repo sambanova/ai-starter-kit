@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 import uuid
-from datetime import datetime # noqa
+from datetime import datetime  # noqa
 from typing import Any, Optional, cast
 
 import streamlit as st
@@ -336,7 +336,7 @@ def sidebar_setup(
                         value=app_description.get('sample_parser_ref_code'),
                         placeholder=app_description.get('sample_parser_ref_code'),
                         help="""Write valid Python code defining an auto contained function named `parse(response: str) -> list`.
-                            The function should return a list of tool call dicts or an empty list. "**Use the prefilled one as reference**""", # noqa
+                            The function should return a list of tool call dicts or an empty list. "**Use the prefilled one as reference**""",  # noqa
                     )
 
                     if st.button('Add parser', key='add_parser_button'):
@@ -464,7 +464,7 @@ def main_interaction_area(app_description: dict[str, str]) -> None:
     with apply_col:
         add_prompt = st.checkbox('Add assistant generation prompt', value=True)
         apply_button = st.button(
-            f'Apply {("ˋ" + st.session_state.model_name + "ˋ") if st.session_state.model_name is not None else ""} chat template', # noqa
+            f'Apply {("ˋ" + st.session_state.model_name + "ˋ") if st.session_state.model_name is not None else ""} chat template',  # noqa
             key='apply_chat_template_button',
             type='primary',
         )
@@ -502,7 +502,7 @@ def main_interaction_area(app_description: dict[str, str]) -> None:
     invoke_col, raw_result_col = st.columns([1, 3])
     with invoke_col:
         if st.button(
-            f'Invoke {("ˋ" + st.session_state.api_model_name + "ˋ") if st.session_state.api_model_name is not None else ""}', # noqa
+            f'Invoke {("ˋ" + st.session_state.api_model_name + "ˋ") if st.session_state.api_model_name is not None else ""}',  # noqa
             key='invoke_model_btn',
             type='primary',
         ):
@@ -528,7 +528,7 @@ def main_interaction_area(app_description: dict[str, str]) -> None:
     parse_col, parsed_out_col = st.columns([1, 3])
     with parse_col:
         if st.button(
-            f'Parse raw output {("with ˋ" + st.session_state.parser_name + "ˋ parser") if st.session_state.parser_name is not None else ""}' # noqa
+            f'Parse raw output {("with ˋ" + st.session_state.parser_name + "ˋ parser") if st.session_state.parser_name is not None else ""}'  # noqa
         ):
             if st.session_state.parser_name:
                 if st.session_state.raw_response:
