@@ -4,14 +4,14 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct" \
+--model-names "Meta-Llama-3.1-8B-Instruct" \
 --results-dir "./data/results/llmperf" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---num-input-tokens 1000 \
---num-output-tokens 1000 \
+--num-input-tokens 100 \
+--num-output-tokens 100 \
 --multimodal-image-size na \
---num-requests 16 \
+--num-requests 1 \
 --use-multiple-prompts False \
 --save-llm-responses False \
 --use-debugging-mode False \
