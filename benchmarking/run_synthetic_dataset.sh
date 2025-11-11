@@ -4,7 +4,7 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "DeepSeek-V3-0324-batch" \
+--model-names "Meta-Llama-3.3-70B-Instruct DeepSeek-V3-0324-cb DeepSeek-R1-0528-cb DeepSeek-V3.1-cb" \
 --results-dir "./data/results/llmperf" \
 --num-concurrent-requests 1 \
 --timeout 600 \
