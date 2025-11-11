@@ -10,6 +10,7 @@ import os
 import sys
 import unittest
 from unittest.mock import MagicMock, patch
+from typing import Any, Dict, List, Type
 
 # Paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -107,6 +108,50 @@ def parse(response: str):
         self.assertEqual(msg['tool_calls'], [])
 
 
-if __name__ == '__main__':
+class CustomTextTestResult(unittest.TextTestResult):
+    test_results: List[Dict[str, Any]]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.test_results: List[Dict[str, Any]] = []
+
+    def _get_test_name(self, test: unittest.TestCase) -> str:
+        """Handle both TestCase and _ErrorHolder objects."""
+        return getattr(test, '_testMethodName', str(test))
+
+    def addSuccess(self, test: unittest.TestCase) -> None:
+        super().addSuccess(test)
+        self.test_results.append({'name': self._get_test_name(test), 'status': 'PASSED'})
+
+    def addFailure(self, test: unittest.TestCase, err: Any) -> None:
+        super().addFailure(test, err)
+        self.test_results.append({'name': self._get_test_name(test), 'status': 'FAILED', 'message': str(err[1])})
+
+    def addError(self, test: unittest.TestCase, err: Any) -> None:
+        super().addError(test, err)
+        self.test_results.append({'name': self._get_test_name(test), 'status': 'ERROR', 'message': str(err[1])})
+
+def main() -> int:
     suite = unittest.TestLoader().loadTestsFromTestCase(ChatTemplateManagerTestCase)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    test_result = unittest.TextTestRunner(resultclass=CustomTextTestResult).run(suite)
+
+    logger.info('\nTest Results:')
+    assert hasattr(test_result, 'test_results')
+    for result in test_result.test_results:
+        logger.info(f'{result["name"]}: {result["status"]}')
+        if 'message' in result:
+            logger.info(f'  Message: {result["message"]}')
+
+    failed_tests = len(test_result.failures) + len(test_result.errors)
+    logger.info(f'\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}')
+
+    if failed_tests:
+        logger.error(f'Number of failed tests: {failed_tests}')
+        return failed_tests
+    else:
+        logger.info('All tests passed successfully!')
+        return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
