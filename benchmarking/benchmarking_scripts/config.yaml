@@ -1,7 +1,7 @@
 model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '../benchmarking/data/demos/mara/vijay_tests/all_models/'
-consolidated_results_dir: '../benchmarking/data/demos/mara/vijay_tests/all_models/consolidated_results'
+output_files_dir: '../benchmarking/data/demos/mara/vijay_tests/all_models/for_dcb'
+consolidated_results_dir: '../benchmarking/data/demos/mara/vijay_tests/all_models/for_dcb/consolidated_results'
 timeout: 900
 time_delay: 30
 use_multiple_prompts : False # Only available for synthetic performance evaluation
