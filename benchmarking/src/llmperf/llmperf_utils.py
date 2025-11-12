@@ -139,7 +139,6 @@ def get_tokenizer(model_name: str) -> Any:
     elif family_model_type == 'gpt-oss':
         tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')        
     elif family_model_type == 'allam':
-        print("Using Allam tokenizer")
         tokenizer = AutoTokenizer.from_pretrained('humain-ai/ALLaM-7B-Instruct-preview')          
     else:
         tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')
