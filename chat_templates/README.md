@@ -135,6 +135,9 @@ After you've deployed the GUI, you can use the starter kit. Follow these steps:
 
 - Load a built-in parser from presets (JSON tools parser, XML tools parser).
 - Or write your own parser methods directly in the UI.
+  
+> Note: Custom parsers run user-supplied Python code. To reduce risk, the code is executed with an empty global environment
+> This limits access to the application’s globals, but it is **Not a full sandbox**. Only provide code you trust.
 
 ## 5.4 Add messages and tools
 
