@@ -166,7 +166,7 @@ sample_tools:
                     - city
 
 sample_parser_ref_code: |
-    def parse(response: str):
+    def parse(response: str) -> list[dict]:
         """Extract tools from response and parse them to list of tools format"""
 
         import json
@@ -212,17 +212,18 @@ llama_json_parser_ref_code: |
     import json
     import uuid
     from pydantic import BaseModel
+    from typing import Any
 
     class ToolCallModel(BaseModel):
         """Schema validator for a tool-call output."""
         name: str
         arguments: dict
 
-    def generate_random_id(length=18):
+    def generate_random_id(length=18) -> str:
         """Generate random ID prefix 'call_' of given length."""
         return "call_" + str(uuid.uuid4()).replace("-", "")[:length] 
 
-    def instantiate_function_calling_model(model_name: str, parameters: dict):
+    def instantiate_function_calling_model(model_name: str, parameters: dict) -> dict[str, Any]:
         """
         Validate and format a function-call into OpenAI tool-call schema.
         """
@@ -233,7 +234,7 @@ llama_json_parser_ref_code: |
             "function": {"name": model_name, "arguments": json.dumps(parameters)},
         } 
 
-    def extract_json_strings(response: str):
+    def extract_json_strings(response: str) -> list[str]:
         """Extract every top-level {...} JSON object from text."""
         fc_strings, brace_count, start = [], 0, None
         for i, ch in enumerate(response):
@@ -248,7 +249,7 @@ llama_json_parser_ref_code: |
                     start = None
         return fc_strings
     
-    def parse(response: str):
+    def parse(response: str) -> list[Any]:
         """Parse JSON-style tool calls into OpenAI format (Llama3)."""
         calls = []
         for js in extract_json_strings(response):
@@ -266,17 +267,18 @@ deepseek_xml_parser_ref_code: |
     import re
     import uuid
     from pydantic import BaseModel
+    from typing import Any
 
     class ToolCallModel(BaseModel):
         """Schema validator for a tool-call output."""
         name: str
         arguments: dict
 
-    def generate_random_id(length=18):
+    def generate_random_id(length=18) -> str:
         """Generate random ID prefix 'call_' of given length."""
         return "call_" + str(uuid.uuid4()).replace("-", "")[:length]
 
-    def instantiate_function_calling_model(model_name: str, parameters: dict):
+    def instantiate_function_calling_model(model_name: str, parameters: dict) -> dict[str, Any]:
         """
         Validate and format a function-call into OpenAI tool-call schema.
         """
@@ -287,7 +289,7 @@ deepseek_xml_parser_ref_code: |
             "function": {"name": model_name, "arguments": json.dumps(parameters)},
         }
 
-    def extract_xml_strings(response: str):
+    def extract_xml_strings(response: str) -> list[dict[str, Any]]:
         """Extract tool-call pairs from XML markers. (DeepSeek style)"""
         fc_strings = []
         pattern = r"<｜tool▁call▁begin｜>(.*?)<｜tool▁sep｜>(.*?)<｜tool▁call▁end｜>"
@@ -303,7 +305,7 @@ deepseek_xml_parser_ref_code: |
                 raise ValueError(error_msg)
         return fc_strings
 
-    def parse(response: str):
+    def parse(response: str) -> list[Any]:
         """Parse XML-style tool calls into OpenAI format (DeepSeek)"""
         calls = []
         for fc in extract_xml_strings(response):
