@@ -20,7 +20,7 @@ sentencepiece==0.2.0
 sseclient-py==1.8.0
 stqdm==0.0.5
 tensorflow==2.16.1
-torch==2.2.2
+torch==2.8.0
 tqdm>=4.66.3
 transformers==4.50.1
 joblib==1.4.2
