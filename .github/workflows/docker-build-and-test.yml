@@ -44,14 +44,13 @@ jobs:
           echo "Cleaning hosted tool cache (~15GB)..."
           sudo rm -rf /opt/hostedtoolcache || true
       
-          echo "Cleaning ONLY log files to avoid breaking runner..."
-          sudo find /home/runner/actions-runner -maxdepth 5 -type f -name "*.log" -delete || true
-          sudo find /home/runner/actions-runner -maxdepth 5 -type f -size +1M -delete || true
+          echo "Cleaning ONLY diagnostic logs (not binaries)..."
+          sudo find /home/runner/actions-runner -maxdepth 6 -type f -name "*.log" -delete || true
+          sudo find /home/runner/actions-runner -maxdepth 6 -type f -size +1M -delete || true
       
-          echo "Recreating runner diag directories so GitHub can write logs..."
+          echo "Recreating diag directories..."
           sudo mkdir -p /home/runner/actions-runner/_diag || true
           sudo mkdir -p /home/runner/actions-runner/cached/_diag || true
-          sudo chmod -R 777 /home/runner/actions-runner || true
       
           echo "Free space after cleanup:"
           df -h
