@@ -32,25 +32,19 @@ jobs:
       ACTIONS_RUNNER_DEBUG: 'true'
       ACTIONS_STEP_DEBUG: 'true'
     steps:
-      - name: Hard cleanup (free runner disk ASAP)
+      - name: Hard cleanup
         run: |
           echo "Initial free space:"
           df -h
       
-          echo "Cleaning Docker..."
+          # Clean Docker safely
           docker system prune -af || true
           docker builder prune -af || true
-      
-          echo "Cleaning hosted tool cache (~15GB)..."
+    
           sudo rm -rf /opt/hostedtoolcache || true
       
-          echo "Cleaning ONLY diagnostic logs (not binaries)..."
-          sudo find /home/runner/actions-runner -maxdepth 6 -type f -name "*.log" -delete || true
-          sudo find /home/runner/actions-runner -maxdepth 6 -type f -size +1M -delete || true
-      
-          echo "Recreating diag directories..."
-          sudo mkdir -p /home/runner/actions-runner/_diag || true
-          sudo mkdir -p /home/runner/actions-runner/cached/_diag || true
+          # Remove ONLY log files from runner diagnostics - safe
+          sudo find /home/runner/actions-runner -type f -name "*.log" -delete || true
       
           echo "Free space after cleanup:"
           df -h
