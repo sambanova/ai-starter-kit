@@ -32,6 +32,23 @@ jobs:
       ACTIONS_RUNNER_DEBUG: 'true'
       ACTIONS_STEP_DEBUG: 'true'
     steps:
+      - name: Hard cleanup
+        run: |
+          echo "Initial free space:"
+          df -h
+      
+          # Clean Docker safely
+          docker system prune -af || true
+          docker builder prune -af || true
+    
+          sudo rm -rf /opt/hostedtoolcache || true
+      
+          # Remove ONLY log files from runner diagnostics - safe
+          sudo find /home/runner/actions-runner -type f -name "*.log" -delete || true
+      
+          echo "Free space after cleanup:"
+          df -h
+    
       - name: Checkout code
         uses: actions/checkout@v4
 
