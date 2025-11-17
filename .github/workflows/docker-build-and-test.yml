@@ -32,6 +32,28 @@ jobs:
       ACTIONS_RUNNER_DEBUG: 'true'
       ACTIONS_STEP_DEBUG: 'true'
     steps:
+      - name: Hard cleanup (free runner disk ASAP)
+        run: |
+          echo "Initial free space:"
+          df -h
+
+          echo "Pruning Docker..."
+          docker system prune -af || true
+          docker builder prune -af || true
+
+          echo "Removing hosted tool cache..."
+          sudo rm -rf /opt/hostedtoolcache || true
+
+          echo "Removing old GitHub runner diagnostics..."
+          sudo rm -rf /home/runner/actions-runner/_diag || true
+          sudo rm -rf /home/runner/actions-runner/cached/_diag || true
+
+          # Recreate diag folder so GitHub doesn't error when writing summaries
+          sudo mkdir -p /home/runner/actions-runner/cached/_diag || true
+
+          echo "Free space after cleanup:"
+          df -h
+    
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -47,12 +69,6 @@ jobs:
       - name: Create empty .env file
         run: touch .env
 
-      - name: Pre-clean Docker space
-        run: |
-          docker system prune -af || true
-          docker builder prune -af || true
-          df -h
-
       - name: Build Docker image with BuildKit and verbose logging
         run: |
           echo "Building Docker image with BuildKit and verbose logging..."
@@ -63,13 +79,6 @@ jobs:
             --secret id=env,src=.env \
             -t "${DOCKER_IMAGE}:${DOCKER_TAG}" \
             .
-
-      - name: Prune Docker after build
-        run: |
-          docker builder prune -af || true
-          docker image prune -af || true
-          docker container prune -f || true
-          df -h
 
       - name: List Docker images
         run: docker images
