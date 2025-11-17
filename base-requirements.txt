@@ -1,5 +1,5 @@
 # Core dependencies
-llama-index==0.11.17
+llama-index==0.13.0
 llama-index-llms-langchain==0.4.2
 langchain-chroma>=0.2.1,<1.0.0
 langchain-community>=0.3.7,<1.0.0
