@@ -36,21 +36,23 @@ jobs:
         run: |
           echo "Initial free space:"
           df -h
-
-          echo "Pruning Docker..."
+      
+          echo "Cleaning Docker..."
           docker system prune -af || true
           docker builder prune -af || true
-
-          echo "Removing hosted tool cache..."
+      
+          echo "Cleaning hosted tool cache (~15GB)..."
           sudo rm -rf /opt/hostedtoolcache || true
-
-          echo "Removing old GitHub runner diagnostics..."
-          sudo rm -rf /home/runner/actions-runner/_diag || true
-          sudo rm -rf /home/runner/actions-runner/cached/_diag || true
-
-          # Recreate diag folder so GitHub doesn't error when writing summaries
+      
+          echo "Cleaning ONLY log files to avoid breaking runner..."
+          sudo find /home/runner/actions-runner -maxdepth 5 -type f -name "*.log" -delete || true
+          sudo find /home/runner/actions-runner -maxdepth 5 -type f -size +1M -delete || true
+      
+          echo "Recreating runner diag directories so GitHub can write logs..."
+          sudo mkdir -p /home/runner/actions-runner/_diag || true
           sudo mkdir -p /home/runner/actions-runner/cached/_diag || true
-
+          sudo chmod -R 777 /home/runner/actions-runner || true
+      
           echo "Free space after cleanup:"
           df -h
     
