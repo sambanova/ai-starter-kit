@@ -22,7 +22,7 @@ torch==2.2.2
 
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1
-transformers==4.50.1
+transformers==4.53.0
 sentence-transformers==3.3.1
 huggingface-hub==0.26.0
 instructorembedding==1.0.1
