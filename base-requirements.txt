@@ -68,7 +68,7 @@ librosa==0.10.1
 beautifulsoup4==4.12.3
 fpdf2==2.7.9
 html2text==2024.2.26
-pypdf>=4.0.1,<5.0.0
+pypdf>=4.0.1,<7.0.0
 unstructured[pdf]==0.17.2
 unstructured-client==0.18.0
 unstructured-inference==0.8.10
