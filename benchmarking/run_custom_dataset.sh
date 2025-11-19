@@ -6,13 +6,13 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode custom \
---model-name "Meta-Llama-3.1-8B-Instruct" \
---results-dir "./data/bundle_tests/3d1_8b/custom_prompts" \
+--model-name "gpt-oss-120b" \
+--results-dir "./data/bundle_tests/us_varun/custom_prompts/gptoss_120b" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "../benchmarking/prompts/bundle_tests/3d1_8b/3s1_8b_bundle.jsonl" \
+--input-file-path "../benchmarking/prompts/bundle_tests/us_varun/us_varun_bundle-gptoss_120b.jsonl" \
 --save-llm-responses True \
---sampling-params '{"max_tokens_to_generate": 100}' \
+--sampling-params '{"max_tokens_to_generate": 200}' \
 --use-debugging-mode False \
 --llm-api sncloud
 

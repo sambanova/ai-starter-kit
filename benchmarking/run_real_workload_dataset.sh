@@ -4,15 +4,15 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode real_workload \
---model-name "Meta-Llama-3.3-70B-Instruct" \
+--model-name "Meta-Llama-3.1-8B-Instruct Meta-Llama-3.3-70B-Instruct gpt-oss-120b" \
 --results-dir "./data/results/llmperf" \
 --qps 1 \
 --qps-distribution "constant" \
 --timeout 600 \
---num-input-tokens 1000 \
---num-output-tokens 1000 \
+--num-input-tokens 100 \
+--num-output-tokens 100 \
 --multimodal-image-size na \
---num-requests 16 \
+--num-requests 1 \
 --use-debugging-mode False \
 --llm-api sncloud
 
