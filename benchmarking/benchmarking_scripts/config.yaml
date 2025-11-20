@@ -1,7 +1,7 @@
 model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '../benchmarking/data/bundle_tests/us_varun/'
-consolidated_results_dir: '../benchmarking/data/bundle_tests/us_varun/consolidated_results'
+output_files_dir: '../benchmarking/data/bundle_tests/3d3_70b/switching_time'
+consolidated_results_dir: '../benchmarking/data/bundle_tests/3d3_70b/switching_time/consolidated_results'
 timeout: 3600
 time_delay: 0
 use_multiple_prompts : False # Only available for synthetic performance evaluation
