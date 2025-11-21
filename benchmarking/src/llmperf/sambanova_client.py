@@ -21,7 +21,7 @@ from transformers import AutoTokenizer
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
-from benchmarking.utils import SAMBANOVA_BASE_URL
+from benchmarking.utils import SAMBANOVA_API_BASE
 
 warnings.filterwarnings('ignore')
 
@@ -101,7 +101,14 @@ class BaseAPIEndpoint(abc.ABC):
         if number_chunks_recieved <= 1:
             ttft = total_request_time
         else:
-            ttft = chunks_timings[0]
+            if len(chunks_received) <= 1:
+                ttft = chunks_timings[0]
+            else:
+                # calculate tpot
+                tpot = self._calculate_tpot_from_streams_after_first(chunks_received, chunks_timings)
+                # calculate ttft
+                total_tokens_in_first_chunk = self._get_token_length(chunks_received[0])
+                ttft = chunks_timings[0] - (total_tokens_in_first_chunk - 1) * tpot
         return ttft
 
     def _populate_client_metrics(
@@ -224,13 +231,13 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # Load sambanova cloud env variables
         if self.request_config.api_variables:
             self.base_url = (
-                self.request_config.api_variables['SAMBANOVA_BASE_URL']
-                if self.request_config.api_variables['SAMBANOVA_BASE_URL']
-                else SAMBANOVA_BASE_URL
+                self.request_config.api_variables['SAMBANOVA_API_BASE']
+                if self.request_config.api_variables['SAMBANOVA_API_BASE']
+                else SAMBANOVA_API_BASE
             )
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBANOVA_BASE_URL', SAMBANOVA_BASE_URL)
+            self.base_url = os.environ.get('SAMBANOVA_API_BASE', SAMBANOVA_API_BASE)
             self.api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
     def _get_url(self) -> str:
@@ -336,12 +343,16 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
                             if data['choices'][0].get('finish_reason') is None:
-                                if data['choices'][0]['delta'].get('content') is not None:
+                                if (data['choices'][0]['delta'].get('content') is not None) \
+                                    or (data['choices'][0]['delta'].get('reasoning') is not None):
                                     # log s timings
                                     events_timings.append(time.monotonic() - event_start_time)
                                     event_start_time = time.monotonic()
                                     # concatenate streaming text pieces
-                                    stream_content = data['choices'][0]['delta']['content']
+                                    if data['choices'][0]['delta'].get('content') is not None:
+                                        stream_content = data['choices'][0]['delta']['content']
+                                    elif data['choices'][0]['delta'].get('reasoning') is not None:
+                                        stream_content = data['choices'][0]['delta']['reasoning']
                                     events_received.append(stream_content)
                                     generated_text += stream_content
                         # process streaming chunk when performance usage is provided
@@ -353,6 +364,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
+
         ttft = self._calculate_ttft_from_streams(events_received, events_timings, total_request_time)
 
         # Populate server and client metrics

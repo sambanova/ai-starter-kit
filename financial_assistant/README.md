@@ -18,8 +18,7 @@ Table of Contents:
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
-    - [Set up the inference endpoint, configs and environment variables](#set-up-the-inference-endpoint-configs-and-environment-variables)
-    - [Update the Embeddings API information](#update-the-embeddings-api-information)
+    - [Set up the inference endpoint, configs and environment variables](#set-up-the-generative-model)
 - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
     - [Deployment: Use a virtual environment 3.11 preferred](#workshop-deployment-use-a-virtual-environment-311-preferred)
 - [Environment variables](#environment-variables)
@@ -60,20 +59,11 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ### Set up the generative model
 
-The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio.
+The next step is to set up your environment variables to use one of the inference models available from SambaNova. You can obtain a free API key through SambaCloud.
 
-- **SambaNova Cloud**: Follow the instructions [here](../README.md#use-sambanova-cloud-option-1) to set up your environment variables.
-    Then, in the [config file](./config.yaml), set `select_expert`  depending on the model that you want to use, as well as `temperature` and `max_tokens_to_generate`.
+Follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) to set up your environment variables.
 
-### Set up the embedding model
-
-You have the following options to set up your embedding model:
-
-* **SambaNovaCloud embedding model (Option 1)**: To get maximum inference speed, you can use a SambaNova Cloud embeddings models. Follow the instructions [here](../README.md#use-sambanovacloud-embedding-option-1) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sncloud"`, and set the `model`.
-
-* **CPU embedding model (Option 2)**: In the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"cpu"`.
-
-* **SambaStudio embedding model (Option 3)**: To increase inference speed, you can use a SambaStudio embedding model endpoint instead of using the default (CPU) Hugging Face embedding. Follow the instructions [here](../README.md#use-sambastudio-embedding-option-3) to set up your endpoint and environment variables. Then, in the [config file](./config.yaml), set the variable `type` in `embedding_model` to `"sambastudio"`, and set the configs `batch_size`, `bundle` and `model` according to your SambaStudio endpoint.
+Then, in the [config file](./config.yaml), set the `model` config depending on the model you want to use.
 
 ## Windows requirements
 

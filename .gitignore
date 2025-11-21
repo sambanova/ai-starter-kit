@@ -180,7 +180,6 @@ next-env.d.ts
 
 # Fine tuning Data
 fine_tuning_sql/data/
-yoda/data/
 utils/synthetic_data_gen/output/
 
 # search assistant Data
@@ -190,29 +189,9 @@ yoda/data/
 #snapi and snsdk
 SambaStudio_API_Client-*
 snsdk-*
-# FineTune Local Data
-fine_tuning_embeddings/sample_data
-fine_tuning_embeddings/data
-fine_tuning_embeddings/processed_data
-fine_tuning_embeddings/results
-fine_tuning_embeddings/finetuned_model
-
-#CoE JumpStart
-CoE_jump_start/langgraph_rag_agent_llama3_local.ipynb
-CoE_jump_start/data
-CoE_jump_start/results
-CoE_jump_start/expert_results
 
 #Local Test Files
 
-=======
-#image search data
-image_search/data
-
-
-=======
-#edgar data
-edgar_qna/data
 =======
 
 utils/parsing/output
@@ -226,10 +205,6 @@ enterprise_knowledge_retriever/data
 enterprise_knowledge_retriever/app/output
 enterprise_knowledge_retriever/output
 
-=======
-
-# financial_agent_crewai
-financial_agent_crewai/cache/*
 
 =======
 
@@ -245,22 +220,14 @@ multimodal_knowledge_retriever/data/upload*
 
 =======
 
-# fucntion calling
+# function calling
 function_calling/data/tmp*
 
-=======
-#web crawled retriever data
-web_crawled_data_retriever/data/
 
 =======
 # benchmarking data
 benchmarking/data
 benchmarking/debug
-
-=======
-# agent workflow
-agent_workflows/output
-agent_workflows/data/tmp
 
 logs/
 
@@ -272,6 +239,11 @@ utils/eval/res.csv
 utils/eval/data
 
 =======
+# chat templates
+chat_templates/data
+
+=======
+
 #wandb
 wandb/
 
@@ -289,14 +261,6 @@ utils/dedicated_env/tmp_source_file.json
 utils/fine_tuning/sambastudio_fine_tuning_dataset
 utils/dedicated_env/models
 e2e_fine_tuning/data
-
-# yoda llava_data_prep
-yoda/llava_data_prep/sec_data
-yoda/synthetic_data
-yoda/llava_data_prep/scripts/table.aux
-yoda/llava_data_prep/notebooks/yolov8n.pt
-yoda/llava_data_prep/test
-yoda/llava_data_prep/scripts/yolov8n.pt
 
 #Deployment 
 kits_to_deploy.json

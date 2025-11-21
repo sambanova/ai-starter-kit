@@ -11,7 +11,7 @@
 
 SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises.
 
-To run these examples, you can obtain a free API key using [SambaNova Cloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStudio](https://docs.sambanova.ai/sambastudio/latest/index.html). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
+To run these examples, you can obtain a free API key using [SambaCloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStack](https://sambanova.ai/products/sambastack). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
 
 Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">message us</a> on SambaNova Community <a href="https://community.sambanova.ai/latest" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Community" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
@@ -21,14 +21,11 @@ The table below lists the available kits, which are grouped into four categories
 
 For functionalities related to third-party integrations, find a list in our [Integrations Repository](https://github.com/sambanova/integrations) and [Integrations Docs](https://docs.sambanova.ai/cloud/docs/integrations).
 
-**Note**: For each kit, we specify whether it is compatible with SambaNova Cloud, SambaStudio, or both.
-
 <table style="width: 100%;">
 <thead>
 <tr>
 <th width="20%">Name</th>
 <th width="45%">Kit Description</th>
-<th width="20%">Compatible APIs</th>
 <th width="15%">Category</th>
   
 </tr>
@@ -39,71 +36,61 @@ For functionalities related to third-party integrations, find a list in our [Int
 <tr>
 <td width="20%"><a href="data_extraction/README.md">Data Extraction</a></td>
 <td width="40%">Series of notebooks that demonstrate methods for extracting text from documents in different input formats.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Data Ingestion & Preparation </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="e2e_fine_tuning/README.md">End to End Fine-tuning</a></td>
 <td width="40%"> Recipe to upload and train a Language Model (LLM) using your own data in SambaStudio platform. </td>
-<td width="20%"> SambaStudio </td>
 <td width="20%"> Data Ingestion & Preparation </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="multimodal_knowledge_retriever/README.md">Multimodal Knowledge Retriever</a></td>
 <td width="40%"> Sample implementation of the semantic search workflow leveraging the SambaNova platform to get answers using text, tables, and images to questions about your documents. Includes a runnable demo. </td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="eval_jumpstart/README.md">RAG Evaluation Kit</a></td>
 <td width="40%">A tool for evaluating the performance of LLM APIs using the RAG Evaluation methodology.</td>
-<td width="20%">SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="search_assistant/README.md">Search Assistant</a></td>
 <td width="40%">Sample implementation of the semantic search workflow built using the SambaNova platform to get answers to your questions using search engine snippets, and website crawled information as the source. Includes a runnable demo.</td>
-<td width="20%">SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Intelligent Information Retrieval </td>   
 </tr>
 
 <tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
 <td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>    
-</tr>
-
-<tr>
-<td width="20%"><a href="https://github.com/sambanova/integrations/tree/main/continue">Code Copilot</a></td>
-<td width="40%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
-<td width="20%"> Integrations </td>  
 </tr>
 
 <tr>
 <td width="20%"><a href="financial_assistant/README.md"> Financial Assistant</a></td> 
 <td width="40%">This app demonstrates the capabilities of LLMs in extracting and analyzing financial data using function calling, web scraping, and RAG.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
 <tr>
 <td width="20%"><a href="function_calling/README.md"> Function Calling</a></td>
 <td width="40%">Example of tools calling implementation and a generic function calling module that can be used inside your application workflows.</td>
-<td width="20%"> SambaNova Cloud, SambaStudio</td>
 <td width="20%"> Advanced AI Capabilities </td>
+</tr>
+
+<tr>
+<td width="20%"><a href="chat_templates/README.md">Custom Chat Templates</a></td>
+<td width="40%"> complete workflow of how modern chat models format, send, and interpret conversations. From Jinja chat templates to Completions API invocation and tool-call parsing.</td>
+<td width="20%"> Advanced AI Capabilitie </td>
 </tr>
 
 </tbody>
@@ -111,75 +98,35 @@ For functionalities related to third-party integrations, find a list in our [Int
 
 # Getting Started 
 
-Go to [SambaNova Cloud Quickstart Guide](./quickstart/README.md) If is your first time using the AI State Kits and you want to try out simple examples. Follow the next steps to read more detailed instructions or if you ar a SambaStudio user. 
+Go to [SambaNova Quickstart Guide](./quickstart/README.md) if it's your first time using the AI State Kits and you want to try out simple examples. 
 
 ## Getting a SambaNova API key and setting your generative models
 
-Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaNova Cloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStudio. 
+Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaCloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStack.
 
-### Use SambaNova Cloud (Option 1)
+### Use SambaCloud (Option 1)
 
-For more information and to obtain your API key, visit the [SambaNova Cloud webpage](https://cloud.sambanova.ai).
+To generate an API key, go to the [API section of the SambaCloud portal](https://cloud.sambanova.ai/apis).
 
-To integrate SambaNova Cloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
+To integrate SambaCloud LLMs with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file, use [.env-example](.env-example) as template:
 
-- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Enter the SambaNova Cloud API key in the `.env` file, for example:
+- Enter the SambaCloud API key in the `ai-starter-kit/.env` file, for example:
   
 ```bash
-SAMBANOVA_API_KEY = "456789abcdef0123456789abcdef0123"
+SAMBANOVA_API_KEY = "your-sambanova-api-key"
 ```
 
-### Use SambaStudio (Option 2)
+### Use SambaStack (Option 2)
 
-Begin by deploying your LLM of choice (e.g., Llama 3 8B) to an endpoint for inference in SambaStudio. Use either the GUI or CLI, as described in the [SambaStudio endpoint documentation](https://docs.sambanova.ai/sambastudio/latest/endpoints.html).
+Begin by deploying your LLM of choice (e.g., Llama 3.3 70B) to an endpoint for inference in SambaStack. 
 
-To integrate your LLM deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
+To integrate your LLM deployed on SambaStack with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file,  use [.env-example](.env-example) as template:
 
-- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Set your SambaStudio variables. For example, an endpoint with the URL
-"https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-is entered in the `.env` file as:
+- Set your SambaStack variables, for example:
 
 ``` bash
-SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
-
-## Setting your embedding models
-
-Currently, you can set your embedding models on SambaNova Cloud, SambaStudio, or CPU.
-
-### Use SambaNovaCloud embeddings (Option 1)
-
-To integrate your embedding model deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
-
-- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Set your SambaNova Cloud variables in `.env` file as:
-
-``` bash
-SAMBANOVA_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
-```
-
-### Use CPU embedding (Option 2)
-
-You can run the Hugging Face embedding models locally on CPU. In this case, no information is needed in the `.env` file.
-
-
-### Use SambaStudio embedding (Option 3)
-
-Alternatively, you can use SambaStudio embedding model endpoints instead of the CPU-based HugginFace embeddings to increase inference speed. Please follow [this guide](https://docs.sambanova.ai/sambastudio/latest/e5-large.html#_deploy_an_e5_large_v2_endpoint) to deploy your SambaStudio embedding model.
-
-To integrate your embedding model deployed on SambaStudio with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file:
-
-- Create the `.env` file at `ai-starter-kit/.env` if the file does not exist.
-- Set your SambaStudio variables. For example, an endpoint with the URL
-`"https://api-stage.sambanova.net/api/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"`
-is entered in the `.env` file as:
-
-``` bash
-SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/predict/nlp/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-SAMBASTUDIO_API_KEY="89abcdef-0123-4567-89ab-cdef01234567"
+SAMBANOVA_API_KEY = "your-sambanova-api-key"
+SAMBANOVA_API_BASE = "you-sambanova-base-url"
 ```
 
 ## Run the desired starter kit
@@ -565,9 +512,7 @@ If you continue to experience issues, please [open an issue](https://github.com/
 
 ### API Reference
 
-- Find more information about SambaNova Cloud [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
-
-- Find more information about SambaStudio [here](https://docs.sambanova.ai/sambastudio/latest/index.html)
+- Find more information about SambaCloud and SambaStack [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
 
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. You are responsible for performing due diligence per your organization policies for use in your applications.
 
