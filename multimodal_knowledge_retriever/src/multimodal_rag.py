@@ -21,12 +21,12 @@ import streamlit as st
 import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
-from langchain.chains import RetrievalQA
-from langchain.memory import ConversationSummaryMemory
-from langchain.prompts import ChatPromptTemplate, load_prompt
-from langchain.retrievers.multi_vector import MultiVectorRetriever
-from langchain.schema import Document
-from langchain.storage import InMemoryByteStore
+from langchain_classic.chains import RetrievalQA
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.prompts import ChatPromptTemplate, load_prompt
+from langchain_classic.retrievers.multi_vector import MultiVectorRetriever
+from langchain_classic.schema import Document
+from langchain_classic.storage import InMemoryByteStore
 from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
@@ -49,7 +49,7 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 
 # Configure the logger
 logging.basicConfig(
-    level=logging.INFO,  # Set the logging level (e.g., INFO, DEBUG)
+    level=logging.DEBUG,  # Set the logging level (e.g., INFO, DEBUG)
     format='%(asctime)s [%(levelname)s] - %(message)s',  # Define the log message format
 )
 
@@ -609,7 +609,7 @@ class MultimodalRetrieval:
         upload_folder = os.path.join(kit_dir, 'data', data_sub_folder)
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
-        print('Extracting content from documents')
+        logger.debug('Extracting content from documents')
         for pdf in pdf_files:
             file_path = os.path.join(upload_folder, pdf.name)
             with open(file_path, 'wb') as file:
@@ -627,21 +627,21 @@ class MultimodalRetrieval:
             image_paths.append(single_images_folder)
         text_docs, table_docs, image_paths = self.process_raw_elements(raw_elements, image_paths)
         if len(image_paths) > 0:
-            print(
+            logger.debug(
                 f'* {len(image_paths)} calls to the multimodal model will be done to summarize and '
                 'ingest images in provided documents\n\n'
             )
         if summarize_texts and len(text_docs) > 0:
-            print(
+            logger.debug(
                 f'* {len(text_docs)} calls to the LLM will be done to summarize and '
                 'ingest texts in provided documents\n\n'
             )
         if summarize_tables and len(table_docs) > 0:
-            print(
+            logger.debug(
                 f'* {len(table_docs)} calls to the LLM will be done to summarize and '
                 'ingest tables in provided documents\n\n'
             )
-        print(
+        logger.info(
             f'* **In total {len(image_paths) + len(text_docs) + len(table_docs)} '
             'chunks will be sent to the embeddings model to ingest**\n'
         )

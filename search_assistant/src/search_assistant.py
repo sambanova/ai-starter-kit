@@ -8,12 +8,12 @@ from urllib.parse import urlparse
 import requests
 import yaml
 from dotenv import load_dotenv
-from langchain.chains import ConversationalRetrievalChain, RetrievalQA
-from langchain.docstore.document import Document
-from langchain.memory import ConversationSummaryMemory
-from langchain.output_parsers import ResponseSchema, StructuredOutputParser
-from langchain.prompts import ChatPromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_classic.chains import ConversationalRetrievalChain, RetrievalQA
+from langchain_classic.docstore.document import Document
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.output_parsers import ResponseSchema, StructuredOutputParser
+from langchain_classic.prompts import ChatPromptTemplate
+from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -214,10 +214,14 @@ class SearchAssistant:
         str: The parsed output with HTML links instead of reference numbers.
         """
         for i, link in enumerate(links):
-            answer = answer.replace(f'[reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
-            answer = answer.replace(f'[reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
-            answer = answer.replace(f'[Reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
-            answer = answer.replace(f'[Reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
+            answer = answer.replace(f'[reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'[reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'[Reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'[Reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【reference:{i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【reference: {i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【Reference:{i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【Reference: {i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
         return answer
 
     def querySerper(

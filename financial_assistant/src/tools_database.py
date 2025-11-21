@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 import pandas
 import streamlit
-from langchain.prompts import PromptTemplate
+from langchain_classic.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import AIMessage

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
 import yaml
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from langchain_chroma import Chroma
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate

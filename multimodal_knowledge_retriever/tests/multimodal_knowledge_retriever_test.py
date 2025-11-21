@@ -24,7 +24,8 @@ import time
 import unittest
 from typing import Any, Dict, List, Tuple, Type
 
-from langchain.docstore.document import Document
+from langchain_classic.docstore.document import Document
+from langchain_classic.retrievers.multi_vector import MultiVectorRetriever
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -36,8 +37,6 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 sys.path.append(kit_dir)
 sys.path.append(repo_dir)
-
-from langchain.retrievers.multi_vector import MultiVectorRetriever
 
 from multimodal_knowledge_retriever.src.multimodal_rag import MultimodalRetrieval
 

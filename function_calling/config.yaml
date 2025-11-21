@@ -1,5 +1,5 @@
 llm: 
-  "model": "DeepSeek-V3.1"
+  "model": "DeepSeek-V3-0324"
   "temperature": 0.01
   "max_tokens": 8192
   "top_p": null
@@ -8,7 +8,7 @@ llm:
 tools:
     query_db:
       llm: 
-        "model": "DeepSeek-V3.1" 
+        "model": "DeepSeek-V3-0324" 
         "temperature": 0.01 
         "max_tokens": 1024
         "top_p": null
@@ -18,14 +18,14 @@ tools:
 
     translate:
       llm: 
-        "model": "DeepSeek-V3.1" 
+        "model": "Meta-Llama-3.3-70B-Instruct" 
         "temperature": 0.0
         "max_tokens": 8192
         "top_p": null
         "top_k": null
     rag:
       llm:
-        "model": "DeepSeek-V3.1"
+        "model": "Meta-Llama-3.3-70B-Instruct"
         "temperature": 0.0 
         "max_tokens": 8192
         "top_p": null
