@@ -1,6 +1,6 @@
 # Core dependencies
-llama-index==0.11.17
-llama-index-llms-langchain==0.4.2
+llama-index==0.14.8
+llama-index-llms-langchain==0.7.1
 langchain-chroma>=0.2.1,<1.0.0
 langchain-community>=0.3.7,<1.0.0
 langchain-huggingface>=0.1.2,<1.0.0
@@ -14,11 +14,11 @@ crewai-tools==0.0.1
 pandasai==2.2.15
 pydantic>=2.9.2,<3.0.0
 pydantic_core>=2.23.4,<3.0.0
-python-dotenv==1.1.1
+python-dotenv==1.2.1
 streamlit-extras>=0.4.3,<1.0.0
 streamlit>=1.40.2,<2.0.0
 st-pages>=0.5.0,<1.0.0
-torch==2.2.2
+torch==2.9.1
 
 # Machine Learning and NLP
 scikit-learn==1.4.1.post1
