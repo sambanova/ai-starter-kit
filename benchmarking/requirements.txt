@@ -3,7 +3,7 @@ Requests>=2.32.2
 ipykernel==6.29.4
 langchain-community==0.3.16
 litellm==1.37.19
-matplotlib==3.8.0
+matplotlib==3.10.7
 mypy==1.11.2
 nbformat==5.10.4
 num2words==0.5.13
@@ -15,7 +15,7 @@ pydantic==2.9.2
 pydantic_core==2.23.4
 python-dotenv==1.0.1
 ruff==0.6.9
-seaborn==0.12.2
+seaborn==0.13.2
 sentencepiece==0.2.0
 sseclient-py==1.8.0
 stqdm==0.0.5
