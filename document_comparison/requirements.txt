@@ -26,7 +26,7 @@ pre-commit==4.0.1
 psutil==6.0.0
 pydantic>=2.9.2,<3.0.0
 pydantic_core>=2.23.4,<3.0.0
-python-dotenv==1.1.1
+python-dotenv==1.2.1
 ruff==0.6.9
 sentence_transformers==3.3.1
 streamlit-extras>=0.4.3,<1.0.0

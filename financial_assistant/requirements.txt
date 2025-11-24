@@ -10,7 +10,7 @@ pandasai==2.3.0
 pydantic>=2.9.2,<3.0.0
 pydantic_core>=2.23.4,<3.0.0
 pypdf>=4.0.1,<6.0.0
-python-dotenv==1.1.1
+python-dotenv==1.2.1
 ruff>=0.6.9,<1.0.0
 schedule==1.2.2
 sentence-transformers==4.1.0
