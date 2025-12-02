@@ -6,11 +6,11 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode custom \
---model-name "Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/bundle_tests/3d3_70b/custom_prompts" \
+--model-name "gpt-oss-120b" \
+--results-dir "./data/bundle_tests/audio/custom_prompts" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "../benchmarking/prompts/bundle_tests/3d3_70b/3d3_70b.jsonl" \
+--input-file-path "../benchmarking/prompts/bundle_tests/audio/audio.jsonl" \
 --save-llm-responses True \
 --sampling-params '{"max_tokens_to_generate": 200}' \
 --use-debugging-mode False \
