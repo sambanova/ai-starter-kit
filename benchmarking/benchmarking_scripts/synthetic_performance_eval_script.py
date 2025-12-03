@@ -215,6 +215,8 @@ def run_benchmarking(
         logging.info(f'Time delay: {config["time_delay"]} seconds')
         time.sleep(config['time_delay'])
 
+    # run_name = '20251112-183248.576011'
+    # output_files_dir = os.path.join(config['output_files_dir'], run_name)
     # Consolidate results
     if config['consolidated_results_dir']:
         logging.info(f'Writing consolidated results to {config["consolidated_results_dir"]}')
