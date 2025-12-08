@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from langchain_classic.schema import Document
 from numpy.typing import NDArray
-from paddleocr import PaddleOCR, PPStructure # type: ignore[import-not-found]
+from paddleocr import PaddleOCR, PPStructure  # type: ignore[import-not-found]
 from pdf2image import convert_from_path
 from PIL import Image, ImageDraw, ImageFont
 
