@@ -58,7 +58,7 @@ nest-asyncio==1.6.0
 httpx==0.28.1
 backoff==2.2.1
 streamlit-javascript==0.1.5
-gradio==5.23.1
+gradio==5.31.0
 gradio_client==1.8.0
 sseclient-py==1.8.0
 
