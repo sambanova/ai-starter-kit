@@ -73,7 +73,8 @@ Install the python dependencies in your project environment:
 cd ai-starter-kit/function_calling
 python3 -m venv function_calling_env
 source function_calling_env/bin/activate
-pip install -r requirements.txt
+pip instal uv
+uv pip install -r requirements.txt
 ```
 
 # Use the Function Calling kit

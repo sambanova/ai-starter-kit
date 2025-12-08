@@ -48,7 +48,8 @@ cd ai-starter-kit
 python3 -m venv data_extract_env
 source data_extract_env/bin/activate
 cd data_extraction
-pip install -r requirements.txt
+pip instal uv
+uv pip install -r requirements.txt
 ```
 3. Install files required for the paddle utility: We recommend that you use virtualenv or conda environment for installation.
 >Use this in case you want to use **Paddle OCR** recipe for [PDF OCR and table extraction](notebooks/pdf_extraction.ipynb) you should use the requirementsPaddle file instead.
@@ -57,7 +58,8 @@ cd ai-starter-kit
 python3 -m venv data_extract_env
 source data_extract_env/bin/activate
 cd data_extraction
-pip install -r requirementsPaddle.txt
+pip install uv
+uv pip install -r requirementsPaddle.txt
 ```
 4. Some text extraction examples use the `Unstructured` library. Register at [Unstructured.io](https://unstructured.io/#get-api-key) to get a free API key and create an enviroment file to store the API key and URL:
 ```

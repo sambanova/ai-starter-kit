@@ -69,7 +69,8 @@ Install the python dependencies in your previously created environment.
 
   ``` bash
     cd ai_starter_kit/e2e_fine_tuning
-    pip install -r requirements.txt
+    pip install uv
+    uv pip install -r requirements.txt
   ```
 
 # Bring your own checkpoint

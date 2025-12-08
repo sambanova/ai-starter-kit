@@ -53,7 +53,8 @@ Mac install instructions. See pyenv-virtualenv repo for more detailed instructio
 - cd into utils/parsing and pip install the requirements
 
   ```bash
-  pip install -r requirements.txt
+  pip install uv
+  uv pip install -r requirements.txt
   ```
 
 - cd into the unstructured-api foder and Install the unstructured-api make-file:

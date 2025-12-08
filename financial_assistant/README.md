@@ -83,7 +83,8 @@ If you want to use a Python virtual environment:
     cd ai-starter-kit/financial_assistant
     python3 -m venv financial_assistant_venv
     source financial_assistant_venv/bin/activate
-    pip install -r requirements.txt
+    pip install uv
+    uv pip install -r requirements.txt
     ```
 
 2. Run the following command:

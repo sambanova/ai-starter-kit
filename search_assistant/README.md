@@ -86,7 +86,8 @@ If you want to use virtualenv or conda environment
     cd ai-starter-kit/search_assistant
     python3 -m venv search_assistant_env
     source search_assistant_env/bin/activate
-    pip install -r requirements.txt
+    pip install uv
+    uv pip install -r requirements.txt
     ```
 
 2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), and [openSERP](https://github.com/karust/openserp).

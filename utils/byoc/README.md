@@ -64,7 +64,8 @@ Install the python dependencies in your previously created environment.
 
     ```bash
       cd ai_starter_kit/utils/byoc
-      pip install -r requirements.txt
+      pip install uv
+      uv pip install -r requirements.txt
     ``` 
 
 # Using the BYOC utility
