@@ -9,6 +9,7 @@ langchain-sambanova==1.0.0
 langchain==1.0.2
 langgraph==1.0.1
 langchain-experimental==0.4.0
+litellm==1.80.0
 crewai==1.2.1
 crewai-tools==1.2.1
 pandasai==2.3.2
@@ -57,7 +58,7 @@ backoff==2.2.1
 streamlit-javascript==0.1.5
 gradio==5.23.1
 gradio_client==1.8.0
-sseclient==0.0.27
+sseclient-py==1.8.0
 
 # Visualization
 plotly==6.3.1
