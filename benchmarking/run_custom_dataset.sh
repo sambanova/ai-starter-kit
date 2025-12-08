@@ -6,11 +6,11 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode custom \
---model-name "Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/bundle_tests/us_rag_bundle/custom_prompts" \
+--model-name "DeepSeek-V3.1-Terminus" \
+--results-dir "./data/bundle_tests/chinese_rag_bundle/custom_prompts" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "../benchmarking/prompts/bundle_tests/us_rag_bundle/us_rag_bundle-llama3d3_70b.jsonl" \
+--input-file-path "../benchmarking/prompts/bundle_tests/chinese_rag_bundle/dsterminus.jsonl" \
 --save-llm-responses True \
 --sampling-params '{"max_tokens_to_generate": 200}' \
 --use-debugging-mode False \
