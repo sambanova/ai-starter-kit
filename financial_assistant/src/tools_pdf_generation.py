@@ -42,7 +42,7 @@ class PDFReport(FPDF):  # type: ignore
 
         # Rendering logo:
         self.image(
-            os.path.join(repo_dir, 'images', 'SambaNova-light-logo-1.png'),
+            os.path.join(repo_dir, 'images', 'light-logo.png'),
             self.w - self.l_margin - LOGO_WIDTH,
             self.t_margin - self.t_margin / 2,
             LOGO_WIDTH,

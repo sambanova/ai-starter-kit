@@ -38,11 +38,11 @@ initialize_session(streamlit.session_state, prod_mode)
 set_css_styles()
 
 # Add SambaNova logo
-streamlit.logo(image=os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
+streamlit.logo(image=os.path.join(repo_dir, 'images', 'dark-logo.png'))
 
 # Title of the main page
 columns = streamlit.columns([0.15, 0.85], vertical_alignment='top')
-columns[0].image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
+columns[0].image(os.path.join(repo_dir, 'images', 'dark-logo.png'))
 columns[1].title('SambaNova Financial Assistant')
 
 # Home page
@@ -53,7 +53,7 @@ if not are_credentials_set():
 # Add sidebar
 with streamlit.sidebar:
     # Inject HTML to display the logo in the sidebar at 70% width
-    logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+    logo_path = os.path.join(repo_dir, 'images', 'dark-logo.png')
     with open(logo_path, 'rb') as img_file:
         encoded = base64.b64encode(img_file.read()).decode()
     streamlit.sidebar.markdown(

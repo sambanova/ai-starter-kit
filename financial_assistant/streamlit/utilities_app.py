@@ -553,7 +553,7 @@ def set_css_styles() -> None:
     # Streamlit app setup
     streamlit.set_page_config(
         page_title='Finance App',
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        page_icon=os.path.join(repo_dir, 'images', 'icon.svg'),
         layout='wide',
     )
 

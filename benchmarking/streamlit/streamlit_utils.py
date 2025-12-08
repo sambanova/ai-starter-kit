@@ -45,7 +45,7 @@ APP_PAGES = {
 
 def render_logo() -> None:
     # Inject HTML to display the logo in the sidebar at 70% width
-    logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+    logo_path = os.path.join(repo_dir, 'images', 'dark-logo.png')
     with open(logo_path, 'rb') as img_file:
         encoded = base64.b64encode(img_file.read()).decode()
     st.sidebar.markdown(

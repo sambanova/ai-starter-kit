@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        page_icon=os.path.join(repo_dir, 'images', 'icon.svg'),
     )
 
     _init()
