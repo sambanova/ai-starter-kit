@@ -30,7 +30,7 @@ COPY base-requirements.txt tests/requirements.txt ./
 # Use BuildKit's cache mount to speed up pip installs
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip uv && \
-    uv pip install -r base-requirements.txt
+    uv pip install --system -r base-requirements.txt
 
 # Final stage
 FROM python:3.11.5-slim-bookworm
