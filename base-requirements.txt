@@ -12,7 +12,7 @@ langchain-experimental==0.4.0
 litellm==1.80.0
 crewai==1.2.1
 crewai-tools==1.2.1
-pandasai==2.3.2
+pandasai==3.0.0a1
 pydantic==2.12.3
 pydantic_core==2.41.4
 python-dotenv==1.2.1

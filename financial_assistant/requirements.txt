@@ -6,7 +6,7 @@ langchain-sambanova==1.0.0
 langchain==1.0.2
 mypy==1.18.2
 numpy==1.26.4
-pandasai==2.3.2
+pandasai==3.0.0a1
 pydantic==2.12.3
 pydantic_core==2.41.4
 pypdf==6.1.3
