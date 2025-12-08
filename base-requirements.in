@@ -1,5 +1,5 @@
 # Core dependencies
-llama-index
+llama-index>=0.14.6
 llama-index-llms-langchain>=0.4.2
 langchain-chroma>=0.2.1
 langchain-community>=0.3.7
@@ -8,7 +8,7 @@ langchain-milvus>=0.1.10
 langchain-sambanova>=1.0.0
 langchain>=1.0.0
 langgraph>=1.0.0
-#langchain-experimental>=0.3.2
+langchain-experimental>=0.4.0
 crewai>=0.100.1
 crewai-tools>=0.0.1
 pandasai>=2.2.15

@@ -2,8 +2,8 @@ import argparse
 import json
 from typing import Any, Dict, List, Optional
 
-from langchain.docstore.document import Document
-from langchain.document_loaders.base import BaseLoader
+from langchain_classic.docstore.document import Document
+from langchain_classic.document_loaders.base import BaseLoader
 
 try:
     from unstructured.partition.pdf import partition_pdf

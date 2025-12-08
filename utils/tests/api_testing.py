@@ -37,8 +37,8 @@ os.path.join(repo_dir, 'utils', 'tests', 'config.yaml')
 
 import openai
 from dotenv import load_dotenv
-from langchain_community.chat_models import ChatSambaNova
 from langchain_core.messages import HumanMessage
+from langchain_sambanova import ChatSambaNova
 from openai import OpenAI
 
 from utils.tests.utils_test import (

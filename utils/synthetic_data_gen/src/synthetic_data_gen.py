@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
-from langchain.prompts import ChatPromptTemplate
+from langchain_classic.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel

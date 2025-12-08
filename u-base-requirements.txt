@@ -494,13 +494,16 @@ langchain-chroma==1.0.0
 langchain-classic==1.0.0
     # via langchain-community
 langchain-community==0.4.1
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   langchain-experimental
 langchain-core==1.0.1
     # via
     #   langchain
     #   langchain-chroma
     #   langchain-classic
     #   langchain-community
+    #   langchain-experimental
     #   langchain-huggingface
     #   langchain-milvus
     #   langchain-sambanova
@@ -508,6 +511,8 @@ langchain-core==1.0.1
     #   langgraph
     #   langgraph-checkpoint
     #   langgraph-prebuilt
+langchain-experimental==0.4.0
+    # via -r base-requirements.in
 langchain-huggingface==1.0.0
     # via -r base-requirements.in
 langchain-milvus==0.2.2
