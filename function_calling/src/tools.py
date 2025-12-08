@@ -8,7 +8,7 @@ import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
 from io import StringIO
-from typing import Any, Dict, Optional, Queue, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import yaml
 from dotenv import load_dotenv
@@ -111,7 +111,7 @@ class PythonREPL(BaseModel):
         command: str,
         globals: Optional[Dict[str, Any]],
         locals: Optional[Dict[str, Any]],
-        queue: Queue[str],
+        queue: multiprocessing.Queue,  # type: ignore[type-arg]
     ) -> None:
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
@@ -131,7 +131,7 @@ class PythonREPL(BaseModel):
         # Warn against dangers of PythonREPL
         warn_once()
 
-        queue: Queue[str] = multiprocessing.Queue()
+        queue: multiprocessing.Queue = multiprocessing.Queue()  # type: ignore[type-arg]
 
         # Only use multiprocessing if we are enforcing a timeout
         if timeout is not None:
@@ -150,7 +150,8 @@ class PythonREPL(BaseModel):
         else:
             self.worker(command, self.globals, self.locals, queue)
         # get the result from the worker function
-        return queue.get()
+        result=queue.get()
+        return cast(str, result)
 
 
 class ToolClass(ABC):
