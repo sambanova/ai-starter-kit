@@ -48,7 +48,7 @@ def load_app_description() -> Any:
 def setup_ui_style(repo_dir: str) -> None:
     st.set_page_config(
         page_title='Custom Chat Templates Kit',
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        page_icon=os.path.join(repo_dir, 'images', 'icon.svg'),
         layout='wide',
         initial_sidebar_state='expanded',
     )
@@ -124,7 +124,7 @@ def sidebar_setup(
     prod_mode: bool, additional_variables: dict[str, Optional[str]], app_description: dict[str, Optional[str]]
 ) -> None:
     with st.sidebar:
-        logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+        logo_path = os.path.join(repo_dir, 'images', 'dark-logo.png')
         with open(logo_path, 'rb') as img_file:
             import base64
 

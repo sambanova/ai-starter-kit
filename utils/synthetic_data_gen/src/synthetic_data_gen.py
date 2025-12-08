@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
-from langchain.prompts import ChatPromptTemplate
+from langchain_classic.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -29,6 +29,7 @@ sys.path.append(repo_dir)
 
 
 load_dotenv(os.path.join(repo_dir, '.env'))
+
 
 def load_chat_prompt(path: str) -> ChatPromptTemplate:
     """Load chat prompt from yaml file"""
@@ -53,6 +54,7 @@ def load_chat_prompt(path: str) -> ChatPromptTemplate:
             messages.append((item['role'], item['content']))
 
     return ChatPromptTemplate(messages=messages, **config)
+
 
 class SyntheticDatum(BaseModel):
     """Model of a synthetic generated datum"""

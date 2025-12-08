@@ -44,8 +44,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 # disable annoying streamlit logging
-logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").disabled = True
-transformers.logging.set_verbosity_error()
+logging.getLogger('streamlit.runtime.scriptrunner_utils.script_run_context').disabled = True
+transformers.logging.set_verbosity_error()  # type: ignore[no-untyped-call]
 load_dotenv('../.env', override=True)
 
 SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_template.yaml')
@@ -782,7 +782,6 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         return (raw_prompt, self.get_token_length(raw_prompt['template']))
 
 
-
 class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
     def __init__(
         self,
@@ -1200,8 +1199,10 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         """
 
         random_selected_prompts = random.choices(raw_prompts, k=num_requests)
-        assert len(random_selected_prompts) == num_requests, 'Number of selected prompts \
+        assert len(random_selected_prompts) == num_requests, (
+            'Number of selected prompts \
             does not match the requested count'
+        )
         return random_selected_prompts
 
     def build_request_configs(

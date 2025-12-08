@@ -7,8 +7,8 @@ import requests
 import streamlit
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_classic.schema import Document
+from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 from sec_downloader import Downloader

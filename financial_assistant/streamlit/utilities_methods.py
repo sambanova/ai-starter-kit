@@ -194,7 +194,7 @@ def stream_single_response(response: Any) -> None:
         response = str(response)
         with streamlit.chat_message(
             'ai',
-            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+            avatar=os.path.join(repo_dir, 'images', 'icon.svg'),
         ):
             if isinstance(response, str):
                 # If images are not present in the response, treat it as pure text

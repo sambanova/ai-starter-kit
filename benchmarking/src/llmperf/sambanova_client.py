@@ -16,7 +16,7 @@ sys.path.append('./src/llmperf')
 import warnings
 
 from dotenv import load_dotenv
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
@@ -27,7 +27,7 @@ warnings.filterwarnings('ignore')
 
 
 class BaseAPIEndpoint(abc.ABC):
-    def __init__(self, request_config: RequestConfig, tokenizer: AutoTokenizer) -> None:
+    def __init__(self, request_config: RequestConfig, tokenizer: PreTrainedTokenizerBase) -> None:
         self.request_config = request_config
         self.tokenizer = tokenizer
 
@@ -225,6 +225,7 @@ class BaseAPIEndpoint(abc.ABC):
 
         return metrics
 
+
 class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -330,7 +331,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
-            client = sseclient.SSEClient(response)  # type: ignore
+            client = sseclient.SSEClient(response)  # type: ignore[arg-type]
             generated_text = ''
 
             for event in client.events():
@@ -343,8 +344,9 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         if data.get('usage') is None:
                             # if streams still don't hit a finish reason
                             if data['choices'][0].get('finish_reason') is None:
-                                if (data['choices'][0]['delta'].get('content') is not None) \
-                                    or (data['choices'][0]['delta'].get('reasoning') is not None):
+                                if (data['choices'][0]['delta'].get('content') is not None) or (
+                                    data['choices'][0]['delta'].get('reasoning') is not None
+                                ):
                                     # log s timings
                                     events_timings.append(time.monotonic() - event_start_time)
                                     event_start_time = time.monotonic()

@@ -23,8 +23,8 @@ import sys
 from typing import Any, List, Optional, Set
 
 import chromadb
-from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
+from langchain_classic.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.vectorstores import FAISS, Qdrant
 from langchain_milvus import Milvus

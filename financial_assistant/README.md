@@ -1,8 +1,8 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="../images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -83,7 +83,8 @@ If you want to use a Python virtual environment:
     cd ai-starter-kit/financial_assistant
     python3 -m venv financial_assistant_venv
     source financial_assistant_venv/bin/activate
-    pip install -r requirements.txt
+    pip install uv
+    uv pip install -r requirements.txt
     ```
 
 2. Run the following command:

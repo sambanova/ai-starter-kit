@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 import pandas
 import streamlit
-from langchain.prompts import PromptTemplate
+from langchain_classic.prompts import PromptTemplate
 from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import AIMessage
@@ -250,7 +250,7 @@ def query_stock_database_sql(user_query: str, symbol_list: List[str]) -> Any:
 
     # TODO: With larger context windows
     # https://python.langchain.com/v0.1/docs/use_cases/sql/quickstart/#convert-question-to-sql-query
-    # from langchain.chains import create_sql_query_chain
+    # from langchain_classic.chains import create_sql_query_chain
     # chain = create_sql_query_chain(sambanova_llm, db)
 
     # Instantiate the SQL executor

@@ -61,7 +61,7 @@ def handle_userinput(instruction: str) -> None:
 
     with st.chat_message(
         'ai',
-        avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        avatar=os.path.join(repo_dir, 'images', 'icon.svg'),
     ):
         st.write(completion)
         st.markdown(
@@ -155,7 +155,7 @@ def initialize_application_template() -> None:
 
 def main() -> None:
     st.set_page_config(
-        page_title='AI Starter Kit', page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'), layout='wide'
+        page_title='AI Starter Kit', page_icon=os.path.join(repo_dir, 'images', 'icon.svg'), layout='wide'
     )
 
     # set buttons style
@@ -193,7 +193,7 @@ def main() -> None:
     # add title and icon
     col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
-        st.image(os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png'))
+        st.image(os.path.join(repo_dir, 'images', 'dark-logo.png'))
     st.markdown(
         """
         <style>

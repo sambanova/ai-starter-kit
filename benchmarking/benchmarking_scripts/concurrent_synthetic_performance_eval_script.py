@@ -107,7 +107,7 @@ def run_benchmarking(
         ['input_tokens', 'output_tokens', 'num_requests']
     ].astype('Int64')
 
-    #import concurrent.futures
+    # import concurrent.futures
 
     def run_benchmark_for_row(row: pd.Series) -> None:
         model_name = row['model_name']
@@ -138,9 +138,9 @@ def run_benchmarking(
 
         if cr_set and qps_set:
             logging.warning(
-                f"Row {row.name}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-"
+                f'Row {row.name}: {model_name}-{multimodal_img_size}-{input_tokens}-{output_tokens}-'
                 f"{concurrent_requests}-{qps} is invalid: both 'concurrent_requests' and 'qps' are set. "
-                "Set only one of them, skipping run."
+                'Set only one of them, skipping run.'
             )
             return
 
@@ -214,16 +214,16 @@ def run_benchmarking(
     # Run benchmarks concurrently
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = {executor.submit(run_benchmark_for_row, row): row for _, row in model_configs_df.iterrows()}
-        
+
         for future in concurrent.futures.as_completed(futures):
             row = futures[future]
             try:
                 future.result()
             except Exception as e:
-                logging.error(f"Benchmark for row {row.name} failed: {str(e)}")
-            
+                logging.error(f'Benchmark for row {row.name} failed: {str(e)}')
+
             # Maintain delay between completions if needed
-            #time.sleep(config['time_delay'])
+            # time.sleep(config['time_delay'])
 
     # Consolidate results
     if config['consolidated_results_dir']:
@@ -269,11 +269,11 @@ def run_benchmarking(
                 'server_end_to_end_latency_s_min',
                 'server_end_to_end_latency_s_mean',
                 'server_end_to_end_latency_s_p50',
-                'server_end_to_end_latency_s_max',                
+                'server_end_to_end_latency_s_max',
                 'server_output_token_per_s_min',
-                'server_output_token_per_s_mean', 
+                'server_output_token_per_s_mean',
                 'server_output_token_per_s_p50',
-                'server_output_token_per_s_max',                               
+                'server_output_token_per_s_max',
                 'acceptance_rate_min',
                 'acceptance_rate_p50',
                 'acceptance_rate_max',
@@ -286,11 +286,11 @@ def run_benchmarking(
                 'client_end_to_end_latency_s_min',
                 'client_end_to_end_latency_s_mean',
                 'client_end_to_end_latency_s_p50',
-                'client_end_to_end_latency_s_max',                
+                'client_end_to_end_latency_s_max',
                 'client_output_token_per_s_min',
-                'client_output_token_per_s_mean',                
+                'client_output_token_per_s_mean',
                 'client_output_token_per_s_p50',
-                'client_output_token_per_s_max',                
+                'client_output_token_per_s_max',
                 'client_total_output_throughput',
                 'num_requests_started',
                 'num_completed_requests',

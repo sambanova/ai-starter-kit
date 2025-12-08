@@ -77,9 +77,9 @@ class ChatTemplateManager:
 
         tokenizer_path = os.path.join(self.cache_dir, model_name.replace('/', '_'))
         if os.path.exists(tokenizer_path):
-            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)  # type: ignore[no-untyped-call]
         else:
-            tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]
                 model_name, use_auth_token=self.hf_token, cache_dir=self.cache_dir
             )
         self.tokenizers[model_name] = tokenizer

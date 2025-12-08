@@ -156,7 +156,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
         with st.chat_message('user'):
             st.write(f'{ques}')
 
-        with st.chat_message('ai', avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg')):
+        with st.chat_message('ai', avatar=os.path.join(repo_dir, 'images', 'icon.svg')):
             formatted_ans = ans.replace('$', r'\$')
             st.write(f'{formatted_ans}')
             if st.session_state.show_sources:
@@ -170,7 +170,7 @@ def handle_userinput(user_question: Optional[str]) -> None:
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
-            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+            avatar=os.path.join(repo_dir, 'images', 'icon.svg'),
         ):
             st.write(load_app_description().get('app_overview'))
 
@@ -198,7 +198,7 @@ def main() -> None:
 
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        page_icon=os.path.join(repo_dir, 'images', 'icon.svg'),
     )
 
     # set buttons style
@@ -290,7 +290,7 @@ def main() -> None:
 
     with st.sidebar:
         # Inject HTML to display the logo in the sidebar at 70% width
-        logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+        logo_path = os.path.join(repo_dir, 'images', 'dark-logo.png')
         with open(logo_path, 'rb') as img_file:
             encoded = base64.b64encode(img_file.read()).decode()
         st.sidebar.markdown(

@@ -259,11 +259,11 @@ def run_benchmarking(
                 'server_end_to_end_latency_s_min',
                 'server_end_to_end_latency_s_mean',
                 'server_end_to_end_latency_s_p50',
-                'server_end_to_end_latency_s_max',                
+                'server_end_to_end_latency_s_max',
                 'server_output_token_per_s_min',
-                'server_output_token_per_s_mean', 
+                'server_output_token_per_s_mean',
                 'server_output_token_per_s_p50',
-                'server_output_token_per_s_max',                               
+                'server_output_token_per_s_max',
                 'acceptance_rate_min',
                 'acceptance_rate_p50',
                 'acceptance_rate_max',
@@ -276,11 +276,11 @@ def run_benchmarking(
                 'client_end_to_end_latency_s_min',
                 'client_end_to_end_latency_s_mean',
                 'client_end_to_end_latency_s_p50',
-                'client_end_to_end_latency_s_max',                
+                'client_end_to_end_latency_s_max',
                 'client_output_token_per_s_min',
-                'client_output_token_per_s_mean',                
+                'client_output_token_per_s_mean',
                 'client_output_token_per_s_p50',
-                'client_output_token_per_s_max',                
+                'client_output_token_per_s_max',
                 'client_total_output_throughput',
                 'num_requests_started',
                 'num_completed_requests',
@@ -327,14 +327,14 @@ def run_benchmarking(
                     if key in df_summary.index:
                         df_summary.at[key, 'requests_grouping'] = requests_grouping
                         df_summary.at[key, 'requests_batching'] = requests_batching
-                        
+
                         # Build request_batching_frequencies dictionary
-                        freq_dict: Dict[int,int] = defaultdict(int)
+                        freq_dict: Dict[int, int] = defaultdict(int)
                         for group_count, batch_value in zip(requests_grouping, requests_batching):
                             freq_dict[batch_value] += group_count
 
                         # Store the result as a normal dict (not defaultdict)
-                        df_summary.at[key, 'request_batching_frequencies'] = dict(freq_dict)   
+                        df_summary.at[key, 'request_batching_frequencies'] = dict(freq_dict)
                     else:
                         raise KeyError(f'Key {key} not found in dictionary. File: {file}')
             df_summary['representative_batch_size'] = df_summary['requests_batching'].apply(

@@ -1,8 +1,8 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="../images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -73,7 +73,8 @@ Install the python dependencies in your project environment:
 cd ai-starter-kit/function_calling
 python3 -m venv function_calling_env
 source function_calling_env/bin/activate
-pip install -r requirements.txt
+pip instal uv
+uv pip install -r requirements.txt
 ```
 
 # Use the Function Calling kit

@@ -1,7 +1,7 @@
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="../images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -69,7 +69,8 @@ Install the python dependencies in your previously created environment.
 
   ``` bash
     cd ai_starter_kit/e2e_fine_tuning
-    pip install -r requirements.txt
+    pip install uv
+    uv pip install -r requirements.txt
   ```
 
 # Bring your own checkpoint

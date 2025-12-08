@@ -1,8 +1,8 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="../images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -11,25 +11,18 @@ Benchmarking
 
 <!-- TOC -->
 
-- [Benchmarking](#benchmarking)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
-  - [Clone this repository](#clone-this-repository)
-  - [Set up the inference endpoint, and environment variables](#set-up-the-inference-endpoint-and-environment-variables)
-  - [Create the (virtual) environment](#create-the-virtual-environment)
+    - [Clone this repository](#clone-this-repository)
+    - [Set up the inference endpoint, and environment variables](#set-up-the-inference-endpoint-and-environment-variables)
+    - [Create the (virtual) environment](#create-the-virtual-environment)
 - [Use the starter kit](#use-the-starter-kit)
-  - [GUI Option](#gui-option)
-    - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
-    - [Full Walkthrough](#full-walkthrough)
-      - [Synthetic Performance Evaluation](#synthetic-performance-evaluation)
-      - [Real Workload Performance Evaluation](#real-workload-performance-evaluation)
-      - [Custom Performance Evaluation](#custom-performance-evaluation)
-      - [Performance on Chat](#performance-on-chat)
-  - [CLI Option](#cli-option)
-    - [Synthetic Dataset](#synthetic-dataset)
-    - [Real Workload Dataset](#real-workload-dataset)
-    - [Custom Dataset](#custom-dataset)
+    - [GUI Option](#gui-option)
+        - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
+        - [Full Walkthrough](#full-walkthrough)
+    - [CLI Option](#cli-option)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
+- [TroubleShooting](#troubleshooting)
 
 <!-- /TOC -->
 
@@ -87,7 +80,8 @@ SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/v2/predict/generic/12345678
 2. Install the required dependencies:
     ```bash
     cd benchmarking # If not already in the benchmarking folder
-    pip install -r requirements.txt
+    pip install uv
+    uv pip install -r requirements.txt
     ```
 
 # Use the starter kit

@@ -107,11 +107,9 @@ def _initialize_sesion_variables() -> None:
         st.switch_page('app.py')
 
 
-
 def main() -> None:
-
     set_font()
-    
+
     render_title_icon('Chat Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
         """With this option, users have a way to know performance metrics per response. Set your LLM first on the left
@@ -170,7 +168,7 @@ def main() -> None:
         # format="%.2f")
 
         # Sets LLM
-        sidebar_run_option = st.sidebar.button('Set up!', type='primary', width="stretch")
+        sidebar_run_option = st.sidebar.button('Set up!', type='primary', width='stretch')
 
         # Additional settings
         with st.expander('Additional settings', expanded=True):
@@ -228,7 +226,7 @@ def main() -> None:
                         st.write(f'{user["question"]}')
                     with st.chat_message(
                         'ai',
-                        avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+                        avatar=os.path.join(repo_dir, 'images', 'icon.svg'),
                     ):
                         st.write(f'{system["answer"]}')
                         with st.expander('Performance metrics'):
@@ -255,7 +253,7 @@ def main() -> None:
 if __name__ == '__main__':
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        page_icon=os.path.join(repo_dir, 'images', 'icon.svg'),
     )
 
     _initialize_sesion_variables()
