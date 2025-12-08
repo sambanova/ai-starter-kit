@@ -36,8 +36,9 @@ jobs:
       # Dependencies
       - name: Install Dependencies
         run: |
+          pip install uv
           python -m pip install --upgrade pip
-          pip install -r base-requirements.txt
+          uv pip install -r base-requirements.txt
           pip install ruff mypy
 
       # Ruff
