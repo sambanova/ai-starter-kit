@@ -9,7 +9,7 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import cv2
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from numpy.typing import NDArray
 from paddleocr import PaddleOCR, PPStructure  # type: ignore
 from pdf2image import convert_from_path
