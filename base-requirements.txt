@@ -15,9 +15,10 @@ crewai-tools==1.2.1
 pandasai==2.3.2
 pydantic==2.12.3
 pydantic_core==2.41.4
-python-dotenv==1.1.1
+python-dotenv==1.2.1
+sambanova>=1.2.0
 streamlit-extras==0.6.0
-streamlit==1.50.0
+streamlit==1.51.0
 st-pages==1.0.1
 torch==2.9.0
 
@@ -83,6 +84,7 @@ schedule==1.2.2
 tqdm==4.67.1
 watchdog==6.0.0
 pillow==10.4.0
+pillow-heif==0.22.0
 pycountry==24.6.1
 omegaconf==2.3.0
 jsonlines==4.0.0

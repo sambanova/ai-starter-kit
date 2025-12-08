@@ -13,7 +13,7 @@ poetry==1.8.3
 pre-commit==4.3.0
 pydantic==2.12.3
 pydantic_core==2.41.4
-python-dotenv==1.1.1
+python-dotenv==1.2.1
 ruff==0.14.2
 seaborn==0.13.2
 sentencepiece==0.2.0
@@ -25,4 +25,4 @@ tqdm==4.67.1
 transformers==4.57.1
 joblib==1.4.2
 openpyxl==3.1.5
-streamlit==1.50.0
+streamlit==1.51.0
