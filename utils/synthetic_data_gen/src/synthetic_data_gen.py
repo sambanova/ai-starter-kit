@@ -30,6 +30,7 @@ sys.path.append(repo_dir)
 
 load_dotenv(os.path.join(repo_dir, '.env'))
 
+
 def load_chat_prompt(path: str) -> ChatPromptTemplate:
     """Load chat prompt from yaml file"""
 
@@ -53,6 +54,7 @@ def load_chat_prompt(path: str) -> ChatPromptTemplate:
             messages.append((item['role'], item['content']))
 
     return ChatPromptTemplate(messages=messages, **config)
+
 
 class SyntheticDatum(BaseModel):
     """Model of a synthetic generated datum"""

@@ -9,7 +9,7 @@ try:
     from unstructured.partition.pdf import partition_pdf
     from unstructured.staging.base import elements_to_json
 except ImportError as e:
-    raise ValueError('unstructured package not found, please install it with ' '`pip install unstructured`') from e
+    raise ValueError('unstructured package not found, please install it with `pip install unstructured`') from e
 
 
 def extract_elements_from_file(input_file: str, output_image_dir: str) -> List[Any]:
@@ -146,7 +146,7 @@ class UnstructuredPdfPytesseractLoader(BaseLoader):
         assert self.output_image_dir is not None
         self.pdf_elements = extract_elements_from_file(self.file_path, self.output_image_dir)
         if self.save_json:
-            json_output = f"{self.file_path.split('.')[0]}.json"
+            json_output = f'{self.file_path.split(".")[0]}.json'
             elements_to_json(self.pdf_elements, filename=json_output)
             assert self.output_file is not None
             return process_json_file(json_output, self.output_file)
@@ -164,7 +164,7 @@ class UnstructuredPdfPytesseractLoader(BaseLoader):
 
 def main(input_file: str, output_file: str, output_image_dir: str) -> None:
     pdf_elements = extract_elements_from_file(input_file, output_image_dir)
-    json_output_file = f"{input_file.split('.')[0]}.json"
+    json_output_file = f'{input_file.split(".")[0]}.json'
     elements_to_json(pdf_elements, filename=json_output_file)
     process_json_file(json_output_file, output_file)
 

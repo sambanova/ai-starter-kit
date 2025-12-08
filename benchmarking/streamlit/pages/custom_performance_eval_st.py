@@ -80,7 +80,6 @@ def _initialize_sesion_variables() -> None:
         st.switch_page('app.py')
 
 
-
 def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
     """Runs custom performance evaluation
 
@@ -120,7 +119,6 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
 
 
 def main() -> None:
-
     set_font()
 
     render_title_icon('Custom Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
@@ -207,17 +205,12 @@ def main() -> None:
         # TODO: Add more tuning params below (temperature, top_k, etc.)
 
         job_submitted = st.sidebar.button(
-            'Run!', 
-            disabled=st.session_state.running, 
-            key='run_button', 
-            type='primary', 
-            width="stretch")
+            'Run!', disabled=st.session_state.running, key='run_button', type='primary', width='stretch'
+        )
 
         sidebar_stop = st.sidebar.button(
-            'Stop', 
-            disabled=not st.session_state.running, 
-            type='secondary', 
-            width="stretch")
+            'Stop', disabled=not st.session_state.running, type='secondary', width='stretch'
+        )
 
     if sidebar_stop:
         st.session_state.running = False

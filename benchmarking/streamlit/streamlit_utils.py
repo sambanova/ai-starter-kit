@@ -23,24 +23,25 @@ APP_PAGES = {
     'synthetic_eval': {
         'file_path': 'pages/synthetic_performance_eval_st.py',
         'page_label': 'Synthetic Performance Evaluation',
-        'page_icon': ":material/analytics:"
+        'page_icon': ':material/analytics:',
     },
     'real_workload_eval': {
         'file_path': 'pages/real_workload_eval_st.py',
         'page_label': 'Real Workload Evaluation',
-        'page_icon': ":material/speed:"
+        'page_icon': ':material/speed:',
     },
     'custom_eval': {
         'file_path': 'pages/custom_performance_eval_st.py',
         'page_label': 'Custom Performance Evaluation',
-        'page_icon': ":material/instant_mix:"
+        'page_icon': ':material/instant_mix:',
     },
     'chat_eval': {
-        'file_path': 'pages/chat_performance_st.py', 
+        'file_path': 'pages/chat_performance_st.py',
         'page_label': 'Performance on Chat',
-        'page_icon': ":material/chat:"
+        'page_icon': ':material/chat:',
     },
 }
+
 
 def render_logo() -> None:
     # Inject HTML to display the logo in the sidebar at 70% width
@@ -152,9 +153,11 @@ def find_pages_to_show() -> List[Any]:
         if page_k in pages:
             pages_to_show.append(
                 st.Page(
-                    APP_PAGES[page_k]['file_path'], 
-                    title=APP_PAGES[page_k]['page_label'], 
-                    icon=APP_PAGES[page_k]['page_icon']))
+                    APP_PAGES[page_k]['file_path'],
+                    title=APP_PAGES[page_k]['page_label'],
+                    icon=APP_PAGES[page_k]['page_icon'],
+                )
+            )
     return pages_to_show
 
 

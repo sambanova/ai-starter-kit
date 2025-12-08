@@ -84,7 +84,11 @@ class TimedRetrievalQAChain(RetrievalQAChain):
 
 
 def analyze_times(
-    answer: str, start_time: float, end_preprocessing_time: float, end_llm_time: float, tokenizer: PreTrainedTokenizerBase
+    answer: str,
+    start_time: float,
+    end_preprocessing_time: float,
+    end_llm_time: float,
+    tokenizer: PreTrainedTokenizerBase,
 ) -> Dict[str, float | int]:
     preprocessing_time = end_preprocessing_time - start_time
     llm_time = end_llm_time - end_preprocessing_time
@@ -126,7 +130,7 @@ def generate(
 
 def process_bulk_QA(vectordb_path: str, questions_file_path: str) -> str:
     documentRetrieval = DocumentRetrieval(sambanova_api_key=sambanova_api_key)
-    tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')   # type: ignore[no-untyped-call]
+    tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')  # type: ignore[no-untyped-call]
     if os.path.exists(vectordb_path):
         # load the vectorstore
         embeddings = documentRetrieval.load_embedding_model()

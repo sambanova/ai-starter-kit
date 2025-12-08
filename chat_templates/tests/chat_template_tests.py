@@ -157,5 +157,5 @@ def main() -> int:
 if __name__ == '__main__':
     exit_code = main()
     if exit_code == 0:
-        logger.info("All CLI tests for chat_templates passed")
+        logger.info('All CLI tests for chat_templates passed')
     sys.exit(exit_code)

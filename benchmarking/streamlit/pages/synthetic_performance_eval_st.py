@@ -171,7 +171,6 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def main() -> None:
-
     set_font()
 
     render_title_icon('Synthetic Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
@@ -278,7 +277,7 @@ def main() -> None:
             disabled=st.session_state.running or st.session_state.optional_download,
             key='run_button',
             type='primary',
-            width="stretch"
+            width='stretch',
         )
 
         if st.session_state.optional_download:
@@ -287,14 +286,14 @@ def main() -> None:
                 data=st.session_state.zip_buffer,
                 file_name='output_files.zip',
                 mime='application/zip',
-                width="stretch"
+                width='stretch',
             )
         else:
             st.sidebar.download_button(
                 label='Download Results',
                 data='',
                 disabled=not st.session_state.running or not st.session_state.optional_download,
-                width="stretch"
+                width='stretch',
             )
 
         # Disable stop button if app is not running and download button is not available
@@ -302,7 +301,7 @@ def main() -> None:
             'Stop',
             disabled=(not st.session_state.running) and (not st.session_state.optional_download),
             type='secondary',
-            width="stretch"
+            width='stretch',
         )
 
     if sidebar_stop:
@@ -401,7 +400,7 @@ if __name__ == '__main__':
         page_title='AI Starter Kit',
         page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
     )
-    
+
     _initialize_session_variables()
 
     main()

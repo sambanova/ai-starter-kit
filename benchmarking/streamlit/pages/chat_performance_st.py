@@ -107,11 +107,9 @@ def _initialize_sesion_variables() -> None:
         st.switch_page('app.py')
 
 
-
 def main() -> None:
-
     set_font()
-    
+
     render_title_icon('Chat Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
     st.markdown(
         """With this option, users have a way to know performance metrics per response. Set your LLM first on the left
@@ -170,7 +168,7 @@ def main() -> None:
         # format="%.2f")
 
         # Sets LLM
-        sidebar_run_option = st.sidebar.button('Set up!', type='primary', width="stretch")
+        sidebar_run_option = st.sidebar.button('Set up!', type='primary', width='stretch')
 
         # Additional settings
         with st.expander('Additional settings', expanded=True):

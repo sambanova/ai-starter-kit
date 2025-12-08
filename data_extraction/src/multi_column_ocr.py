@@ -96,7 +96,7 @@ class PaddleOCRLoader:
         output_folder = os.path.join(output_folder, os.path.basename(pdf_file_path).split('.')[0])
         os.makedirs(output_folder, exist_ok=True)
         for i, image in enumerate(images):
-            img_name = f"{os.path.basename(pdf_file_path).split('.')[0]}_page_{i}.jpg"
+            img_name = f'{os.path.basename(pdf_file_path).split(".")[0]}_page_{i}.jpg'
             output_path = f'{output_folder}/{img_name}'
             image.save(output_path, 'JPEG')
         return output_folder
@@ -328,7 +328,7 @@ class PaddleOCRLoader:
         """
         # Create a mask image with the same size as the original image
         pil_image = Image.fromarray(image)
-        mask = Image.new('L', pil_image.size, 255) # "L" mode is for grayscale
+        mask = Image.new('L', pil_image.size, 255)  # "L" mode is for grayscale
         # Create a drawing object for the mask
         draw = ImageDraw.Draw(mask)
         # Draw black rectangles on the mask at the positions of the bounding boxes
@@ -723,7 +723,7 @@ class PaddleOCRLoader:
             bboxes = self.get_content_bboxes(bboxes)
             bbox = img.getbbox()
             if bbox is None:
-                raise ValueError("Image has no bounding box")
+                raise ValueError('Image has no bounding box')
 
             img_size = (bbox[2], bbox[3])
             assert isinstance(bboxes, list)
