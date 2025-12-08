@@ -8,8 +8,7 @@ import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
 from io import StringIO
-from multiprocessing import Queue
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Queue, Union
 
 import yaml
 from dotenv import load_dotenv
