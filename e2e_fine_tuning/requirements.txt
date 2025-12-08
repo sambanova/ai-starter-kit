@@ -2,4 +2,4 @@ huggingface-hub==0.36.0
 Jinja2==3.1.6
 python-dotenv==1.021
 langchain-sambanova==1.0.0
-datasets==4.3.0
+datasets==4.4.1

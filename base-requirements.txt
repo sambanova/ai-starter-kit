@@ -24,14 +24,14 @@ torch==2.9.0
 
 # Machine Learning and NLP
 scikit-learn==1.7.2
-transformers==4.57.1
+transformers==4.57.3
 sentence-transformers==5.1.2
 huggingface-hub==0.36.0
 instructorembedding==1.0.1
-datasets==4.3.0
+datasets==4.4.1
 evaluate==0.4.6
-accelerate==1.11.0
-peft==0.17.1
+accelerate==1.12.0
+peft==0.18.0
 
 # Data processing and storage
 pandas==1.5.3
