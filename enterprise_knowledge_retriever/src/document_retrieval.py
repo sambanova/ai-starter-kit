@@ -124,7 +124,7 @@ class RetrievalQAChain(Chain):
 
     def rerank_docs(self, query: str, docs: List[Document], final_k: int) -> List[Document]:
         # Lazy hardcoding for now
-        tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')
+        tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')  # type: ignore[no-untyped-call]
         reranker = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-large')
         pairs = []
         for d in docs:

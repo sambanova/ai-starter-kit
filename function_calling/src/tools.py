@@ -8,6 +8,7 @@ import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
 from io import StringIO
+from multiprocessing import Queue
 from typing import Any, Dict, Optional, Union
 
 import yaml
@@ -75,17 +76,18 @@ def get_config_info(config_path: str = CONFIG_PATH) -> Dict[str, Any]:
 
     return tools_info
 
+
 @functools.lru_cache(maxsize=None)
 def warn_once() -> None:
     """Warn once about the dangers of PythonREPL."""
-    logger.warning("Python REPL can execute arbitrary code. Use with caution.")
+    logger.warning('Python REPL can execute arbitrary code. Use with caution.')
 
 
 class PythonREPL(BaseModel):
     """Simulates a standalone Python REPL."""
 
-    globals: Optional[Dict] = Field(default_factory=dict, alias="_globals")  # type: ignore[arg-type]
-    locals: Optional[Dict] = Field(default_factory=dict, alias="_locals")  # type: ignore[arg-type]
+    globals: Optional[Dict[str, Any]] = Field(default_factory=dict, alias='_globals')
+    locals: Optional[Dict[str, Any]] = Field(default_factory=dict, alias='_locals')
 
     @staticmethod
     def sanitize_input(query: str) -> str:
@@ -100,17 +102,17 @@ class PythonREPL(BaseModel):
         Returns:
             str: The sanitized query
         """
-        query = re.sub(r"^(\s|`)*(?i:python)?\s*", "", query)
-        query = re.sub(r"(\s|`)*$", "", query)
+        query = re.sub(r'^(\s|`)*(?i:python)?\s*', '', query)
+        query = re.sub(r'(\s|`)*$', '', query)
         return query
 
     @classmethod
     def worker(
         cls,
         command: str,
-        globals: Optional[Dict],
-        locals: Optional[Dict],
-        queue: multiprocessing.Queue,
+        globals: Optional[Dict[str, Any]],
+        locals: Optional[Dict[str, Any]],
+        queue: Queue[str],
     ) -> None:
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
@@ -130,14 +132,12 @@ class PythonREPL(BaseModel):
         # Warn against dangers of PythonREPL
         warn_once()
 
-        queue: multiprocessing.Queue = multiprocessing.Queue()
+        queue: Queue[str] = multiprocessing.Queue()
 
         # Only use multiprocessing if we are enforcing a timeout
         if timeout is not None:
             # create a Process
-            p = multiprocessing.Process(
-                target=self.worker, args=(command, self.globals, self.locals, queue)
-            )
+            p = multiprocessing.Process(target=self.worker, args=(command, self.globals, self.locals, queue))
 
             # start it
             p.start()
@@ -147,7 +147,7 @@ class PythonREPL(BaseModel):
 
             if p.is_alive():
                 p.terminate()
-                return "Execution timed out"
+                return 'Execution timed out'
         else:
             self.worker(command, self.globals, self.locals, queue)
         # get the result from the worker function

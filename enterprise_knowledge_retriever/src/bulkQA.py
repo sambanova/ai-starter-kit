@@ -45,7 +45,7 @@ import pandas as pd
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -84,7 +84,7 @@ class TimedRetrievalQAChain(RetrievalQAChain):
 
 
 def analyze_times(
-    answer: str, start_time: float, end_preprocessing_time: float, end_llm_time: float, tokenizer: AutoTokenizer
+    answer: str, start_time: float, end_preprocessing_time: float, end_llm_time: float, tokenizer: PreTrainedTokenizerBase
 ) -> Dict[str, float | int]:
     preprocessing_time = end_preprocessing_time - start_time
     llm_time = end_llm_time - end_preprocessing_time
@@ -100,7 +100,7 @@ def analyze_times(
 
 
 def generate(
-    qa_chain: RetrievalQAChain, question: str, tokenizer: AutoTokenizer
+    qa_chain: RetrievalQAChain, question: str, tokenizer: PreTrainedTokenizerBase
 ) -> Tuple[str, Set[str], Dict[str, float | int]]:
     response = qa_chain.invoke({'question': question})
     answer = response.get('answer')
@@ -126,7 +126,7 @@ def generate(
 
 def process_bulk_QA(vectordb_path: str, questions_file_path: str) -> str:
     documentRetrieval = DocumentRetrieval(sambanova_api_key=sambanova_api_key)
-    tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')
+    tokenizer = AutoTokenizer.from_pretrained('openai/gpt-oss-120b')   # type: ignore[no-untyped-call]
     if os.path.exists(vectordb_path):
         # load the vectorstore
         embeddings = documentRetrieval.load_embedding_model()

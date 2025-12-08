@@ -9,6 +9,7 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import cv2
+import numpy as np
 from langchain_classic.schema import Document
 from numpy.typing import NDArray
 from paddleocr import PaddleOCR, PPStructure  # type: ignore
@@ -326,14 +327,15 @@ class PaddleOCRLoader:
             np.array: masked image
         """
         # Create a mask image with the same size as the original image
-        mask = Image.new('L', image.size, 255)  # "L" mode is for grayscale
+        pil_image = Image.fromarray(image)
+        mask = Image.new('L', pil_image.size, 255) # "L" mode is for grayscale
         # Create a drawing object for the mask
         draw = ImageDraw.Draw(mask)
         # Draw black rectangles on the mask at the positions of the bounding boxes
         for box in bboxs:
             draw.rectangle(box, fill=0)
         # Apply the mask to erase content within the bounding boxes
-        erased_image = Image.composite(image, Image.new('RGB', image.size, (255, 255, 255)), mask)
+        erased_image = Image.composite(pil_image, Image.new('RGB', pil_image.size, (255, 255, 255)), mask)
         # Create a drawing object for the erased image
         draw_erased = ImageDraw.Draw(erased_image)
         font = ImageFont.truetype(self.font_path, 30)
@@ -344,8 +346,10 @@ class PaddleOCRLoader:
             center_x = (box[0] + box[2]) // 2
             center_y = (box[1] + box[3]) // 2
             # Calculate the position to place the text
-            text_size = draw_erased.textsize(text, font)
-            text_position = (center_x - text_size[0] // 2, center_y - text_size[1] // 2)
+            bbox = draw_erased.textbbox((0, 0), text, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            text_position = (center_x - text_w // 2, center_y - text_h // 2)
             # Draw the text on the erased image
             draw_erased.text(text_position, text, fill=(0, 0, 0), font=font)
         if save:
@@ -696,7 +700,8 @@ class PaddleOCRLoader:
             # save tables
             tables_bboxs, tables = self.get_tables(structured_ocr_result)
             tables_json_file_path = self.save_tables(tables, file_path, save_html=save_intermediate)
-            _, masked_img = self.mask_elements_from_image(img, tables_bboxs, 'table')
+            np_img = np.array(img)
+            _, masked_img = self.mask_elements_from_image(np_img, tables_bboxs, 'table')
             # save figures
             figures_bboxs, figures = self.get_figures(structured_ocr_result)
             figures_json_file_path = self.save_figures(figures, file_path)
@@ -716,7 +721,11 @@ class PaddleOCRLoader:
                 element['bbox'] for element in structured_ocr_result
             ]
             bboxes = self.get_content_bboxes(bboxes)
-            img_size = (img.getbbox()[2], img.getbbox()[3])
+            bbox = img.getbbox()
+            if bbox is None:
+                raise ValueError("Image has no bounding box")
+
+            img_size = (bbox[2], bbox[3])
             assert isinstance(bboxes, list)
             bboxes = self.order_paragraphs(bboxes, img_size, header_height=header_height, footer_height=footer_height)
             assert isinstance(bboxes, list)

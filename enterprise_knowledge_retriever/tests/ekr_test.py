@@ -77,7 +77,7 @@ class EKRTestCase(unittest.TestCase):
         cls.time_start = time.time()
         cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
         cls.judge = CorrectnessLLMJudge(**judge_info)
-        cls.rag_model = WeaveDummyModel(model_kwargs=rag_info)  # type: ignore
+        cls.rag_model = WeaveDummyModel(model_kwargs=rag_info)
         cls.data_manager = WeaveDatasetManager()
         cls.dataset = cls.get_data()
         cls.document_retrieval = DocumentRetrieval(sambanova_api_key=cls.sambanova_api_key)
@@ -135,8 +135,8 @@ class EKRTestCase(unittest.TestCase):
             self.dataset[i]['context'] = response.get('source_documents', '')
             self.dataset[i]['completion'] = response.get('answer', '')
 
-        evaluation = weave.Evaluation(  # type: ignore
-            name=' '.join(str(value) for value in judge_info.values()), dataset=self.dataset, scorers=[self.judge]
+        evaluation = weave.Evaluation( 
+            name=' '.join(str(value) for value in judge_info.values()), dataset=self.dataset, scorers=[self.judge] # type: ignore[arg-type]
         )
 
         evaluation_results = asyncio.run(evaluation.evaluate(self.rag_model))

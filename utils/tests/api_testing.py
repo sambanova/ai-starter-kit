@@ -104,7 +104,7 @@ class TestAPIModel(unittest.TestCase):
             self.assertGreater(len(response.choices[0].message.content), 0)
             self.assertTrue(hasattr(response, 'model'))
             self.assertIn(response.model, [model, f'{model}-Text'])
-            self.assertTrue(hasattr(response, 'usage'))
+            self.assertTrue(hasattr(response, 'token_usage'))
 
     def test_client_chat_completion_text_streaming(self) -> None:
         for model in text_models:
@@ -120,7 +120,7 @@ class TestAPIModel(unittest.TestCase):
                 self.assertIsInstance(chunk.choices[0].delta.content, str)
                 self.assertTrue(hasattr(chunk, 'model'))
                 self.assertIn(chunk.model, [model, f'{model}-Text'])
-                self.assertTrue(hasattr(chunk, 'usage'))
+                self.assertTrue(hasattr(chunk, 'token_usage'))
 
     def test_client_chat_completion_image(self) -> None:
         for model in image_models:
@@ -150,7 +150,7 @@ class TestAPIModel(unittest.TestCase):
             self.assertGreater(len(response.choices[0].message.content), 0)
             self.assertTrue(hasattr(response, 'model'))
             self.assertEqual(response.model, model)
-            self.assertTrue(hasattr(response, 'usage'))
+            self.assertTrue(hasattr(response, 'token_usage'))
 
     # def test_client_chat_completion_audio(self) -> None:
     #     for model in audio_models:
@@ -182,7 +182,7 @@ class TestAPIModel(unittest.TestCase):
     #         self.assertGreater(len(response.choices[0].message.content), 0)
     #         self.assertTrue(hasattr(response, 'model'))
     #         self.assertEqual(response.model, model)
-    #         self.assertTrue(hasattr(response, 'usage'))
+    #         self.assertTrue(hasattr(response, 'token_usage'))
 
     # def test_request_audio(self) -> None:
     #     for model in audio_models:
@@ -220,7 +220,7 @@ class TestAPIModel(unittest.TestCase):
             self.assertIsInstance(response.content, str)
             self.assertGreater(len(response.content), 0)
             self.assertTrue(hasattr(response, 'response_metadata'))
-            self.assertIn('usage', response.response_metadata)
+            self.assertIn('token_usage', response.response_metadata)
 
     def test_langchain_chat_completion_image(self) -> None:
         message = [
@@ -242,7 +242,7 @@ class TestAPIModel(unittest.TestCase):
             self.assertIsInstance(response.content, str)
             self.assertGreater(len(response.content), 0)
             self.assertTrue(hasattr(response, 'response_metadata'))
-            self.assertIn('usage', response.response_metadata)
+            self.assertIn('token_usage', response.response_metadata)
 
     # def test_langchain_chat_completion_audio(self) -> None:
     #     messages = [
@@ -261,7 +261,7 @@ class TestAPIModel(unittest.TestCase):
     #         self.assertIsInstance(response.content, str)
     #         self.assertGreater(len(response.content), 0)
     #         self.assertTrue(hasattr(response, 'response_metadata'))
-    #         self.assertIn('usage', response.response_metadata)
+    #         self.assertIn('token_usage', response.response_metadata)
 
     @classmethod
     def tearDownClass(cls: Type['TestAPIModel']) -> None:
