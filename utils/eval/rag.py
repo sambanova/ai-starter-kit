@@ -12,8 +12,8 @@ sys.path.append(repo_dir)
 
 from typing import List, Tuple
 
-from langchain_classic import hub
 from langchain_chroma import Chroma
+from langchain_classic import hub
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.embeddings import Embeddings
 

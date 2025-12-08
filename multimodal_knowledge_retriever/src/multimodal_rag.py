@@ -21,13 +21,13 @@ import streamlit as st
 import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
+from langchain_chroma import Chroma
 from langchain_classic.chains import RetrievalQA
 from langchain_classic.memory import ConversationSummaryMemory
 from langchain_classic.prompts import ChatPromptTemplate, load_prompt
 from langchain_classic.retrievers.multi_vector import MultiVectorRetriever
 from langchain_classic.schema import Document
 from langchain_classic.storage import InMemoryByteStore
-from langchain_chroma import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 from unstructured.partition.pdf import partition_pdf
