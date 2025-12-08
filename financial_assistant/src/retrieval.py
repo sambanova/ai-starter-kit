@@ -54,7 +54,7 @@ def get_qa_response(
         Answer to the user request.
 
     Raises:
-        TypeError: If `user_request` is not a string or `documents` is not a list of `langchain_classic.schema.Document`.
+        TypeError: If `user_request` is not a string or `documents` is not a list of `langchain_classic.schema.Document`
     """
     if not isinstance(user_request, str):
         raise TypeError('user_request must be a string.')
