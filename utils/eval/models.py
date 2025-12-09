@@ -249,8 +249,8 @@ class WeaveRAGModel(Model):
                 SNCloudSchema(**self.llm_params),
                 EmbeddingsSchema(**self.embeddings_params),
                 VectorDBSchema(**self.rag_params),
-                api_key=self.sambanova_api_key,
-                base_url=self.sambanova_api_base,
+                sambanova_api_key=self.sambanova_api_key,
+                sambanova_api_base=self.sambanova_api_base,
             )
         else:
             self.rag_chain = RAGChain(
