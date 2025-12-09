@@ -1,5 +1,5 @@
 llm: 
-  model: "gpt-oss-120b"
+  model: "DeepSeek-V3-0324"
   temperature: 0.0
   max_tokens: 2048
   top_p: null
