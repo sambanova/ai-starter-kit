@@ -25,13 +25,14 @@ from financial_assistant.streamlit.utilities_app import (
     set_css_styles,
     submit_sec_edgar_details,
 )
-from utils.visual.env_utils import are_credentials_set, save_credentials
+from utils.visual.env_utils import are_credentials_set, save_credentials, env_input_fields
 
 if not prod_mode:
     load_dotenv(os.path.join(repo_dir, '.env'))
 
+additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
 # Initialize session
-initialize_session(streamlit.session_state, prod_mode)
+initialize_session(session_state = streamlit.session_state, prod_mode=prod_mode, additional_env_vars=additional_env_vars)
 
 
 # Set CSS styles
@@ -46,7 +47,7 @@ columns[0].image(os.path.join(repo_dir, 'images', 'dark-logo.png'))
 columns[1].title('SambaNova Financial Assistant')
 
 # Home page
-if not are_credentials_set():
+if not are_credentials_set(additional_env_vars):
     streamlit.title('Financial Insights with LLMs')
     streamlit.write(INTRODUCTION_TEXT)
 
@@ -65,25 +66,24 @@ with streamlit.sidebar:
         unsafe_allow_html=True,
     )
 
-    if not are_credentials_set():
+    if not are_credentials_set(additional_env_vars):
         # Get the SambaNova API Key
         streamlit.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
-        api_key = streamlit.text_input('SAMBANOVA CLOUD API KEY')
+        api_key, additional_vars = env_input_fields(additional_env_vars)
         if streamlit.button('Save Credentials', key='save_credentials_sidebar'):
-            message = save_credentials(api_key=api_key, prod_mode=prod_mode)
+            message = save_credentials(api_key=api_key, additional_vars=additional_vars, prod_mode=prod_mode)
             streamlit.success(message)
             streamlit.session_state.mp_events.api_key_saved()
             streamlit.rerun()
         else:
             streamlit.stop()
     else:
-        if prod_mode:
-            streamlit.success('Credentials are set')
-            if streamlit.button('Clear Credentials', key='clear-credentials'):
-                save_credentials(api_key='', prod_mode=prod_mode)
-                streamlit.success(r':orange[You have been logged out.]')
-                time.sleep(2)
-                streamlit.rerun()
+        streamlit.success('Credentials are set')
+        if streamlit.button('Clear Credentials', key='clear-credentials'):
+            save_credentials('', '', prod_mode) # type: ignore
+            streamlit.success(r':orange[You have been logged out.]')
+            time.sleep(2)
+            streamlit.rerun()
 
 
 from financial_assistant.src.utilities import get_logger
@@ -100,7 +100,7 @@ logger = get_logger()
 def main() -> None:
     with streamlit.sidebar:
         # Create the cache and its main subdirectories
-        if are_credentials_set() and not os.path.exists(streamlit.session_state.cache_dir):
+        if are_credentials_set(additional_env_vars) and not os.path.exists(streamlit.session_state.cache_dir):
             # List the main cache subdirectories
             subdirectories = [
                 streamlit.session_state.sources_dir,
@@ -131,7 +131,7 @@ def main() -> None:
                 # Delete the cache
                 clear_cache(delete=True)
                 # Clear the SambaNova credentials
-                save_credentials(api_key='', prod_mode=prod_mode)
+                save_credentials('', '', prod_mode)
 
                 streamlit.success(r':green[The chat history has been cleared.]')
                 streamlit.success(r':green[The cache has been deleted.]')
@@ -140,7 +140,7 @@ def main() -> None:
                 streamlit.rerun()
                 return
 
-        if are_credentials_set():
+        if are_credentials_set(additional_env_vars):
             # Navigation menu
             streamlit.title('Navigation')
             menu = streamlit.radio(
@@ -198,7 +198,7 @@ def main() -> None:
                     # Display the current directory contents
                     display_directory_contents(streamlit.session_state.current_path, streamlit.session_state.cache_dir)
 
-    if are_credentials_set():
+    if are_credentials_set(additional_env_vars):
         # Home page
         if menu == 'Home':
             streamlit.title('Financial Insights with LLMs')

@@ -7,4 +7,5 @@ from financial_assistant.src.llm import SambaNovaLLM
 sambanova_llm = SambaNovaLLM(
     config_path=CONFIG_PATH,
     sambanova_api_key=streamlit.session_state.SAMBANOVA_API_KEY,
+    sambanova_api_base=streamlit.session_state.SAMBANOVA_API_BASE
 )

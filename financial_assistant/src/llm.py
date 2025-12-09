@@ -28,6 +28,7 @@ class SambaNovaLLM:
         default_tool: Optional[BaseTool | Tool | StructuredTool | type[BaseModel]] = None,
         system_prompt: Optional[str] = FUNCTION_CALLING_PROMPT_TEMPLATE,
         sambanova_api_key: Optional[str] = None,
+        sambanova_api_base: Optional[str] = None,
     ) -> None:
         """
         Args:
@@ -36,6 +37,7 @@ class SambaNovaLLM:
             default_tool: The optional default tool to use. Defaults to `ConversationalResponse`.
             system_prompt: The optional system prompt to use. Defaults to `FUNCTION_CALLING_SYSTEM_PROMPT`.
             sambanova_api_key: The optional sambanova api key for authentication.
+            sambanova_api_base: The optional sambanova api base url.
 
         Raises:
             TypeError: If `tools` is not a list of
@@ -50,7 +52,7 @@ class SambaNovaLLM:
         self.check_llm_info()
 
         # Set the LLM
-        self.llm = self.set_llm(sambanova_api_key=sambanova_api_key)
+        self.llm = self.set_llm(sambanova_api_key=sambanova_api_key, sambanova_api_base=sambanova_api_base)
 
         # Set the tools
         if tools is not None and not isinstance(tools, list):
@@ -132,7 +134,7 @@ class SambaNovaLLM:
         if not isinstance(self.llm_info['temperature'], float):
             raise TypeError('LLM `temperature` must be a float.')
 
-    def set_llm(self, sambanova_api_key: Optional[str] = None) -> ChatSambaNova:
+    def set_llm(self, sambanova_api_key: Optional[str] = None, sambanova_api_base: Optional[str] = None) -> ChatSambaNova:
         """
         Set the LLM to use.
 
@@ -146,10 +148,12 @@ class SambaNovaLLM:
         if sambanova_api_key is None:
             sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
         assert sambanova_api_key is not None
+            
         # Instantiate the LLM
         llm = ChatSambaNova(
-            **self.llm_info,
             api_key=SecretStr(sambanova_api_key),
+            base_url=sambanova_api_base,
+            **self.llm_info
         )
         return llm
 
