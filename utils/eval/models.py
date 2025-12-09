@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 import weave
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_sambanova import ChatSambaNova
+from pydantic import SecretStr
 from weave import Model
 from weave.flow.scorer import Scorer
 
@@ -47,6 +48,8 @@ class CorrectnessLLMJudge(Scorer):
     include_usage: Optional[bool] = False
     normalize_score: int = 1
     model_kwargs: Optional[Dict[str, Any]] = None
+    sambanova_api_key: Optional[SecretStr] = None
+    sambanova_api_base: Optional[str] = None
 
     @weave.op()
     async def score(
@@ -82,14 +85,26 @@ class CorrectnessLLMJudge(Scorer):
             query=query, generated_answer=generated_answer, context=context, expected_answer=expected_answer
         )
 
-        llm = ChatSambaNova(
-            model=self.model_name,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            streaming=self.streaming,
-            stream_options={'include_usage': True},
-        )
+        if self.sambanova_api_key is not None and self.sambanova_api_base is not None:
+            llm = ChatSambaNova(
+                api_key=self.sambanova_api_key,
+                base_url=self.sambanova_api_base,
+                model=self.model_name,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                streaming=self.streaming,
+                stream_options={'include_usage': True},
+            )
+        else:
+            llm = ChatSambaNova(
+                model=self.model_name,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                streaming=self.streaming,
+                stream_options={'include_usage': True},
+            )
 
         judge = llm | JsonOutputParser()
 
@@ -131,6 +146,8 @@ class WeaveChatModel(Model):
     streaming: bool = False
     include_usage: Optional[bool] = False
     model_kwargs: Optional[Dict[str, Any]] = None
+    sambanova_api_key: Optional[SecretStr] = None
+    sambanova_api_base: Optional[str] = None
 
     @weave.op()
     async def predict(self, query: str, system_message: Optional[str] = None) -> Dict[str, Any]:
@@ -152,14 +169,26 @@ class WeaveChatModel(Model):
         Raises:
             Exception: If there is an error during the invocation of the model.
         """
-        client = ChatSambaNova(
-            model=self.model_name,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            streaming=self.streaming,
-            stream_options={'include_usage': True},
-        )
+        if self.sambanova_api_key is not None and self.sambanova_api_base is not None:
+            client = ChatSambaNova(
+                api_key=self.sambanova_api_key,
+                base_url=self.sambanova_api_base,
+                model=self.model_name,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                streaming=self.streaming,
+                stream_options={'include_usage': True},
+            )
+        else:
+            client = ChatSambaNova(
+                model=self.model_name,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                streaming=self.streaming,
+                stream_options={'include_usage': True},
+            )
 
         if system_message is None:
             system_message = SYSTEM_PROMPT
@@ -206,6 +235,8 @@ class WeaveRAGModel(Model):
     rag_params: Optional[Dict[str, Any]] = None
     model_kwargs: Optional[Dict[str, Any]] = None
     rag_chain: Optional[RAGChain] = None
+    sambanova_api_key: Optional[SecretStr] = None
+    sambanova_api_base: Optional[str] = None
 
     def __init__(self, **kwargs: Dict[str, Any]) -> None:
         super().__init__(**kwargs)
@@ -213,11 +244,20 @@ class WeaveRAGModel(Model):
         self._initialize_rag()
 
     def _initialize_rag(self) -> None:
-        self.rag_chain = RAGChain(
-            SNCloudSchema(**self.llm_params),
-            EmbeddingsSchema(**self.embeddings_params),
-            VectorDBSchema(**self.rag_params),
-        )
+        if self.sambanova_api_key is not None and self.sambanova_api_base is not None:
+            self.rag_chain = RAGChain(
+                SNCloudSchema(**self.llm_params),
+                EmbeddingsSchema(**self.embeddings_params),
+                VectorDBSchema(**self.rag_params),
+                api_key=self.sambanova_api_key,
+                base_url=self.sambanova_api_base,
+            )
+        else:
+            self.rag_chain = RAGChain(
+                SNCloudSchema(**self.llm_params),
+                EmbeddingsSchema(**self.embeddings_params),
+                VectorDBSchema(**self.rag_params),
+            )
 
     def upload_docs(self, path: str) -> None:
         self.rag_chain.upload_docs(path)

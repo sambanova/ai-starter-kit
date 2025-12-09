@@ -10,12 +10,13 @@ repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
 sys.path.append(utils_dir)
 sys.path.append(repo_dir)
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from langchain_chroma import Chroma
 from langchain_classic import hub
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.embeddings import Embeddings
+from pydantic import SecretStr
 
 from utils.eval.eval_utils import custom_parser
 from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
@@ -36,8 +37,15 @@ class RAGChain:
     """
 
     def __init__(
-        self, llm_params: SNCloudSchema, embeddings_params: EmbeddingsSchema, vectordb_params: VectorDBSchema
+        self,
+        llm_params: SNCloudSchema,
+        embeddings_params: EmbeddingsSchema,
+        vectordb_params: VectorDBSchema,
+        sambanova_api_key: Optional[str] = None,
+        sambanova_api_base: Optional[str] = None,
     ) -> None:
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.llm_params = llm_params
         self.embeddings_params = embeddings_params
         self.vectordb_params = vectordb_params
@@ -91,7 +99,14 @@ class RAGChain:
             Tuple: A tuple containing the embeddings model and the vector database.
         """
         try:
-            embeddings = SambaNovaEmbeddings(**self.embeddings_params.model_dump())
+            if self.sambanova_api_key is not None and self.sambanova_api_base is not None:
+                embeddings = SambaNovaEmbeddings(
+                    **self.embeddings_params.model_dump(),
+                    api_key=self.sambanova_api_key,
+                    base_url=self.sambanova_api_base,
+                )
+            else:
+                embeddings = SambaNovaEmbeddings(**self.embeddings_params.model_dump())
             vectordb = VectorStoreManager.load_vectordb(embeddings=embeddings, **self.vectordb_params.model_dump())
             return embeddings, vectordb
         except Exception as e:
@@ -108,7 +123,12 @@ class RAGChain:
         try:
             prompt = hub.pull('rlm/rag-prompt')
             retriever = self.vectordb.as_retriever()
-            llm = ChatSambaNova(**self.llm_params.model_dump())
+            if self.sambanova_api_key is not None and self.sambanova_api_base is not None:
+                llm = ChatSambaNova(
+                    **self.llm_params.model_dump(), api_key=self.sambanova_api_key, base_url=self.sambanova_api_base
+                )
+            else:
+                llm = ChatSambaNova(**self.llm_params.model_dump())
 
             rag_chain = prompt | llm | custom_parser
 

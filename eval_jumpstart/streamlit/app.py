@@ -100,9 +100,15 @@ def upload_file_options(
 
 def initialize_base_evaluator(option: str) -> WeaveEvaluator:
     if option == 'Evaluate multiple LLMs':
-        return BaseWeaveEvaluator()
+        return BaseWeaveEvaluator(
+            sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
+            sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
+        )
     elif option == 'Evaluate Rag Chain':
-        return BaseWeaveRAGEvaluator()
+        return BaseWeaveRAGEvaluator(
+            sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
+            sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
+        )
     else:
         raise ValueError(f'Invalid Evaluation Option: {option}.')
 
