@@ -17,7 +17,6 @@ import uuid
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import nltk
-import streamlit as st
 import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
@@ -31,6 +30,7 @@ from langchain_classic.storage import InMemoryByteStore
 from langchain_core.output_parsers import StrOutputParser
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
 from unstructured.partition.pdf import partition_pdf
+from pydantic import SecretStr
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -87,7 +87,7 @@ class MultimodalRetrieval:
     Class used to perform multimodal retrieval tasks.
     """
 
-    def __init__(self, conversational: bool = False) -> None:
+    def __init__(self, sambanova_api_key: str, sambanova_api_base: Optional[str], conversational: bool = False) -> None:
         """
         initialize MultimodalRetrieval object.
         """
@@ -97,6 +97,8 @@ class MultimodalRetrieval:
         self.embedding_model_info = config_info[2]
         self.retrieval_info = config_info[3]
         self.prod_mode = config_info[4]
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.set_llm()
         self.set_lvlm()
         self.collection_id = str(uuid.uuid4())
@@ -132,19 +134,12 @@ class MultimodalRetrieval:
         Model (str): The name of the model to use for the LLM (overwrites the param set in config).
         """
 
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
         if model is None:
             model = self.llm_info['model']
         llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
         llm = ChatSambaNova(
-            api_key=sambanova_api_key,
+            api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **llm_info,
             model=model,
         )
@@ -157,19 +152,13 @@ class MultimodalRetrieval:
         Parameters:
         model (str): The name of the model to use for the LVLM (overwrites the param set in config).
         """
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         if model is None:
             model = self.lvlm_info['model']
         lvlm_info = {k: v for k, v in self.lvlm_info.items() if k != 'model'}
         lvlm = ChatSambaNova(
-            api_key=sambanova_api_key,
+            api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **lvlm_info,
             model=model,
         )
@@ -361,15 +350,12 @@ class MultimodalRetrieval:
         Returns:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         """
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-        self.embeddings = SambaNovaEmbeddings(api_key=sambanova_api_key, **self.embedding_model_info)
+        self.embeddings = SambaNovaEmbeddings(            
+            api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
+            **self.embedding_model_info
+        )
 
         collection_name = f'collection_{self.collection_id}'
         logger.info(f'This is the collection name: {collection_name}')
