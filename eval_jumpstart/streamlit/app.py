@@ -116,7 +116,8 @@ st_description = load_app_description()
 def main() -> None:
     prod_mode = False
 
-    initialize_env_variables(prod_mode)
+    additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
+    initialize_env_variables(prod_mode, additional_env_vars)
 
     st.set_page_config(
         page_title='AI Starter Kit',
@@ -147,125 +148,133 @@ def main() -> None:
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
         st.markdown('Get your WANDB API key [here](https://wandb.ai/authorize)')
 
-        if not are_credentials_set():
-            api_key, additional_vars = env_input_fields()
+        if not are_credentials_set(additional_env_vars):
+            st.markdown(f"credentias not set {st.session_state['SAMBANOVA_API_BASE'], st.session_state['SAMBANOVA_API_KEY']}") #rm
+            api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.success(message)
                 st.rerun()
         else:
             st.success('Credentials are set')
+            st.markdown(f"credentias set {st.session_state['SAMBANOVA_API_BASE'], st.session_state['SAMBANOVA_API_KEY']}") #rm
             if st.button('Clear Credentials', key='clear_credentials'):
                 save_credentials('', '', prod_mode)  # type: ignore
+                st.session_state.enable_evaluation = False
+                st.markdown(f"credentias reset {st.session_state['SAMBANOVA_API_BASE'], st.session_state['SAMBANOVA_API_KEY']}") #rm
+                import time 
+                time.sleep(2)
                 st.rerun()
+                
+        if are_credentials_set(additional_env_vars):
 
-        if st.session_state.project_name == '' or st.session_state.project_name is None:
-            project_name = st.text_input('wandb project name', value='', type='default')
+            if st.session_state.project_name == '' or st.session_state.project_name is None:
+                project_name = st.text_input('wandb project name', value='', type='default')
 
-            if (
-                st.button('Enter your wandb project name', key='project_name_sidebar')
-                and project_name is not None
-                and project_name != ''
-            ):
-                with st.spinner('Processing'):
-                    st.session_state.project_name = project_name
-                    try:
-                        url_pattern = r'https?://\S+'
-                        captured_output = io.StringIO()
-                        sys.stdout = captured_output
-                        weave.init(st.session_state.project_name)
-                        sys.stdout = sys.__stdout__
-                        captured_logs = captured_output.getvalue()
-                        url = re.search(url_pattern, captured_logs)
-                        if url is not None:
-                            st.session_state.url = url.group(0)
-                    except Exception as e:
-                        st.error(f'Error: {e}.')
-                    st.success('Wandb project name saved successfully!')
-                    st.rerun()
-        else:
-            st.success('Wandb project name is set already set')
-
-            st.markdown('**1. Evaluation options**')
-
-            options = ['Evaluate multiple LLMs', 'Evaluate Rag Chain']
-
-            if not st.session_state.evaluation_option_submitted:
-                evaluation_option = st.selectbox('', options)
-
-                submit_button = st.button('Enter Evaluation Option')
-
-                if submit_button:
+                if (
+                    st.button('Enter your wandb project name', key='project_name_sidebar')
+                    and project_name is not None
+                    and project_name != ''
+                ):
                     with st.spinner('Processing'):
-                        st.session_state.evaluation_option_submitted = True
-                        st.session_state.evaluation_option = evaluation_option
+                        st.session_state.project_name = project_name
+                        try:
+                            url_pattern = r'https?://\S+'
+                            captured_output = io.StringIO()
+                            sys.stdout = captured_output
+                            weave.init(st.session_state.project_name)
+                            sys.stdout = sys.__stdout__
+                            captured_logs = captured_output.getvalue()
+                            url = re.search(url_pattern, captured_logs)
+                            if url is not None:
+                                st.session_state.url = url.group(0)
+                        except Exception as e:
+                            st.error(f'Error: {e}.')
+                        st.success('Wandb project name saved successfully!')
                         st.rerun()
-
             else:
-                st.success('Evaluation Option selected!')
+                st.success('Wandb project name is set already set')
 
-            docs: List[UploadedFile] | None
-            text_docs: List[UploadedFile] | None
+                st.markdown('**1. Evaluation options**')
 
-            if (
-                isinstance(st.session_state.evaluation_option, str)
-                and st.session_state.evaluation_option == 'Evaluate multiple LLMs'
-            ):
-                docs = upload_file_options(st.session_state.evaluation_option)  # type: ignore
-                evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
-                if (
-                    not (st.session_state.project_name == '' or st.session_state.project_name is None)
-                    and docs is not None
-                    and len(docs) != 0
-                ):
-                    if st.sidebar.button('Evaluate!'):
+                options = ['Evaluate multiple LLMs', 'Evaluate Rag Chain']
+
+                if not st.session_state.evaluation_option_submitted:
+                    evaluation_option = st.selectbox('', options)
+
+                    submit_button = st.button('Enter Evaluation Option')
+
+                    if submit_button:
                         with st.spinner('Processing'):
-                            try:
-                                assert isinstance(docs, list)
-                                temp_file = save_files_user(docs)
-                                st.session_state.qna_file_path = temp_file
-                                st.session_state.enable_evaluation = True
+                            st.session_state.evaluation_option_submitted = True
+                            st.session_state.evaluation_option = evaluation_option
+                            st.rerun()
 
-                            except Exception as e:
-                                st.error(f'Error: {e}.')
+                else:
+                    st.success('Evaluation Option selected!')
 
-            elif (
-                isinstance(st.session_state.evaluation_option, str)
-                and st.session_state.evaluation_option == 'Evaluate Rag Chain'
-            ):
-                docs, text_docs = upload_file_options(st.session_state.evaluation_option)  # type: ignore
-                evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
+                docs: List[UploadedFile] | None
+                text_docs: List[UploadedFile] | None
+
                 if (
-                    not (st.session_state.project_name == '' or st.session_state.project_name is None)
-                    and docs is not None
-                    and len(docs) != 0
-                    and text_docs is not None
-                    and len(text_docs) != 0
+                    isinstance(st.session_state.evaluation_option, str)
+                    and st.session_state.evaluation_option == 'Evaluate multiple LLMs'
                 ):
-                    if st.sidebar.button('Evaluate!'):
-                        with st.spinner('Processing'):
-                            try:
-                                temp_pdf_file = save_files_user(text_docs)
-                                evaluator.populate_vectordb(temp_pdf_file)  # type: ignore
-                                temp_file = save_files_user(docs)
-                                st.session_state.qna_file_path = temp_file
-                                st.session_state.enable_evaluation = True
-                            except Exception as e:
-                                st.error(f'Error: {e}.')
+                    docs = upload_file_options(st.session_state.evaluation_option)  # type: ignore
+                    evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
+                    if (
+                        not (st.session_state.project_name == '' or st.session_state.project_name is None)
+                        and docs is not None
+                        and len(docs) != 0
+                    ):
+                        if st.sidebar.button('Evaluate!'):
+                            with st.spinner('Processing'):
+                                try:
+                                    assert isinstance(docs, list)
+                                    temp_file = save_files_user(docs)
+                                    st.session_state.qna_file_path = temp_file
+                                    st.session_state.enable_evaluation = True
 
-            with st.expander('Additional settings', expanded=True):
-                st.markdown('**Reset app**')
-                st.markdown('**Note:** Resetting the app will clear all settings')
-                if st.button('Reset app'):
-                    st.session_state.project_name = None
-                    st.session_state.qna_file_path = None
-                    st.session_state.enable_evaluation = False
-                    st.session_state.url = None
-                    st.session_state.evaluation_option = None
-                    st.session_state.evaluation_option_submitted = False
-                    st.toast('App reset.')
-                    logging.info('App reset.')
-                    st.rerun()
+                                except Exception as e:
+                                    st.error(f'Error: {e}.')
+
+                elif (
+                    isinstance(st.session_state.evaluation_option, str)
+                    and st.session_state.evaluation_option == 'Evaluate Rag Chain'
+                ):
+                    docs, text_docs = upload_file_options(st.session_state.evaluation_option)  # type: ignore
+                    evaluator = initialize_base_evaluator(st.session_state.evaluation_option)
+                    if (
+                        not (st.session_state.project_name == '' or st.session_state.project_name is None)
+                        and docs is not None
+                        and len(docs) != 0
+                        and text_docs is not None
+                        and len(text_docs) != 0
+                    ):
+                        if st.sidebar.button('Evaluate!'):
+                            with st.spinner('Processing'):
+                                try:
+                                    temp_pdf_file = save_files_user(text_docs)
+                                    evaluator.populate_vectordb(temp_pdf_file)  # type: ignore
+                                    temp_file = save_files_user(docs)
+                                    st.session_state.qna_file_path = temp_file
+                                    st.session_state.enable_evaluation = True
+                                except Exception as e:
+                                    st.error(f'Error: {e}.')
+
+                with st.expander('Additional settings', expanded=True):
+                    st.markdown('**Reset app**')
+                    st.markdown('**Note:** Resetting the app will clear all settings')
+                    if st.button('Reset app'):
+                        st.session_state.project_name = None
+                        st.session_state.qna_file_path = None
+                        st.session_state.enable_evaluation = False
+                        st.session_state.url = None
+                        st.session_state.evaluation_option = None
+                        st.session_state.evaluation_option_submitted = False
+                        st.toast('App reset.')
+                        logging.info('App reset.')
+                        st.rerun()
 
     st.write(st_description.get('app_overview'))
 
