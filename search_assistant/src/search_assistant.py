@@ -68,7 +68,7 @@ class SearchAssistant:
     Class used to do generation over search query results and scraped sites
     """
 
-    def __init__(self, sambanova_api_key: str, serpapi_api_key: str, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, sambanova_api_key: str,  serpapi_api_key: str,  sambanova_api_base:Optional[str] = None, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Initializes the search assistant with the given configuration parameters.
 
@@ -91,6 +91,7 @@ class SearchAssistant:
             self.config = config
         config_info = self._get_config_info(CONFIG_PATH)
         self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.serpapi_api_key = serpapi_api_key
         self.embedding_model_info = config_info[0]
         self.llm_info = config_info[1]
@@ -162,6 +163,7 @@ class SearchAssistant:
 
         llm = ChatSambaNova(
             api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **llm_info,
             model=model,
         )

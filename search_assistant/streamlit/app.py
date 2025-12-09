@@ -216,7 +216,8 @@ def main() -> None:
     """,
         unsafe_allow_html=True,
     )
-
+    
+    additional_env_vars.update({'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'})
     initialize_env_variables(prod_mode, additional_env_vars)
 
     if 'conversation' not in st.session_state:
@@ -289,7 +290,7 @@ def main() -> None:
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials'):
-                save_credentials('', {var: '' for var in (additional_env_vars or [])}, prod_mode)
+                save_credentials('', '', prod_mode)
                 st.rerun()
 
         if are_credentials_set(additional_env_vars):
