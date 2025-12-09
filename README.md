@@ -11,7 +11,7 @@
 
 SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises.
 
-To run these examples, you can obtain a free API key using [SambaCloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStack](https://sambanova.ai/products/sambastack). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
+To run these examples, you can obtain a free API key using [SambaCloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStack](https://sambanova.ai/products/sambastack) or [SambaManaged](https://sambanova.ai/products/sambamanaged). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
 
 Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">message us</a> on SambaNova Community <a href="https://community.sambanova.ai/latest" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Community" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
@@ -102,7 +102,7 @@ Go to [SambaNova Quickstart Guide](./quickstart/README.md) if it's your first ti
 
 ## Getting a SambaNova API key and setting your generative models
 
-Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaCloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStack.
+Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaCloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStack or SambaManaged.
 
 ### Use SambaCloud (Option 1)
 
@@ -116,13 +116,13 @@ To integrate SambaCloud LLMs with this AI starter kit, update the API informatio
 SAMBANOVA_API_KEY = "your-sambanova-api-key"
 ```
 
-### Use SambaStack (Option 2)
+### Use SambaStack/SambaManaged (Option 2)
 
-Begin by deploying your LLM of choice (e.g., Llama 3.3 70B) to an endpoint for inference in SambaStack. 
+Begin by deploying your LLM of choice (e.g., Llama 3.3 70B) to an endpoint for inference in SambaStack/SambaManaged. 
 
-To integrate your LLM deployed on SambaStack with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file,  use [.env-example](.env-example) as template:
+To integrate your LLM deployed on SambaStack/SambaManaged with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file,  use [.env-example](.env-example) as template:
 
-- Set your SambaStack variables, for example:
+- Set your SambaStack/SambaManaged variables, for example:
 
 ``` bash
 SAMBANOVA_API_KEY = "your-sambanova-api-key"
