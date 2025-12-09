@@ -23,12 +23,9 @@ import sys
 
 import weave
 import yaml
-from dotenv import load_dotenv
 
 from utils.eval.evaluator import BaseWeaveEvaluator, BaseWeaveRAGEvaluator, WeaveEvaluator
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
-
-load_dotenv('../.env', override=True)
 
 logging.basicConfig(level=logging.INFO)
 logging.info('URL: http://localhost:8501')
@@ -149,7 +146,6 @@ def main() -> None:
         st.markdown('Get your WANDB API key [here](https://wandb.ai/authorize)')
 
         if not are_credentials_set(additional_env_vars):
-            st.markdown(f"credentias not set {st.session_state['SAMBANOVA_API_BASE'], st.session_state['SAMBANOVA_API_KEY']}") #rm
             api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
@@ -157,17 +153,15 @@ def main() -> None:
                 st.rerun()
         else:
             st.success('Credentials are set')
-            st.markdown(f"credentias set {st.session_state['SAMBANOVA_API_BASE'], st.session_state['SAMBANOVA_API_KEY']}") #rm
             if st.button('Clear Credentials', key='clear_credentials'):
                 save_credentials('', '', prod_mode)  # type: ignore
                 st.session_state.enable_evaluation = False
-                st.markdown(f"credentias reset {st.session_state['SAMBANOVA_API_BASE'], st.session_state['SAMBANOVA_API_KEY']}") #rm
-                import time 
+                import time
+
                 time.sleep(2)
                 st.rerun()
-                
-        if are_credentials_set(additional_env_vars):
 
+        if are_credentials_set(additional_env_vars):
             if st.session_state.project_name == '' or st.session_state.project_name is None:
                 project_name = st.text_input('wandb project name', value='', type='default')
 

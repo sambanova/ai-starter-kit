@@ -1,6 +1,8 @@
 import os
 import sys
 
+from dotenv import load_dotenv
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
@@ -21,6 +23,8 @@ from utils.eval.models import CorrectnessLLMJudge, WeaveChatModel, WeaveRAGModel
 from utils.eval.rag import RAGChain
 
 CONFIG_PATH = os.path.join(current_dir, 'config.yaml')
+
+load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
 
 class WeaveEvaluator(ABC):
