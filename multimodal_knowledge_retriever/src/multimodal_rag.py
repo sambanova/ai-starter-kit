@@ -87,7 +87,9 @@ class MultimodalRetrieval:
     Class used to perform multimodal retrieval tasks.
     """
 
-    def __init__(self, sambanova_api_key: str, sambanova_api_base: Optional[str], conversational: bool = False) -> None:
+    def __init__(
+        self, sambanova_api_key: str, sambanova_api_base: Optional[str] = None, conversational: bool = False
+    ) -> None:
         """
         initialize MultimodalRetrieval object.
         """

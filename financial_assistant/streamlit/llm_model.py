@@ -17,7 +17,7 @@ def get_sambanova_llm() -> SambaNovaLLM:
             sambanova_api_key=api_key,
             sambanova_api_base=api_base,
         )
-    return streamlit.session_state._sambanova_llm  # type: ignore[attr-defined]
+    return streamlit.session_state._sambanova_llm  # type: ignore[no-any-return]
 
 
 class _SambaNovaLLMProxy:

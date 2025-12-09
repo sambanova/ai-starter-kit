@@ -131,7 +131,7 @@ def main() -> None:
                 # Delete the cache
                 clear_cache(delete=True)
                 # Clear the SambaNova credentials
-                save_credentials('', '', prod_mode)
+                save_credentials('', '', prod_mode)  # type: ignore
 
                 streamlit.success(r':green[The chat history has been cleared.]')
                 streamlit.success(r':green[The cache has been deleted.]')

@@ -47,6 +47,7 @@ PDF_TEST_DATA = os.path.join(TEST_DATA_PATH, 'invoicesample.pdf')
 
 class MKRTestCase(unittest.TestCase):
     time_start: float
+    sambanova_api_key: str
     multimodal_retriever: MultimodalRetrieval
     text_docs: List[Document]
     table_docs: List[Document]

@@ -290,7 +290,7 @@ def main() -> None:
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials'):
-                save_credentials('', '', prod_mode)
+                save_credentials('', '', prod_mode)  # type: ignore
                 st.rerun()
 
         if are_credentials_set(additional_env_vars):
