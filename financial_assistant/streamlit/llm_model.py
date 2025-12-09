@@ -1,3 +1,4 @@
+from typing import Any
 import streamlit
 
 from financial_assistant.constants import CONFIG_PATH
@@ -19,10 +20,10 @@ def get_sambanova_llm() -> SambaNovaLLM:
 
 
 class _SambaNovaLLMProxy:
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         return getattr(get_sambanova_llm(), attr)
 
-    def __setattr__(self, attr, value):
+    def __setattr__(self, attr: str, value: Any) -> None:
         return setattr(get_sambanova_llm(), attr, value)
 
 
