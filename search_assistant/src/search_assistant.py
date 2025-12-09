@@ -564,7 +564,9 @@ class SearchAssistant:
         chunks = self.get_text_chunks_with_references(
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
-        embeddings = SambaNovaEmbeddings(api_key=self.sambanova_api_key, **self.embedding_model_info)
+        embeddings = SambaNovaEmbeddings(
+            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+        )
         if update and os.path.exists(persist_directory):
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(
