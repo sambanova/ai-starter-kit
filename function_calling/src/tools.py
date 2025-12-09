@@ -150,7 +150,7 @@ class PythonREPL(BaseModel):
         else:
             self.worker(command, self.globals, self.locals, queue)
         # get the result from the worker function
-        result=queue.get()
+        result = queue.get()
         return cast(str, result)
 
 

@@ -3,7 +3,7 @@ import os
 import shutil
 import time
 from io import BytesIO
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import tiktoken
 import yaml
@@ -41,11 +41,7 @@ class DocumentAnalyzer:
             self.templates = json.load(ifile)
 
     def set_llm(self) -> None:
-        self.llm = ChatSambaNova(
-            api_key=self.sambanova_api_key, 
-            base_url=self.sambanova_api_base,
-            **self.llm_info
-            )
+        self.llm = ChatSambaNova(api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.llm_info)
 
     def delete_temp_dir(self, temp_dir: str) -> None:
         """Delete the temporary directory and its contents."""

@@ -29,8 +29,8 @@ from langchain_classic.schema import Document
 from langchain_classic.storage import InMemoryByteStore
 from langchain_core.output_parsers import StrOutputParser
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
-from unstructured.partition.pdf import partition_pdf
 from pydantic import SecretStr
+from unstructured.partition.pdf import partition_pdf
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -351,10 +351,8 @@ class MultimodalRetrieval:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         """
 
-        self.embeddings = SambaNovaEmbeddings(            
-            api_key=self.sambanova_api_key,
-            base_url=self.sambanova_api_base,
-            **self.embedding_model_info
+        self.embeddings = SambaNovaEmbeddings(
+            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
         )
 
         collection_name = f'collection_{self.collection_id}'

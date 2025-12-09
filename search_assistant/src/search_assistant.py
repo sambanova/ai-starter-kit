@@ -68,7 +68,13 @@ class SearchAssistant:
     Class used to do generation over search query results and scraped sites
     """
 
-    def __init__(self, sambanova_api_key: str,  serpapi_api_key: str,  sambanova_api_base:Optional[str] = None, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self,
+        sambanova_api_key: str,
+        serpapi_api_key: str,
+        sambanova_api_base: Optional[str] = None,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Initializes the search assistant with the given configuration parameters.
 

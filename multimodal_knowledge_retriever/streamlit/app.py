@@ -185,7 +185,7 @@ def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
             return MultimodalRetrieval(
                 sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
                 sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
-                conversational=True
+                conversational=True,
             )
         except Exception as e:
             st.error(f'Failed to initialize MultimodalRetrieval: {str(e)}')
@@ -306,7 +306,7 @@ def main() -> None:
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
         if not are_credentials_set(additional_env_vars):
-            st.session_state.multimodal_retriever=None
+            st.session_state.multimodal_retriever = None
             api_key, additional_variables = env_input_fields(additional_env_vars)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_variables, prod_mode)

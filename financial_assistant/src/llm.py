@@ -134,7 +134,9 @@ class SambaNovaLLM:
         if not isinstance(self.llm_info['temperature'], float):
             raise TypeError('LLM `temperature` must be a float.')
 
-    def set_llm(self, sambanova_api_key: Optional[str] = None, sambanova_api_base: Optional[str] = None) -> ChatSambaNova:
+    def set_llm(
+        self, sambanova_api_key: Optional[str] = None, sambanova_api_base: Optional[str] = None
+    ) -> ChatSambaNova:
         """
         Set the LLM to use.
 
@@ -148,13 +150,9 @@ class SambaNovaLLM:
         if sambanova_api_key is None:
             sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
         assert sambanova_api_key is not None
-            
+
         # Instantiate the LLM
-        llm = ChatSambaNova(
-            api_key=SecretStr(sambanova_api_key),
-            base_url=sambanova_api_base,
-            **self.llm_info
-        )
+        llm = ChatSambaNova(api_key=SecretStr(sambanova_api_key), base_url=sambanova_api_base, **self.llm_info)
         return llm
 
     def invoke_tools(self, query: str) -> Any:

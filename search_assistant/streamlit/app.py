@@ -216,7 +216,7 @@ def main() -> None:
     """,
         unsafe_allow_html=True,
     )
-    
+
     additional_env_vars.update({'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'})
     initialize_env_variables(prod_mode, additional_env_vars)
 

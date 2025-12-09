@@ -74,7 +74,12 @@ class SyntheticData(BaseModel):
 class SyntheticDataGen:
     """Class for generating synthetic data"""
 
-    def __init__(self, sambanova_api_key: Optional[str] = None, sambanova_api_base:Optional[str] = None, config_file: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        sambanova_api_key: Optional[str] = None,
+        sambanova_api_base: Optional[str] = None,
+        config_file: Optional[str] = None,
+    ) -> None:
         """
         Initialize SyntheticDataGen class with configuration parameters.
 
@@ -91,7 +96,7 @@ class SyntheticDataGen:
         self.llm_info = config['llm']
         # Set LLM given llm configuration in config file
         if sambanova_api_key is not None:
-            sambanova_api_key =os.env.get('SAMBANOVA_API_KEY')
+            sambanova_api_key = os.env.get('SAMBANOVA_API_KEY')
         self.sambanova_api_key = SecretStr(sambanova_api_key)
         self.sambanova_api_base = sambanova_api_base
         self.llm = self.set_llm()

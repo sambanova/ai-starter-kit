@@ -25,6 +25,7 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
 logging.basicConfig(level=logging.INFO)
 
+
 def load_config() -> Any:
     with open(CONFIG_PATH, 'r') as yaml_file:
         return yaml.safe_load(yaml_file)
@@ -70,14 +71,14 @@ def handle_userinput(instruction: str) -> None:
 
 
 def initialize_document_analyzer() -> Optional[DocumentAnalyzer]:
-        try:
-            return DocumentAnalyzer(
-                sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
-                sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
-            )
-        except Exception as e:
-            st.error(f'Failed to initialize DocumentAnalyzer: {str(e)}')
-            return None
+    try:
+        return DocumentAnalyzer(
+            sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
+            sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
+        )
+    except Exception as e:
+        st.error(f'Failed to initialize DocumentAnalyzer: {str(e)}')
+        return None
 
 
 def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1') -> str:
@@ -205,7 +206,7 @@ def main() -> None:
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
-    
+
     additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
     initialize_env_variables(prod_mode, additional_env_vars)
 

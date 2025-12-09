@@ -25,14 +25,14 @@ from financial_assistant.streamlit.utilities_app import (
     set_css_styles,
     submit_sec_edgar_details,
 )
-from utils.visual.env_utils import are_credentials_set, save_credentials, env_input_fields
+from utils.visual.env_utils import are_credentials_set, env_input_fields, save_credentials
 
 if not prod_mode:
     load_dotenv(os.path.join(repo_dir, '.env'))
 
 additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
 # Initialize session
-initialize_session(session_state = streamlit.session_state, prod_mode=prod_mode, additional_env_vars=additional_env_vars)
+initialize_session(session_state=streamlit.session_state, prod_mode=prod_mode, additional_env_vars=additional_env_vars)
 
 
 # Set CSS styles
@@ -80,7 +80,7 @@ with streamlit.sidebar:
     else:
         streamlit.success('Credentials are set')
         if streamlit.button('Clear Credentials', key='clear-credentials'):
-            save_credentials('', '', prod_mode) # type: ignore
+            save_credentials('', '', prod_mode)  # type: ignore
             streamlit.success(r':orange[You have been logged out.]')
             time.sleep(2)
             streamlit.rerun()

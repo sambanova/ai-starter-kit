@@ -179,7 +179,7 @@ def initialize_document_retrieval() -> Optional[DocumentRetrieval]:
     try:
         return DocumentRetrieval(
             sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
-            sambanova_api_base=st.session_state['SAMBANOVA_API_BASE']
+            sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
         )
     except Exception as e:
         logging.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
@@ -252,7 +252,7 @@ def main() -> None:
     prod_mode = config.get('prod_mode', False)
     conversational = config['retrieval'].get('conversational', False)
     default_collection = 'ekr_default_collection'
-        
+
     additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
     initialize_env_variables(prod_mode, additional_env_vars)
 

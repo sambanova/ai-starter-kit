@@ -38,7 +38,7 @@ def initialize_session(
     session_state: streamlit.runtime.state.session_state_proxy.SessionStateProxy,
     prod_mode: bool = False,
     cache_dir: Optional[str] = None,
-    additional_env_vars: Optional[Union[list[str],dict[str,str]]] = None
+    additional_env_vars: Optional[Union[list[str], dict[str, str]]] = None,
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
