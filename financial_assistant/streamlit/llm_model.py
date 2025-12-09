@@ -1,4 +1,5 @@
 from typing import Any
+
 import streamlit
 
 from financial_assistant.constants import CONFIG_PATH
