@@ -16,7 +16,6 @@ from langchain_chroma import Chroma
 from langchain_classic import hub
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.embeddings import Embeddings
-from pydantic import SecretStr
 
 from utils.eval.eval_utils import custom_parser
 from utils.eval.schemas import EmbeddingsSchema, SNCloudSchema, VectorDBSchema
