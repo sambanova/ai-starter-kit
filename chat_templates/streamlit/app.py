@@ -121,7 +121,7 @@ def initialize_manager() -> ChatTemplateManager:
 
 # Sidebar Setup
 def sidebar_setup(
-    prod_mode: bool, additional_variables: dict[str, Optional[str]], app_description: dict[str, Optional[str]]
+    prod_mode: bool, additional_env_vars: dict[str, Optional[str]], app_description: dict[str, Optional[str]]
 ) -> None:
     with st.sidebar:
         logo_path = os.path.join(repo_dir, 'images', 'dark-logo.png')
@@ -144,9 +144,9 @@ def sidebar_setup(
 
         # Settings
 
-        if not are_credentials_set(additional_variables):
+        if not are_credentials_set(additional_env_vars):
             st.session_state.manager = None
-            api_key, additional_vars = env_input_fields(additional_variables)
+            api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.mp_events.api_key_saved()
@@ -158,7 +158,7 @@ def sidebar_setup(
                 save_credentials('', '', prod_mode)  # type: ignore
                 st.session_state.manager = initialize_manager()
                 st.rerun()
-        if are_credentials_set(additional_variables):
+        if are_credentials_set(additional_env_vars):
             if st.session_state.manager is None:
                 st.session_state.manager = initialize_manager()
 
@@ -553,8 +553,8 @@ def main() -> None:
     config = load_config()
     app_description = load_app_description()
     prod_mode = config.get('prod_mode', False)
-    additional_variables = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1', 'HUGGINGFACE_TOKEN': None}
-    initialize_env_variables(prod_mode, additional_variables)
+    additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1', 'HUGGINGFACE_TOKEN': None}
+    initialize_env_variables(prod_mode, additional_env_vars)
 
     if 'manager' not in st.session_state:
         st.session_state.manager = None
@@ -589,7 +589,7 @@ def main() -> None:
     if 'parsed_output' not in st.session_state:
         st.session_state.parsed_output = {}
 
-    sidebar_setup(prod_mode, additional_variables, app_description)
+    sidebar_setup(prod_mode, additional_env_vars, app_description)
 
     if st.session_state.manager is not None:
         main_interaction_area(app_description)

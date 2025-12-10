@@ -13,7 +13,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,7 +74,12 @@ class SyntheticData(BaseModel):
 class SyntheticDataGen:
     """Class for generating synthetic data"""
 
-    def __init__(self, config_file: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        sambanova_api_key: Optional[str] = None,
+        sambanova_api_base: Optional[str] = None,
+        config_file: Optional[str] = None,
+    ) -> None:
         """
         Initialize SyntheticDataGen class with configuration parameters.
 
@@ -90,6 +95,10 @@ class SyntheticDataGen:
         config = self.load_config(config_file)
         self.llm_info = config['llm']
         # Set LLM given llm configuration in config file
+        if sambanova_api_key is not None:
+            sambanova_api_key = os.env.get('SAMBANOVA_API_KEY')
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.llm = self.set_llm()
         self.embedding_model_info = config['embedding_model']
         # Set embedding model given the embedding model configuration in config file
@@ -123,6 +132,8 @@ class SyntheticDataGen:
         SambaStudio, or SambaNovaCloud instance
         """
         llm = ChatSambaNova(
+            api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **self.llm_info,
             streaming=True,
         )

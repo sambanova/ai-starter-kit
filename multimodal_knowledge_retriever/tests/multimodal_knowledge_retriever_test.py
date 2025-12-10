@@ -47,6 +47,7 @@ PDF_TEST_DATA = os.path.join(TEST_DATA_PATH, 'invoicesample.pdf')
 
 class MKRTestCase(unittest.TestCase):
     time_start: float
+    sambanova_api_key: str
     multimodal_retriever: MultimodalRetrieval
     text_docs: List[Document]
     table_docs: List[Document]
@@ -57,7 +58,8 @@ class MKRTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls: Type['MKRTestCase']) -> None:
         cls.time_start = time.time()
-        cls.multimodal_retriever = MultimodalRetrieval()
+        cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+        cls.multimodal_retriever = MultimodalRetrieval(sambanova_api_key=cls.sambanova_api_key)
         cls.text_docs, cls.table_docs, cls.image_paths = cls.parse_data()
         cls.vectorstore = cls.create_vectorstore()
         cls.chain = cls.create_retrieval_chain()

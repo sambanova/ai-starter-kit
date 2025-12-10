@@ -175,22 +175,16 @@ def handle_userinput(user_question: Optional[str]) -> None:
             st.write(load_app_description().get('app_overview'))
 
 
-def initialize_document_retrieval(prod_mode: bool) -> Optional[DocumentRetrieval]:
-    if prod_mode:
-        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-    else:
-        if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-        else:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-    if are_credentials_set():
-        try:
-            return DocumentRetrieval(sambanova_api_key=sambanova_api_key)
-        except Exception as e:
-            logging.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
-            st.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
-            return None
-    return None
+def initialize_document_retrieval() -> Optional[DocumentRetrieval]:
+    try:
+        return DocumentRetrieval(
+            sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
+            sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
+        )
+    except Exception as e:
+        logging.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
+        st.error(f'Failed to initialize DocumentRetrieval: {str(e)}')
+        return None
 
 
 def main() -> None:
@@ -259,7 +253,8 @@ def main() -> None:
     conversational = config['retrieval'].get('conversational', False)
     default_collection = 'ekr_default_collection'
 
-    initialize_env_variables(prod_mode)
+    additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
+    initialize_env_variables(prod_mode, additional_env_vars)
 
     if 'conversation' not in st.session_state:
         st.session_state.conversation = None
@@ -307,8 +302,9 @@ def main() -> None:
         # Callout to get SambaNova API Key
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-        if not are_credentials_set():
-            api_key, additional_vars = env_input_fields()
+        if not are_credentials_set(additional_env_vars):
+            st.session_state.document_retrieval = None
+            api_key, additional_vars = env_input_fields(additional_env_vars)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_vars, prod_mode)
                 st.session_state.mp_events.api_key_saved()
@@ -318,14 +314,13 @@ def main() -> None:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
                 save_credentials('', '', prod_mode)  # type: ignore
-                st.session_state.document_retrieval = initialize_document_retrieval(prod_mode)
+                st.session_state.document_retrieval = initialize_document_retrieval()
                 st.rerun()
 
-        if are_credentials_set():
+        if are_credentials_set(additional_env_vars):
             if st.session_state.document_retrieval is None:
-                st.session_state.document_retrieval = initialize_document_retrieval(prod_mode)
+                st.session_state.document_retrieval = initialize_document_retrieval()
 
-        if st.session_state.document_retrieval is not None:
             st.markdown('**1. Pick a datasource**')
 
             # Conditionally set the options based on prod_mode
@@ -388,7 +383,7 @@ def main() -> None:
                         accept_multiple_files=True,
                         type=filetypes,
                     )
-                st.markdown('**Optional Set a specific multimodal model and LLM**')
+                st.markdown('**Optional Set a specific LLM**')
                 llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
                 if st.button('set_model'):
                     st.session_state.document_retrieval.set_llm(llm_model)

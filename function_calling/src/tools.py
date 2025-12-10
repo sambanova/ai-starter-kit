@@ -150,7 +150,7 @@ class PythonREPL(BaseModel):
         else:
             self.worker(command, self.globals, self.locals, queue)
         # get the result from the worker function
-        result=queue.get()
+        result = queue.get()
         return cast(str, result)
 
 
@@ -349,7 +349,11 @@ class QueryDb(ToolClass):
         # get tool configs
         query_db_info = self.config['query_db']
 
-        llm = ChatSambaNova(api_key=self.kwargs.get('sambanova_api_key'), **query_db_info['llm'])
+        llm = ChatSambaNova(
+            api_key=self.kwargs.get('sambanova_api_key'),
+            base_url=self.kwargs.get('sambanova_api_base'),
+            **query_db_info['llm'],
+        )
 
         if self.kwargs.get('session_temp_db') is not None:  # TODO pass this param
             db_path = self.kwargs.get('session_temp_db')
@@ -422,7 +426,11 @@ class Translate(ToolClass):
         translate_info = self.config['translate']
 
         # set the llm based in tool configs
-        llm = ChatSambaNova(api_key=self.kwargs.get('sambanova_api_key'), **translate_info['llm'])
+        llm = ChatSambaNova(
+            api_key=self.kwargs.get('sambanova_api_key'),
+            base_url=self.kwargs.get('sambanova_api_base'),
+            **translate_info['llm'],
+        )
         chain = llm | StrOutputParser()
 
         return chain.invoke(f'Translate from {origin_language} to {final_language}: {input_sentence}')
@@ -456,12 +464,20 @@ class Rag(ToolClass):
         rag_info = self.config['rag']
 
         # set the llm based in tool configs
-        llm = ChatSambaNova(api_key=self.kwargs.get('sambanova_api_key'), **rag_info['llm'])
+        llm = ChatSambaNova(
+            api_key=self.kwargs.get('sambanova_api_key'),
+            base_url=self.kwargs.get('sambanova_api_base'),
+            **rag_info['llm'],
+        )
 
         vdb = VectorDb()
 
         # load embedding model
-        embeddings = SambaNovaEmbeddings(api_key=self.kwargs.get('sambanova_api_key'), **rag_info['embedding_model'])
+        embeddings = SambaNovaEmbeddings(
+            api_key=self.kwargs.get('sambanova_api_key'),
+            base_url=self.kwargs.get('sambanova_api_base'),
+            **rag_info['embedding_model'],
+        )
 
         # set vectorstore and retriever
         vectorstore = vdb.load_vdb(

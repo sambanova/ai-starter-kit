@@ -18,7 +18,7 @@ A tool for evaluating the performance of LLM APIs using the RAG Evaluation metho
   cd eval_jumpstart
   python -m venv eval_jumpstart_env
   source eval_jumpstart_env/bin/activate
-  pip intall 
+  pip install uv
   uv pip install -r requirements.txt
   ```
 

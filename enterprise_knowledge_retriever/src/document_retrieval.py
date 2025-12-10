@@ -229,7 +229,7 @@ class RetrievalQAChain(Chain):
 
 
 class DocumentRetrieval:
-    def __init__(self, sambanova_api_key: str) -> None:
+    def __init__(self, sambanova_api_key: str, sambanova_api_base: Optional[str] = None) -> None:
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
         self.llm_info: Dict[str, Any] = config_info[0]
@@ -240,6 +240,7 @@ class DocumentRetrieval:
         self.pdf_only_mode: bool = config_info[5]
         self.retriever = None
         self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.set_llm()
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
@@ -270,6 +271,7 @@ class DocumentRetrieval:
         llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
         llm = ChatSambaNova(
             api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **llm_info,
             model=model,
         )
@@ -297,7 +299,9 @@ class DocumentRetrieval:
         return langchain_docs
 
     def load_embedding_model(self) -> Embeddings:
-        embeddings = SambaNovaEmbeddings(api_key=self.sambanova_api_key, **self.embedding_model_info)
+        embeddings = SambaNovaEmbeddings(
+            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+        )
         return embeddings
 
     def create_vector_store(

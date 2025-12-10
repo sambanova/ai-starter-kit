@@ -24,7 +24,6 @@ APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml'
 PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 
 logging.basicConfig(level=logging.INFO)
-logging.info('URL: http://localhost:8501')
 
 
 def load_config() -> Any:
@@ -71,24 +70,18 @@ def handle_userinput(instruction: str) -> None:
         )
 
 
-def initialize_document_analyzer(prod_mode: bool) -> Optional[DocumentAnalyzer]:
-    if prod_mode:
-        sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-    else:
-        if 'SAMBANOVA_API_KEY' in st.session_state:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-        else:
-            sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-    if are_credentials_set():
-        try:
-            return DocumentAnalyzer(sambanova_api_key=sambanova_api_key)
-        except Exception as e:
-            st.error(f'Failed to initialize DocumentAnalyzer: {str(e)}')
-            return None
-    return None
+def initialize_document_analyzer() -> Optional[DocumentAnalyzer]:
+    try:
+        return DocumentAnalyzer(
+            sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
+            sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
+        )
+    except Exception as e:
+        st.error(f'Failed to initialize DocumentAnalyzer: {str(e)}')
+        return None
 
 
-def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1', prod_mode: bool = True) -> str:
+def get_document_text(pdf_only_mode: bool = False, document_name: str = 'Document 1') -> str:
     st.markdown('Do you want to enter plain text or upload a file?')
     datasource_options = ['Enter plain text', 'Upload a file']
     datasource = st.selectbox(
@@ -214,7 +207,8 @@ def main() -> None:
 
     prod_mode = config.get('prod_mode', False)
 
-    initialize_env_variables(prod_mode)
+    additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
+    initialize_env_variables(prod_mode, additional_env_vars)
 
     # if 'conversation' not in st.session_state:
     #     st.session_state.conversation = None
@@ -250,8 +244,9 @@ def main() -> None:
     # Callout to get SambaNova API Key
     st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-    if not are_credentials_set():
-        api_key, additional_vars = env_input_fields()
+    if not are_credentials_set(additional_env_vars):
+        st.session_state.document_analyzer = None
+        api_key, additional_vars = env_input_fields(additional_env_vars)
         if st.button('Save Credentials', key='save_credentials_sidebar'):
             message = save_credentials(api_key, additional_vars, prod_mode)
             st.session_state.mp_events.api_key_saved()
@@ -261,11 +256,12 @@ def main() -> None:
         st.success('Credentials are set')
         if st.button('Clear Credentials', key='clear_credentials'):
             save_credentials('', '', prod_mode)  # type: ignore
+            st.session_state.document_analyzer = initialize_document_analyzer()
             st.rerun()
 
-    if are_credentials_set():
+    if are_credentials_set(additional_env_vars):
         if st.session_state.document_analyzer is None:
-            st.session_state.document_analyzer = initialize_document_analyzer(prod_mode)
+            st.session_state.document_analyzer = initialize_document_analyzer()
 
         pdf_only_mode = config.get('pdf_only_mode', False)
 
@@ -273,11 +269,11 @@ def main() -> None:
 
         doc1_title = st.session_state.document_titles[0]
         st.markdown(f'#### 1. {doc1_title}')
-        get_document_text(pdf_only_mode, document_name=doc1_title, prod_mode=prod_mode)
+        get_document_text(pdf_only_mode, document_name=doc1_title)
 
         doc2_title = st.session_state.document_titles[1]
         st.markdown(f'#### 2. {doc2_title}')
-        get_document_text(pdf_only_mode, document_name=doc2_title, prod_mode=prod_mode)
+        get_document_text(pdf_only_mode, document_name=doc2_title)
         # document_name = st.text_input('name', value=)
 
         st.markdown('#### 3. Provide your comparison instruction')

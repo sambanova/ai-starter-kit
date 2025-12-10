@@ -268,7 +268,7 @@ def retrieve_symbol_list(company_names_list: List[str] | str = list()) -> List[s
         chain_symbol = prompt_symbol | sambanova_llm.llm | parser_symbol
 
         # Invoke the chain to derive the ticker symbol of the company
-        symbol = chain_symbol.invoke(company).symbol  # type: ignore
+        symbol = chain_symbol.invoke(company).symbol
         symbol_list.append(symbol)
 
     return list(set(symbol_list))

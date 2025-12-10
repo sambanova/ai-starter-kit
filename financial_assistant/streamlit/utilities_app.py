@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 from threading import Thread
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import uuid4
 
 import pandas
@@ -38,6 +38,7 @@ def initialize_session(
     session_state: streamlit.runtime.state.session_state_proxy.SessionStateProxy,
     prod_mode: bool = False,
     cache_dir: Optional[str] = None,
+    additional_env_vars: Optional[Union[list[str], dict[str, str]]] = None,
 ) -> None:
     """Initialize the Streamlit `session_state`."""
 
@@ -50,7 +51,9 @@ def initialize_session(
         session_state.prod_mode = prod_mode
 
     # Initialize credentials
-    initialize_env_variables(prod_mode)
+    if additional_env_vars is None:
+        additional_env_vars = []
+    initialize_env_variables(prod_mode, additional_env_vars=additional_env_vars)
 
     # Initialize/clear the chat history
     if 'chat_history' not in session_state:

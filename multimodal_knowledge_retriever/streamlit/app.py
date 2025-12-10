@@ -31,7 +31,6 @@ logging.info('URL: http://localhost:8501')
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
-ADDITIONAL_ENV_VARS: list[str] = []
 # Available models in dropdown menu
 LVLM_MODELS = [
     'Llama-4-Maverick-17B-128E-Instruct',
@@ -183,7 +182,11 @@ def handle_user_input(user_question: Optional[str]) -> None:
 def initialize_multimodal_retrieval() -> Optional[MultimodalRetrieval]:
     if are_credentials_set():
         try:
-            return MultimodalRetrieval(conversational=True)
+            return MultimodalRetrieval(
+                sambanova_api_key=st.session_state['SAMBANOVA_API_KEY'],
+                sambanova_api_base=st.session_state['SAMBANOVA_API_BASE'],
+                conversational=True,
+            )
         except Exception as e:
             st.error(f'Failed to initialize MultimodalRetrieval: {str(e)}')
             return None
@@ -251,8 +254,8 @@ def main() -> None:
     config = load_config()
 
     prod_mode = config.get('prod_mode', False)
-
-    initialize_env_variables(prod_mode, ADDITIONAL_ENV_VARS)
+    additional_env_vars = {'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'}
+    initialize_env_variables(prod_mode, additional_env_vars)
 
     if 'multimodal_retriever' not in st.session_state:
         st.session_state.multimodal_retriever = None
@@ -302,8 +305,9 @@ def main() -> None:
 
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 
-        if not are_credentials_set(ADDITIONAL_ENV_VARS):
-            api_key, additional_variables = env_input_fields(ADDITIONAL_ENV_VARS)
+        if not are_credentials_set(additional_env_vars):
+            st.session_state.multimodal_retriever = None
+            api_key, additional_variables = env_input_fields(additional_env_vars)
             if st.button('Save Credentials', key='save_credentials_sidebar'):
                 message = save_credentials(api_key, additional_variables, prod_mode)
                 st.session_state.mp_events.api_key_saved()
@@ -313,10 +317,10 @@ def main() -> None:
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials', key='clear_credentials'):
-                save_credentials('', ADDITIONAL_ENV_VARS, prod_mode)  # type: ignore
+                save_credentials('', '', prod_mode)  # type: ignore
                 st.rerun()
 
-        if are_credentials_set(ADDITIONAL_ENV_VARS):
+        if are_credentials_set(additional_env_vars):
             if st.session_state.multimodal_retriever is None:
                 st.session_state.multimodal_retriever = initialize_multimodal_retrieval()
 
