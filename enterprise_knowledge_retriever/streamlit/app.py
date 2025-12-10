@@ -383,7 +383,7 @@ def main() -> None:
                         accept_multiple_files=True,
                         type=filetypes,
                     )
-                st.markdown('**Optional Set a specific multimodal model and LLM**')
+                st.markdown('**Optional Set a specific LLM**')
                 llm_model = st.selectbox('Select the LLM to use', LLM_MODELS, 0)
                 if st.button('set_model'):
                     st.session_state.document_retrieval.set_llm(llm_model)
