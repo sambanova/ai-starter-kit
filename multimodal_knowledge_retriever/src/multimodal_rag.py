@@ -49,7 +49,7 @@ load_dotenv(os.path.join(repo_dir, '.env'))
 
 # Configure the logger
 logging.basicConfig(
-    level=logging.DEBUG,  # Set the logging level (e.g., INFO, DEBUG)
+    level=logging.INFO,  # Set the logging level (e.g., INFO, DEBUG)
     format='%(asctime)s [%(levelname)s] - %(message)s',  # Define the log message format
 )
 
