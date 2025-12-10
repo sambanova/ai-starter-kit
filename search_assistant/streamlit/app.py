@@ -27,6 +27,19 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, initia
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
+# Available models in dropdown menu
+LLM_MODELS = [
+    'gpt-oss-120b',
+    'Llama-4-Maverick-17B-128E-Instruct',
+    'Meta-Llama-3.3-70B-Instruct',
+    'DeepSeek-R1-Distill-Llama-70B',
+    'DeepSeek-R1',
+    'DeepSeek-V3-0324',
+    'DeepSeek-V3.1',
+    'DeepSeek-V3.1-Terminus',
+    'Meta-Llama-3.1-8B-Instruct',
+    'Qwen-32B',
+]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
 
@@ -323,8 +336,11 @@ def main() -> None:
             if method == 'Search and scrape sites':
                 st.session_state.query = st.text_input('Query')
 
+            llm_model = st.selectbox('Optional Set a specific LLM to use', LLM_MODELS, 0)
+
             if st.button('set'):
                 st.session_state.search_assistant = SearchAssistant(sambanova_api_key, serpapi_api_key)
+                st.session_state.search_assistant.set_llm(llm_model)
                 with st.spinner(
                     'setting searchAssistant' if method == 'Search and answer' else 'searching and scraping sites'
                 ):
