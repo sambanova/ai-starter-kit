@@ -44,7 +44,7 @@ class RAGChain:
         sambanova_api_key: Optional[str] = None,
         sambanova_api_base: Optional[str] = None,
     ) -> None:
-        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_key = sambanova_api_key
         self.sambanova_api_base = sambanova_api_base
         self.llm_params = llm_params
         self.embeddings_params = embeddings_params

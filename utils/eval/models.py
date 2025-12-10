@@ -280,7 +280,7 @@ class WeaveRAGModel(Model):
         response = self.rag_chain.predict(query)
         context = [i.page_content for i in response['context']]
         completion = response['response']['content']
-        usage = response['response']['metadata']['usage']
+        usage = response['response']['metadata']['token_usage']
         input_tokens, output_tokens = usage.get('prompt_tokens'), usage.get('completion_tokens')
         if self.model_kwargs:
             input_token_cost, ouput_token_cost = (
