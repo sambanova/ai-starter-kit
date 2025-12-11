@@ -611,7 +611,37 @@ Every Pull Request automatically triggers checks that:
 GitHub Workflows automatically run all of these checks on every PR.
 
 ### 6.2 Testing
-####### TODO add testing procedures manual and make file and gh automated - point to testing scripts per kit and utils (luis)
+
+#### 6.2.1 Manual usage
+
+**Quick per-kit checks** (run from repo root; requires `.env` with API keys)
+
+In each kit run it's tests
+
+   ```bash
+   python [kit_name]/tests/*.py                         
+   ```
+
+#### 6.2.2 Using the Makefile
+
+- `make setup-test-suite` — create the dedicated test venv and install test deps.
+- `make clean-test-suite` — remove the test venv and unset the local pyenv pin.
+- Pair these with `./run_tests.sh ...` to execute the suites.
+
+#### 6.2.3 GitHub Workflows (CI)
+
+- Pull Requests trigger the same core Python checks plus the test harness (mirroring `./run_tests.sh`), subject to available secrets.
+- Ensure repo secrets like `<CUSTX>_API_KEY` and `SERPAPI_API_KEY` are set so API-dependent tests can run; otherwise they may be skipped or fail fast.
+
+#### Summary
+| Task                            | Manual Command / Script                        | Makefile Target      |
+|---------------------------------|-----------------------------------------------|----------------------|
+| Set up test env                 | `make setup-test-suite`                       | `setup-test-suite`   |
+| Run full local test suite       | `./run_tests.sh local --skip-streamlit`       | (use script)         |
+| Run Docker test suite           | `./run_tests.sh docker --skip-streamlit`      | (use script)         |
+| Run all (local + Docker)        | `./run_tests.sh all --skip-streamlit`         | (use script)         |
+| Per-kit quick check             | `python tests/<kit>_test.py`                  | n/a                  |
+| Clean test env                  | `make clean-test-suite`                       | `clean-test-suite`   |
 
 ### 6.3 Merging changes
 
