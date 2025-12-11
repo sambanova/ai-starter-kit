@@ -626,11 +626,11 @@ Ensure those are set before sending your PR
 
 ## Section 7 Deployment overview
 
-The AI Starter kit ships with some utilities to help you move from customization to a production deployment, but the exact topology (Kubernetes, VMs, on-prem, managed cloud) is customer-specific. Use the building blocks below to assemble a deployment that matches your infra standards.
+The AI Starter kit ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
 
 ### 7.1 What this repo provides for deployment
 
-- **Containerization**: `Dockerfile` builds a runnable image for Streamlit-based kits; `docker-startup.sh` handles env loading and app launch inside the container.
+- **Containerization**: `Dockerfile` builds one reusable image that contains all kits. You choose which kit to start when you run the container. `docker-startup.sh` loads `.env`, applies prod/test tweaks, and then runs the command you pass.
 - **Environment bootstrap**: `Makefile` installs Python, dependencies, parsing service, and system tools (Poppler/Tesseract/libheif) for local or image builds; `make docker-build` produces the test image used by CI scripts.
 - **Configuration hardening**: Each kit `config.yaml` supports `prod_mode`; `utils/prod/update_config.py` can batch-set `prod_mode`, disable risky tools (e.g., Python REPL), and set Streamlit ports.
 - **Secrets and env management**: `.env-example` defines required variables (`SAMBANOVA_API_KEY`, optional `SAMBANOVA_API_BASE`, third-party keys). Streamlit apps pull from env at startup.
@@ -644,19 +644,42 @@ The AI Starter kit ships with some utilities to help you move from customization
    - Lock Streamlit port via `STREAMLIT_PORT := <port>` in `Makefile` if you need a fixed value behind a proxy.
 
 2) **Build the image**
+
    ```bash
    docker build -t <registry>/<image>:<tag> -f Dockerfile .
    ```
 
-3) **Run and verify**
+   - If you need the parsing service, enable `PARSING=true` at build/run time and ensure its port is exposed internally.
+
+3) **Pick a kit to run (per container)**
+   - The image includes all kits; you choose which one starts.
+   - Simple option (auto-wires ports and `.env`):  
+
+     ```bash
+     make docker-run-kit KIT=enterprise_knowledge_retriever
+     ```
+
+   - Manual option (replace the kit name as needed):
+
+     ```bash
+     docker run --rm -p 8501:8501 --env-file .env <registry>/<image>:<tag> \
+       /bin/bash -c "cd enterprise_knowledge_retriever && \
+       streamlit run streamlit/app.py --server.port 8501 --server.address 0.0.0.0"
+     ```
+  
+   - If the container exits immediately, check that you passed a command; the default `CMD ["make","run"]` is only a placeholder.
+
+4) **Run and verify**
+
    ```bash
    docker run --rm -p 8501:8501 \
      --env-file .env \
      <registry>/<image>:<tag>
    ```
+  
    - Smoke test with `./run_tests.sh local --skip-streamlit` (or include Streamlit if you allow browsers in your env). For air-gapped CI, mount `test_results/` as needed.
 
-4) **Harden and promote**
+5) **Harden and promote**
    - Front with your standard reverse proxy (TLS termination, auth, rate limiting). Common choices: Nginx/Envoy/ALB/Ingress.
    - Inject secrets at runtime via your secret manager (KMS/SM/HashiCorp Vault) instead of baking them into images.
    - Add health checks hitting `/:` or a lightweight ping endpoint; container should be configured with `HEALTHCHECK` if your platform uses it.
