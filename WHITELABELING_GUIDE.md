@@ -177,7 +177,7 @@ You'll need to update all README files.
 - Preserve license and attribution requirements
 - Test all links after replacement
 
-#### **Step 4: Update main README file**
+#### **Step 4: Update the main README file**
 
 - In the main [README file](./README.md), replace all instructions related to SambaCloud with your custom platform (e.g., CustxCloud)
 - Remove all specific instructions related to SambaManaged/SambaStack
@@ -268,7 +268,7 @@ SAMBANOVA_API_KEY=your-api-key-here
 3. Backend code uses `langchain-sambanova` package which is injected with SAMBANOVA_API_KEY and SAMBANOVA_API_BASE variables
 4. Streamlit apps use `[kit]/config.yaml` for setting the behavior specifics of the kit, including default models to use and if production mode is enabled
 
-> production mode controls if API_KEY is taken from .env file or is asked to the user when a new session is started
+> production mode controls whether the API_KEY is taken from the .env file or prompted from the user when a new session starts.
 
 #### **3.2.2 Required Code Changes for Base URL Input**
 
@@ -278,9 +278,9 @@ SAMBANOVA_API_KEY=your-api-key-here
 
 #### **3.2.3 Model List Customization**
 
-Each streamlit app has set some default models to use (LLMs LVLMs and Embeddings) that can be customized
+Each Streamlit app has set some default models to use (LLMs, LVLMs, and embeddings) that can be customized.
 
-**Step 1**: Update `[kit]/config.yaml` with default models to use:
+**Step 1**: Update `[kit]/config.yaml` with default models to use. For example:
 
 ```yaml
 # enterprise_knowledge_retriever/config.yaml
@@ -295,15 +295,15 @@ embedding_model:
 # ... rest of config
 ```
 
-**Step 2** Update Models selectors (when available)
+**Step 2**: Update models selectors (when available)
 
-Some kits includes a model selector that allow users to try different models in the same app those are:
+Some kits includes a model selector that allow users to try different models in the same app. Those kits are:
 
 - Enterprise Knowledge Retriever
 - Multimodal Knowledge Retriever
 - Search Assistant 
 
-When a user select one of this models this is used instead of the default one set in `[kit]/config.yaml` configuration file, To modify the list of models to display in the model selector field update: the `LLM_MODELS` constant inside `[kit]/app.py`
+When a user selects one of these models, it is used instead of the default model set in the `[kit]/config.yaml` configuration file. To modify the list of models displayed in the model selector field, update: the `LLM_MODELS` constant inside `[kit]/app.py`
 
 **Example from `enterprise_knowledge_retriever/streamlit/app.py` (lines 33-44)**:
 
@@ -323,7 +323,7 @@ LLM_MODELS = [
 ]
 ```
 
-To check your cloud models availability run the following command
+To check what models are available in your platform, run the following command:
 
 ```bash
     curl --request GET \
