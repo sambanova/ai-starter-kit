@@ -9,8 +9,8 @@
 1. [Overview](#overview)
 2. [Section 1: Getting your AI Starter Kit fork](#section-1-getting-your-ai-starter-kit-fork)
 3. [Section 2: Documentation Customization](#section-2-documentation-customization)
-5. [Section 3: AI Starter Kits UI White Labeling](#section-3-ai-starter-kits-ui-white-labeling)
-6. [Section 4 Notebooks and Quickstarts customizations](#section-4-notebooks-and-quickstarts-customizations)
+5. [Section 3: AI Starter Kits UI Customization](#section-3-ai-starter-kits-ui-customization)
+6. [Section 4 Notebooks and Quickstarts Customization](#section-4-notebooks-and-quickstarts-customization)
 7. [Section 5 Recommended whitelabeling Tools and Automation](#section-5-recommended-whitelabeling-tools-and-automation)
 8. [Section 6 Merging changes to your main](#section-6-merging-changes-to-your-main)
 9. [Section 7 Deployment overview](#section-7-deployment-overview)
@@ -24,10 +24,10 @@
 
 ## Overview
 
-This guide provides comprehensive instructions for customizing and white-labeling SambaNova's AI Starter Kit and for your deployment. As a SambaManaged customer with your own branded cloud infrastructure, you can adapt these resources to:
+This guide provides comprehensive instructions for customizing and white-labeling SambaNova's AI Starter Kit and for your deployment. As a SambaManaged or SambaStack customer with your own branded API infrastructure, you can adapt these resources to:
 
 - Replace SambaNova branding with your company's branding
-- Configure applications to use your custom cloud URL (e.g., `cloud.custx.ai`)
+- Configure applications to use your custom platform URL (e.g., `cloud.custx.ai`)
 - Customize documentation and user interfaces with your branding
 
 ### Prerequisites
@@ -50,7 +50,7 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
 ## Section 1: Getting your AI Starter Kit fork
 
-- Fork the [SambaNova ai-starte-kit repository](https://github.com/sambanova/ai-starter-kit/)
+- Fork the [SambaNova ai-starter-kit repository](https://github.com/sambanova/ai-starter-kit/)
 
     > unselect the checkbox `only copy main branch`
 
@@ -179,10 +179,10 @@ You'll need to update all README files.
 
 #### **Step 4: Update main Readme file**
 
-- In main [readme file](./README.md) replace all instructions related to SambaCloud with CustxCLoud
-- remove al instructions related to SambaManaged/SambaStack
+- In the main [README file](./README.md), replace all instructions related to SambaCloud with your custom platform (e.g., CustxCloud)
+- Remove all specific instructions related to SambaManaged/SambaStack
 
-## Section 3: AI Starter Kits UI White Labeling
+## Section 3: AI Starter Kits UI Customization
 
 ### 3.1 Branding Customization
 
@@ -222,7 +222,7 @@ Update all kit config files with your desired color scheme
 
 > Additionally there are some extra style configurations inside custom html in streamlits to modify fonts, button hover colors, etc. search for `<style>` labels inside `[kit_name]/.streamlit/app.py and replace if desired`
 
-#### **3.1.3 URL Updates in Code**
+#### **3.1.3 Platform URL Updates in Code**
 
 **Hardcoded URLs that need updating:**
 
@@ -241,7 +241,7 @@ Optionally you can customize the app description messages (default description i
 
 To change the kit description edit the `[kit]/strwamlit/app_description.yaml` with your desired description to display.
 
-### 3.2 Configuration for Custom Cloud
+### 3.2 Configuration for API Keys and Base URLs
 
 #### **3.2.1 Understanding Current Configuration**
 
@@ -371,7 +371,7 @@ For each kit, test the following:
 
 - [ ] All logos replaced (dark, light, icon)
 - [ ] All README files updated with your branding
-- [ ] All URLs updated (cloud, community, website)
+- [ ] All URLs updated (platform, community, website)
 - [ ] Streamlit theme colors updated (all 9 apps)
 - [ ] API key links updated in all Streamlit apps
 - [ ] License and attribution preserved
@@ -379,7 +379,7 @@ For each kit, test the following:
 **Configuration Checklist**:
 
 - [ ] `.env` file created and configured
-- [ ] `SAMBANOVA_API_BASE`, and `SAMBANOVA_API_KEY` variables set to your cloud variables
+- [ ] `SAMBANOVA_API_BASE`, and `SAMBANOVA_API_KEY` variables set to your API variables
 - [ ] API key valid and tested
 - [ ] Model lists reviewed and customized
 
@@ -392,7 +392,7 @@ For each kit, test the following:
 - [ ] No broken links in documentation
 - [ ] No references to old branding remain
 
-## Section 4 Notebooks and Quickstarts customizations:
+## Section 4 Notebooks and Quickstarts Customization:
 
 ####### TODO add section explaining required changes in notebooks (environment variables name)
 
