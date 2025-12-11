@@ -120,7 +120,6 @@ This means customization is straightforward:
 > See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions
 
 #### Step 1: Identify Branding Elements to Replace
-#### Step 1: Identify Branding Elements to Replace
 
 All READMEs contain the following SambaNova-specific elements:
 
