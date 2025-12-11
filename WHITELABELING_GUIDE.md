@@ -1,4 +1,4 @@
-# White Labeling and Customization Guide
+# White labeling and Customization Guide
 
 ## SambaNova AI Starter Kit
 
@@ -7,11 +7,11 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Section 1: Getting your AI Starter Kit fork](#section-1-getting-your-ai-starter-kit-fork)
+2. [Section 1: Getting your AI Starter Kit Fork](#section-1-getting-your-ai-starter-kit-fork)
 3. [Section 2: Documentation Customization](#section-2-documentation-customization)
 5. [Section 3: AI Starter Kits UI Customization](#section-3-ai-starter-kits-ui-customization)
 6. [Section 4 Notebooks and Quickstarts Customization](#section-4-notebooks-and-quickstarts-customization)
-7. [Section 5 Recommended whitelabeling Tools and Automation](#section-5-recommended-whitelabeling-tools-and-automation)
+7. [Section 5 Recommended White Labeling Tools and Automation](#section-5-recommended-white-labeling-tools-and-automation)
 8. [Section 6 Merging changes to your main](#section-6-merging-changes-to-your-main)
 9. [Section 7 Deployment overview](#section-7-deployment-overview)
 10. [Section 8 Keeping Up with SambaNova Updates](#section-8-keeping-up-with-sambanova-updates)
@@ -28,14 +28,14 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
 - Replace SambaNova branding with your company's branding
 - Configure applications to use your custom platform URL (e.g., `cloud.custx.ai`)
-- Customize documentation and user interfaces with your branding
+- Customize documentation, codes, and user interfaces with your branding
 
 ### Prerequisites
 
 - Git installed and configured
 - Python 3.10+ installed
 - Access to your white-labeled cloud infrastructure
-- API keys for your cloud platform
+- API keys for your custom platform
 - Basic familiarity with:
   - Git and GitHub workflows
   - Environment variables and configuration files
@@ -48,7 +48,7 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
 ---
 
-## Section 1: Getting your AI Starter Kit fork
+## Section 1: Getting your AI Starter Kit Fork
 
 - Fork the [SambaNova ai-starter-kit repository](https://github.com/sambanova/ai-starter-kit/)
 
@@ -60,7 +60,7 @@ This guide provides comprehensive instructions for customizing and white-labelin
     git clone https://github.com/<custx_org>/ai-starter-kit/
 ```
 
-- Checkout to a new branch from the whitelabeling branch
+- Checkout to a new branch from the white labeling branch
 
 ```bash
     git fetch origin sambamanaged
@@ -117,7 +117,7 @@ This means customization is straightforward:
 
 ### 2.3 Customization Process
 
-> See Section 5 Recommended whitelabeling Tools and Automation to see bulk edition suggestions
+> See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions
 
 #### **Step 1: Identify Branding Elements to Replace**
 
@@ -186,7 +186,7 @@ You'll need to update all README files.
 
 ### 3.1 Branding Customization
 
-> See Section 5 Recommended whitelabeling Tools and Automation to see bulk edition suggestions
+> See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions
 
 #### **3.1.1 Logo Replacement**
 
@@ -396,7 +396,7 @@ For each kit, test the following:
 
 ####### TODO add section explaining required changes in notebooks (environment variables name)
 
-## Section 5 Recommended whitelabeling Tools and Automation
+## Section 5 Recommended White Labeling Tools and Automation
 
 To efficiently customize documentation across multiple files, we recommend the following tools:
 
