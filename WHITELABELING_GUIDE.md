@@ -489,7 +489,120 @@ rg "cloud.sambanova.ai" -l | xargs sd "cloud.sambanova.ai" "cloud.custx.ai"
 
 ## Section 6 Merging changes to your main
 
-####### TODO add formating linting, testing procedures, makefiles and github actions in place (procedures before merging to main) (luis), include pr and merging steps
+### Formatting & Linting
+
+This guide explains how to run formatting, linting, and type-checking manually using command-line tools, or automatically using the provided Makefile and GitHub Workflows.
+
+#### Manual Usage (Direct Commands)
+
+Use these commands if you prefer running tools manually.
+
+###### 1. Format all code
+```bash
+ruff format .
+```
+
+###### 2. Sort imports
+```bash
+ruff check --select I --fix .
+```
+
+###### 3. Lint the code and automatically fix issues
+```bash
+ruff check --fix .
+```
+
+###### 4. Run type checks with mypy
+```bash
+mypy --explicit-package-bases .
+```
+
+
+Running these ensures:
+
+- Consistent formatting
+
+- Correct import ordering
+
+- Linted and auto-fixed code
+
+- Type-safe modules and early bug detection
+
+#### Using the Makefile (Recommended)
+
+The Makefile provides shortcuts for the most common tasks.
+
+###### Format + sort imports + auto-fix + lint 
+```bash
+make format
+```
+
+Runs:
+
+```bash
+ruff format .
+
+ruff check --select I --fix .
+
+ruff check --fix .
+```
+
+###### Lint + type-check 
+```bash
+make lint
+```
+
+Runs:
+
+```bash
+ruff check --select I --fix .
+
+ruff check --fix .
+
+mypy --explicit-package-bases .
+```
+
+###### Format + sort imports + auto-fix + lint + type-check 
+```bash
+make format-lint
+```
+
+Runs:
+
+```bash
+ruff format .
+
+ruff check --select I --fix .
+
+ruff check --fix .
+
+mypy --explicit-package-bases .
+```
+
+###### GitHub Workflows (CI)
+
+Every Pull Request automatically triggers checks that:
+
+- Format your code (ruff format)
+
+- Sort and validate imports
+
+- Run ruff lint checks
+
+- Run mypy --explicit-package-bases .
+
+- Fail the PR if any issues are found
+
+#### Summary
+| Task               | Manual Command                     | Makefile Target   |
+|--------------------|------------------------------------|--------------------|
+| Format code        | `ruff format .`                    | `make format`      |
+| Sort imports       | `ruff check --select I --fix .`    | `make format`      |
+| Lint & auto-fix    | `ruff check --fix .`               | `make format`      |
+| Type checking      | `mypy --explicit-package-bases .`  | `make lint`        |
+
+
+GitHub Workflows automatically run all of these checks on every PR.
 
 ## Section 7 Deployment overview
 
