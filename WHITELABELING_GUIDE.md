@@ -190,12 +190,10 @@ You'll need to update all README files.
 > See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions.
 
 #### 3.1.1 Logo Replacement
-#### 3.1.1 Logo Replacement
 
 **Logo Usage in Code**:
 No code changes needed if you keep the same filenames as suggested in Section 2: Documentation Customization.
 
-#### 3.1.2 Color Scheme Updates
 #### 3.1.2 Color Scheme Updates
 
 Each Streamlit app has a theme configuration file:
