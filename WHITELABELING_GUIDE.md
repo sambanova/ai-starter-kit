@@ -72,7 +72,7 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
 The AI Starter Kit documentation is organized as follows:
 
-#### **Main Documentation Files**
+#### Main Documentation Files
 
 ```
 ai-starter-kit/
@@ -89,7 +89,7 @@ ai-starter-kit/
         └── app_description.yaml                # Kit-specific UI description
 ```
 
-#### **Kit-Specific READMEs**
+#### Kit-Specific READMEs
 
 Each starter kit contains its own README:
 
@@ -119,7 +119,7 @@ This means customization is straightforward:
 
 > See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions
 
-#### **Step 1: Identify Branding Elements to Replace**
+#### Step 1: Identify Branding Elements to Replace
 
 All READMEs contain the following SambaNova-specific elements:
 
@@ -138,7 +138,7 @@ All READMEs contain the following SambaNova-specific elements:
 4. **Company Website**: `https://sambanova.ai/`
 5. **GitHub Repository**: `https://github.com/sambanova/ai-starter-kit`
 
-#### **Step 2: Replace Logo Files**
+#### Step 2: Replace Logo Files
 
 Place your company's logo files in the `images/` directory:
 
@@ -157,7 +157,7 @@ cp /path/to/<your-icon>.svg images/icon.svg
 - **Format**: PNG for logos, SVG for icons
 - **Recommended height**: 100px for main logos
 
-#### **Step 3: Update Documentation URLs and Branding**
+#### Step 3: Update Documentation URLs and Branding
 
 You'll need to update all README files.
 
@@ -177,7 +177,7 @@ You'll need to update all README files.
 - Preserve license and attribution requirements
 - Test all links after replacement
 
-#### **Step 4: Update the main README file**
+#### Step 4: Update the main README file
 
 - In the main [README file](./README.md), replace all instructions related to SambaCloud with your custom platform (e.g., CustxCloud)
 - Remove all specific instructions related to SambaManaged/SambaStack
@@ -188,12 +188,12 @@ You'll need to update all README files.
 
 > See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions.
 
-#### **3.1.1 Logo Replacement**
+#### 3.1.1 Logo Replacement
 
 **Logo Usage in Code**:
 No code changes needed if you keep the same filenames as suggested in Section 2: Documentation Customization.
 
-#### **3.1.2 Color Scheme Updates**
+#### 3.1.2 Color Scheme Updates
 
 Each Streamlit app has a theme configuration file:
 
@@ -222,13 +222,12 @@ Update all kit config files with your desired color scheme
 
 > Additionally, there are some extra style configurations inside custom HTML in Streamlit apps to modify fonts, button hover colors, etc. Search for `<style>` labels inside `[kit_name]/.streamlit/app.py` and replace them if desired.
 
-#### **3.1.3 Platform URL Updates in Code**
+#### 3.1.3 Platform URL Updates in Code
 
-**Hardcoded Platform URLs that need updating:**
-
-1. **API Key Links in Streamlit Apps**
+**API Key Links in Streamlit Apps**
 
 All Streamlit apps contain this code:
+
 ```python
 st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 ```
@@ -238,7 +237,7 @@ Replace it with your API portal link, for example:
 st.markdown('Get your Custx API key [here](https://custx.ai/apis)')
 ```
 
-#### **3.1.4 App Description Updates**
+#### 3.1.4 App Description Updates
 
 Optionally, you can customize the app description messages (the default description shown on the screen when a kit is launched)
 
@@ -246,7 +245,7 @@ To change the kit description, edit the `[kit]/strwamlit/app_description.yaml` w
 
 ### 3.2 Configuration for API Keys and Base URLs
 
-#### **3.2.1 Understanding Current Configuration**
+#### 3.2.1 Understanding Current Configuration
 
 The AI Starter Kit uses environment variables and config.yaml files for configuration:
 
@@ -270,13 +269,42 @@ SAMBANOVA_API_KEY=your-api-key-here
 
 > production mode controls whether the API_KEY is taken from the .env file or prompted from the user when a new session starts.
 
-#### **3.2.2 Required Code Changes for Base URL Input**
+#### 3.2.2 Required Code Changes for Base URL Input
 
-####### TODO  add full instructions (Jorge)
+Each kit requires the Base API URL and API keys, those are asked to the user when the streamlit app is launched (API Key is taken from the .env file if production mode is not enabled)
+Base API URL is prefilled with SambaNova cloud API URL and input fields by default contains SambaNova callouts eg. `Insert your SAMBANOVA_API_KEY`
 
-**Apply this change to all Streamlit apps**
+To change the input fields text and prefilled values, rename the variables and update that are passed under the hood to the SambaNova LangChain wrappers, for this:
 
-#### **3.2.3 Model List Customization**
+1- In the [./utils/visual/env_utils.py](./utils/visual/env_utils.py) find and replace all apparitions of
+
+- `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
+- `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+
+2- In each kit streamlit app `[kit_name]/streamlit/app.py` find replace all apparitions of
+
+- `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
+- `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+
+3- Change the default prefiled base API URL value in all kit streamlit apps (`[kit_name/streamlit/app.py]`)
+
+-  Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dict for the url of your managed API 
+
+``` python
+additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.sambanova.ai/v1'}
+```
+
+to:
+
+``` python
+additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.custx.ai/v1'}
+```
+
+4- Rename base env variable in [.env](./.env-sample) file
+
+- replace - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+
+#### 3.2.3 Model List Customization
 
 Each Streamlit app has set some default models to use (LLMs, LVLMs, and embeddings) that can be customized.
 
@@ -332,7 +360,7 @@ To check what models are available in your platform, run the following command:
 
 ### 3.4 Verification and Testing
 
-#### **3.4.1 Testing Procedures**
+#### 3.4.1 Testing Procedures
 
 - Verify Each Streamlit App
 
@@ -367,7 +395,7 @@ For each kit, test the following:
 - Verify chat avatar uses your icon
 - Check that API key link points to your cloud URL
 
-#### **3.4.2 Checklist**
+#### 3.4.2 Checklist
 
 **Branding Checklist**:
 
@@ -435,7 +463,7 @@ code assistants file editing feature allows you to apply AI-assisted changes acr
 3. "In all Streamlit app.py files, replace the uppercase 'SAMBANOVA_API_KEY' for 'CUSTX_API_KEY' and 'SAMBANOVA_API_BASE' for 'CUSTX_API_BASE' "
 ```
 
-#### **Option 3: Command Line Tools**
+#### Option 3: Command Line Tools
 
 For developers comfortable with command-line tools:
 
@@ -589,7 +617,7 @@ After locally running all required checks you can make a Pull request to your ma
 
 This workflows require the current secrets to be set in your repository:
 
-- `CUSTX_API_KEY`
+- `<CUSTX>_API_KEY`
 - `SERPAPI_API_KEY`
 
 Ensure those are set before sending your PR
@@ -602,7 +630,7 @@ Ensure those are set before sending your PR
 
 As SambaNova continues to improve the AI Starter Kit, you'll want to incorporate updates while maintaining your customizations.
 
-#### **Maintaining a Fork with Selective Merging**. 
+#### Maintaining a Fork with Selective Merging
 
 ```bash
 # Add SambaNova repo as upstream remote
@@ -630,7 +658,7 @@ git merge upstream/main
 
 ### Support Information
 
-#### **Internal Support Setup**
+#### Internal Support Setup
 
 1. **Documentation**
    - Maintain a custom README_CUSTOM.md with your specific setup notes
@@ -646,7 +674,7 @@ git merge upstream/main
    - Create troubleshooting guides for your team
    - Maintain a FAQ
 
-#### **When to Contact SambaNova**
+#### When to Contact SambaNova
 
 Contact SambaNova support for:
 
@@ -663,13 +691,13 @@ Contact SambaNova support for:
 
 ### Support and Issue Tracking
 
-#### **For Issues with SambaNova's Original Code**
+#### For Issues with SambaNova's Original Code
 
 Report issues to SambaNova:
 - GitHub Issues: `https://github.com/sambanova/ai-starter-kit/issues`
 - Community Forum: `https://community.sambanova.ai`
 
-#### **For Your Customized Version**
+#### For Your Customized Version
 
 Set up your own support channels (suggested):
 
@@ -728,20 +756,20 @@ Set up your own support channels (suggested):
 
 ### Best Practices
 
-#### **Version Control**
+#### Version Control
 1. Always work in feature branches
 2. Use descriptive commit messages
 3. Tag releases (e.g., `v1.0.0-custx`)
 4. Document changes in CHANGELOG.md
 
-#### **Configuration Management**
+#### Configuration Management
 
 1. Never commit `.env` files
 2. Use `.env.example` as template
 3. Document all configuration options
 4. Use environment-specific configs (dev, staging, prod)
 
-#### **Testing**
+#### Testing
 
 1. Test each component individually
 2. Perform end-to-end integration tests
@@ -749,14 +777,14 @@ Set up your own support channels (suggested):
 4. Check UI responsiveness
 5. Test with different API keys and endpoints
 
-#### **Documentation**
+#### Documentation
 
 1. Keep README files up to date
 2. Document all customizations
 3. Maintain a decision log
 4. Include troubleshooting guides
 
-#### **Security**
+#### Security
 
 1. Rotate API keys regularly
 2. Use environment variables for secrets
@@ -766,7 +794,7 @@ Set up your own support channels (suggested):
 
 ### Troubleshooting Common Issues
 
-#### **Issue: "API Key Invalid" Error**
+#### Issue: "API Key Invalid" Error
 
 **Symptoms**: Applications fail to authenticate
 
@@ -776,7 +804,7 @@ Set up your own support channels (suggested):
 3. Ensure key hasn't expired
 4. Verify key has correct permissions
 
-#### **Issue: "Module Not Found" Error**
+#### Issue: "Module Not Found" Error
 
 **Symptoms**: Import errors when running apps
 
