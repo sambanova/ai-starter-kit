@@ -489,108 +489,108 @@ rg "cloud.sambanova.ai" -l | xargs sd "cloud.sambanova.ai" "cloud.custx.ai"
 
 ## Section 6 Merging changes to your main
 
-### Formatting & Linting
+### 6.1 Formatting & Linting
 
 This guide explains how to run formatting, linting, and type-checking manually using command-line tools, or automatically using the provided Makefile and GitHub Workflows.
 
-#### Manual Usage (Direct Commands)
+#### 6.1.1 Manual Usage (Direct Commands)
 
 Use these commands if you prefer running tools manually.
 
-###### 1. Format all code
+**1. Install dependencies**
+with your virtual env activated ensure all dependencies are installed
+
+``` bash
+  pip install uv 
+  uv pip install base-requirements.txt
+```
+
+**2. Format all code**
+
 ```bash
 ruff format .
 ```
 
-###### 2. Sort imports
+**2. Sort imports**
+
 ```bash
 ruff check --select I --fix .
 ```
 
-###### 3. Lint the code and automatically fix issues
+** 3. Lint the code and automatically fix issues**
+
 ```bash
 ruff check --fix .
 ```
 
-###### 4. Run type checks with mypy
+**4. Run type checks with mypy**
+
 ```bash
 mypy --explicit-package-bases .
 ```
-
 
 Running these ensures:
 
 - Consistent formatting
-
 - Correct import ordering
-
 - Linted and auto-fixed code
-
 - Type-safe modules and early bug detection
 
-#### Using the Makefile (Recommended)
+#### 6.1.2 Using the Makefile (Recommended)
 
-The Makefile provides shortcuts for the most common tasks.
+The [Makefile](makefile) provides shortcuts for the most common tasks.
 
-###### Format + sort imports + auto-fix + lint 
+**Format + sort imports + auto-fix + lint**
+
 ```bash
 make format
 ```
 
-Runs:
+This runs under the hood:
 
 ```bash
 ruff format .
-
 ruff check --select I --fix .
-
 ruff check --fix .
 ```
 
-###### Lint + type-check 
+**Lint + type-check**
+
 ```bash
 make lint
 ```
 
-Runs:
+This runs under the hood:
 
 ```bash
 ruff check --select I --fix .
-
 ruff check --fix .
-
 mypy --explicit-package-bases .
 ```
 
-###### Format + sort imports + auto-fix + lint + type-check 
+**Format + sort imports + auto-fix + lint + type-check**
+
 ```bash
 make format-lint
 ```
 
-Runs:
+This runs under the hood:
 
 ```bash
 ruff format .
-
 ruff check --select I --fix .
-
 ruff check --fix .
-
 mypy --explicit-package-bases .
 ```
 
-###### GitHub Workflows (CI)
+#### 6.1.3 GitHub Workflows (CI)
 
 Every Pull Request automatically triggers checks that:
 
 - Format your code (ruff format)
-
 - Sort and validate imports
-
 - Run ruff lint checks
-
 - Run mypy --explicit-package-bases .
-
 - Fail the PR if any issues are found
 
 #### Summary
@@ -603,6 +603,20 @@ Every Pull Request automatically triggers checks that:
 
 
 GitHub Workflows automatically run all of these checks on every PR.
+
+### 6.2 Testing
+####### TODO add testing procedures manual and make file and gh automated - point to testing scripts per kit and utils (luis)
+
+### 6.3 Merging changes
+
+After locally running all required checks you can make a Pull request to your main branch which will trigger python checks and testing Github workflows, and you safely merge to main if python checks and tests pass.
+
+This workflows require the current secrets to be set in your repository:
+
+- `CUSTX_API_KEY`
+- `SERPAPI_API_KEY`
+
+Ensure those are set before sending your PR
 
 ## Section 7 Deployment overview
 
