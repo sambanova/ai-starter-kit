@@ -150,6 +150,7 @@ cp /path/to/your-icon.svg images/icon.svg
 ```
 
 **Logo Specifications**:
+
 - **Dark Logo**: Used on light backgrounds
 - **Light Logo**: Used on dark backgrounds
 - **Icon**: Square SVG for favicons and chat avatars (recommended: 512x512px)
@@ -171,6 +172,7 @@ You'll need to update all README files.
 | `github.com/sambanova/ai-starter-kit` | `github.com/custx/ai-starter-kit` | All READMEs |
 
 **Important Notes**:
+
 - Be careful when replacing "SambaNova" - some references may need to remain (e.g., in technical attributions)
 - Preserve license and attribution requirements
 - Test all links after replacement
@@ -210,6 +212,7 @@ font = "sans serif"
 ```
 
 **Your Brand Colors**:
+
 - Primary Color: `______` (used for buttons, links, highlights)
 - Background: `______`
 - Secondary Background: `______`
@@ -300,6 +303,7 @@ Some kits includes a model selector that allow users to try different models in 
 When a user select one of this models this is used instead of the default one set in `[kit]/config.yaml` configuration file, To modify the list of models to display in the model selector field update: the `LLM_MODELS` constant inside `[kit]/app.py`
 
 **Example from `enterprise_knowledge_retriever/streamlit/app.py` (lines 33-44)**:
+
 ```python
 LLM_MODELS = [
     'gpt-oss-120b',
@@ -327,7 +331,7 @@ To check your cloud models availability run the following command
 
 #### **3.4.1 Testing Procedures**
 
-* Verify Each Streamlit App**
+- Verify Each Streamlit App
 
 running example
 
@@ -364,6 +368,7 @@ For each kit, test the following:
 #### **3.4.2 Checklist**
 
 **Branding Checklist**:
+
 - [ ] All logos replaced (dark, light, icon)
 - [ ] All README files updated with your branding
 - [ ] All URLs updated (cloud, community, website)
@@ -372,12 +377,14 @@ For each kit, test the following:
 - [ ] License and attribution preserved
 
 **Configuration Checklist**:
+
 - [ ] `.env` file created and configured
 - [ ] `SAMBANOVA_API_BASE`, and `SAMBANOVA_API_KEY` variables set to your cloud variables
 - [ ] API key valid and tested
 - [ ] Model lists reviewed and customized
 
 **Testing Checklist**:
+
 - [ ] Streamlit apps launch successfully
 - [ ] API connection works with custom base URL
 - [ ] Models load and respond correctly
@@ -393,7 +400,7 @@ For each kit, test the following:
 
 To efficiently customize documentation across multiple files, we recommend the following tools:
 
-#### **Option 1: IDE find and replace*  
+#### Option 1: IDE find and replace
 
 You can replace in bulk all links and constants using VS Code Fin and replace tool
 
@@ -403,16 +410,18 @@ You can replace in bulk all links and constants using VS Code Fin and replace to
 - Add the desired new link or constant in the Replace field
 - add the desired type files to search in files to include eg.(`*.md, *streamlit/app.py`)
 
-#### **Option 2: Code Assistants Editing** 
+#### Option 2: Code Assistants Editing
 
 code assistants file editing feature allows you to apply AI-assisted changes across multiple files simultaneously.
 
 **Setup**:
+
 1. Install a code assitant powered IDE (Cursor, Windsurf) or VS Code with any code copilot extension (GithubCopilot, Cline, Codex, Roocode, etc...)
 2. Open the AI Starter Kit repository in VS Code or your selected IDE
 
 **Usage**:
-```
+
+```txt
 # Example prompts for LLm assitant Edits:
 
 1. "Replace all occurrences of 'https://cloud.sambanova.ai' with
@@ -429,6 +438,7 @@ code assistants file editing feature allows you to apply AI-assisted changes acr
 For developers comfortable with command-line tools:
 
 **Using `sed` (macOS/Linux)**:
+
 ```bash
 # Replace cloud URL in all README files
 find . -name "README.md" -type f -exec sed -i '' \
@@ -441,9 +451,10 @@ find . -name "README.md" -type f -exec sed -i '' \
 # Update community links
 find . -name "README.md" -type f -exec sed -i '' \
   's|https://community.sambanova.ai|https://community.custx.ai|g' {} +
-``` 
+```
 
 **Using `ripgrep` + `sd` (modern alternative)**:
+
 ```bash
 # Install sd: brew install sd
 
@@ -475,19 +486,19 @@ with your virtual env activated ensure all dependencies are installed
 ruff format .
 ```
 
-**2. Sort imports**
+**3. Sort imports**
 
 ```bash
 ruff check --select I --fix .
 ```
 
-** 3. Lint the code and automatically fix issues**
+**4. Lint the code and automatically fix issues**
 
 ```bash
 ruff check --fix .
 ```
 
-**4. Run type checks with mypy**
+**5. Run type checks with mypy**
 
 ```bash
 mypy --explicit-package-bases .
@@ -565,7 +576,6 @@ Every Pull Request automatically triggers checks that:
 | Lint & auto-fix    | `ruff check --fix .`               | `make format`      |
 | Type checking      | `mypy --explicit-package-bases .`  | `make lint`        |
 
-
 GitHub Workflows automatically run all of these checks on every PR.
 
 ### 6.2 Testing
@@ -609,9 +619,10 @@ git cherry-pick <commit-hash>
 git merge upstream/main
 ```
 
-#### **Monitoring for Updates**
+#### Monitoring for Updates
 
 **GitHub Watch**
+
 - Click "Watch" on the SambaNova repository
 - Select "Custom" → "Releases"
 
@@ -636,16 +647,17 @@ git merge upstream/main
 #### **When to Contact SambaNova**
 
 Contact SambaNova support for:
+
 - Issues with core functionality (not related to your customizations)
 - Questions about model availability or performance
 - API-related problems
 - Security vulnerabilities
 
 **Do not contact SambaNova for**:
+
 - Issues introduced by your customizations
 - Branding-related questions
 - Custom code you've added
-
 
 ### Support and Issue Tracking
 
@@ -657,7 +669,8 @@ Report issues to SambaNova:
 
 #### **For Your Customized Version**
 
-Set up your own support channels (suggested): 
+Set up your own support channels (suggested):
+
 1. Create an internal issue tracker
 2. Set up a dedicated Slack/Teams channel
 3. Document known issues in your fork's README
@@ -672,13 +685,15 @@ This appendix lists all code changes required to fully support white labeling.
 **Total files to modify**: ~30-35 files
 
 **Breakdown**:
+
 - Streamlit apps: 9 files
 - Config YAML files: 9 files
 - README files: 11 files
-- Environment utilities: 1 file 
+- Environment utilities: 1 file
 - Logo files: 3 files (replacement)
 
 **Estimated effort**:
+
 - Code changes: 2-4 hours
 - Testing: 4-8 hours
 - Documentation updates: 2-3 hours
@@ -691,16 +706,19 @@ This appendix lists all code changes required to fully support white labeling.
 ### B.1 Official SambaNova Resources
 
 **Documentation**:
+
 - SambaNova Docs: https://docs.sambanova.ai
 - API Reference: https://docs.sambanova.ai/cloud/api-reference
 - Integration Guides: https://docs.sambanova.ai/cloud/docs/integrations
 
 **Community**:
+
 - Community Forum: https://community.sambanova.ai
 - GitHub Issues: https://github.com/sambanova/ai-starter-kit/issues
 - GitHub Discussions: https://github.com/sambanova/ai-starter-kit/discussions
 
 **Code Repositories**:
+
 - AI Starter Kit: https://github.com/sambanova/ai-starter-kit
 - Agents: https://github.com/sambanova/agents
 - Integrations: https://github.com/sambanova/integrations
@@ -708,20 +726,24 @@ This appendix lists all code changes required to fully support white labeling.
 ### B.2 Third-Party Tools & Resources
 
 **Development Tools**:
+
 - VS Code: https://code.visualstudio.com
 - GitHub Copilot: https://github.com/features/copilot
 - Streamlit: https://docs.streamlit.io
 
 **Documentation Tools**:
+
 - Markdown Guide: https://www.markdownguide.org
 - Pandoc: https://pandoc.org
 - MkDocs: https://www.mkdocs.org
 
 **CI/CD & Automation**:
+
 - GitHub Actions: https://docs.github.com/actions
 - Pre-commit hooks: https://pre-commit.com
 
 **Monitoring & Debugging**:
+
 - LangSmith: https://docs.smith.langchain.com
 - MLflow: https://mlflow.org
 
@@ -734,12 +756,14 @@ This appendix lists all code changes required to fully support white labeling.
 4. Document changes in CHANGELOG.md
 
 #### **Configuration Management**
+
 1. Never commit `.env` files
 2. Use `.env.example` as template
 3. Document all configuration options
 4. Use environment-specific configs (dev, staging, prod)
 
 #### **Testing**
+
 1. Test each component individually
 2. Perform end-to-end integration tests
 3. Validate all external links
@@ -747,12 +771,14 @@ This appendix lists all code changes required to fully support white labeling.
 5. Test with different API keys and endpoints
 
 #### **Documentation**
+
 1. Keep README files up to date
 2. Document all customizations
 3. Maintain a decision log
 4. Include troubleshooting guides
 
 #### **Security**
+
 1. Rotate API keys regularly
 2. Use environment variables for secrets
 3. Enable authentication in production
@@ -779,11 +805,13 @@ This appendix lists all code changes required to fully support white labeling.
 1. Ensure you're in correct directory
 2. Activate virtual environment
 3. Install requirements:
-   ```bash
-   pip install uv
-   uv pip install -r base-requirements.txt
-   uv pip install -r [kit]/requirements.txt
-   ```
+
+```bash
+pip install uv
+uv pip install -r base-requirements.txt
+uv pip install -r [kit]/requirements.txt
+```
+
 4. Check Python version (3.10+ required)
 
 #### **Issue: Streamlit App Won't Start**
@@ -791,15 +819,20 @@ This appendix lists all code changes required to fully support white labeling.
 **Symptoms**: Port already in use, or app crashes on startup
 
 **Solutions**:
+
 1. Check if another instance is running:
-   ```bash
-   lsof -i :8501  # Default Streamlit port
-   kill -9 <PID>  # Kill the process
-   ```
+
+```bash
+lsof -i :8501  # Default Streamlit port
+kill -9 <PID>  # Kill the process
+```
+
 2. Use a different port:
-   ```bash
-   streamlit run app.py --server.port 8502
-   ```
+
+```bash
+streamlit run app.py --server.port 8502
+```
+
 3. Check logs for specific errors
 4. Verify all dependencies installed
 
@@ -808,6 +841,7 @@ This appendix lists all code changes required to fully support white labeling.
 **Symptoms**: Broken image icon in UI or README
 
 **Solutions**:
+
 1. Check file paths are correct
 2. Verify image files exist and are readable
 3. Check file permissions
@@ -819,6 +853,7 @@ This appendix lists all code changes required to fully support white labeling.
 **Symptoms**: "Model not found" or similar error
 
 **Solutions**:
+
 1. Check model name spelling (case-sensitive)
 2. Verify model is deployed on your cloud
 3. Check API endpoint supports the model:
