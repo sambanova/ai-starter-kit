@@ -375,7 +375,8 @@ cd enterprise_knowledge_retriever
 streamlit run streamlit/app.py
 ```
 
-**Individual App Testing Guide**
+<details>
+    <summary>Individual App Testing Guide</summary>
 
 For each kit, test the following:
 
@@ -397,6 +398,7 @@ For each kit, test the following:
 - Test a simple query
 - Verify chat avatar uses your icon
 - Check that API key link points to your cloud URL
+</details>
 
 #### 3.4.2 Checklist
 
@@ -405,7 +407,7 @@ For each kit, test the following:
 - [ ] All logos replaced (dark, light, icon)
 - [ ] All README files updated with your branding
 - [ ] All URLs updated (platform, community, website)
-- [ ] Streamlit theme colors updated (all 9 apps)
+- [ ] Streamlit theme colors updated 
 - [ ] API key links updated in all Streamlit apps
 - [ ] License and attribution preserved
 
