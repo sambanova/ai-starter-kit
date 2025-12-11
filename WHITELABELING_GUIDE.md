@@ -33,7 +33,7 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
 - Git installed and configured
 - Python 3.10+ installed
-- Access to your white-labeled cloud infrastructure
+- Access to your white-labeled infrastructure
 - API keys for your custom platform
 - Basic familiarity with:
   - Git and GitHub workflows
@@ -53,13 +53,13 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
     > unselect the checkbox `only copy main branch`
 
-- Clone your new forked repository
+- Clone your new forked repository. For example:
 
 ```bash
     git clone https://github.com/<custx_org>/ai-starter-kit/
 ```
 
-- Checkout to a new branch from the white labeling branch
+- Checkout to a new branch from the white labeling branch. For example:
 
 ```bash
     git fetch origin sambamanaged
@@ -107,6 +107,7 @@ Each starter kit contains its own README:
 ### 2.2 Documentation Tooling
 
 **Format**: Standard Markdown (.md files)
+
 **No specialized generators**: The documentation uses GitHub-flavored Markdown without external documentation generators like MkDocs or Sphinx.
 
 This means customization is straightforward:
@@ -142,10 +143,10 @@ All READMEs contain the following SambaNova-specific elements:
 Place your company's logo files in the `images/` directory:
 
 ```bash
-# Add your logo files (keep the same filenames for easier migration)
-cp /path/to/your-dark-logo.png images/dark-logo.png
-cp /path/to/your-light-logo.png images/light-logo.png
-cp /path/to/your-icon.svg images/icon.svg
+# Add your logo files (replace <your-dark-logo>, <your-light-logo>, <your-icon> with your actual filenames; keep the same target filenames for easier migration)
+cp /path/to/<your-dark-logo>.png images/dark-logo.png
+cp /path/to/<your-light-logo>.png images/light-logo.png
+cp /path/to/<your-icon>.svg images/icon.svg
 ```
 
 **Logo Specifications**:
@@ -162,12 +163,12 @@ You'll need to update all README files.
 
 **Find and replace these patterns:**
 
-| Original | Replace With | Files Affected |
+| Original | Replace with (for example) | Files Affected |
 |----------|--------------|----------------|
 | `https://cloud.sambanova.ai` | `https://cloud.custx.ai` | All READMEs, Streamlit apps |
 | `https://community.sambanova.ai` | `https://community.custx.ai` | All READMEs |
 | `https://sambanova.ai/` | `https://custx.ai/` | All READMEs |
-| `SambaNova` | `YourCompany` | All READMEs (carefully!) |
+| `SambaNova` | `Custx` | All READMEs (carefully!) |
 | `github.com/sambanova/ai-starter-kit` | `github.com/custx/ai-starter-kit` | All READMEs |
 
 **Important Notes**:
@@ -176,7 +177,7 @@ You'll need to update all README files.
 - Preserve license and attribution requirements
 - Test all links after replacement
 
-#### **Step 4: Update main Readme file**
+#### **Step 4: Update main README file**
 
 - In the main [README file](./README.md), replace all instructions related to SambaCloud with your custom platform (e.g., CustxCloud)
 - Remove all specific instructions related to SambaManaged/SambaStack
