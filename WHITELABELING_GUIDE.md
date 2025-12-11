@@ -426,7 +426,31 @@ For each kit, test the following:
 
 ## Section 4 Notebooks and Quickstarts Customization:
 
-####### TODO add section explaining required changes in notebooks (environment variables name)
+Notebooks ship with SambaNova defaults for API base URL and API key names. Update them to your cloud URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
+
+### 4.1 What to change
+
+- **Base URL strings**: Replace any hardcoded `https://api.sambanova.ai/v1` or `https://cloud.sambanova.ai` with your cloud URL (e.g., `https://api.custx.ai/v1`).
+- **Env var names**: Replace `SAMBANOVA_API_KEY` (and `SAMBANOVA_API_BASE` if present) with your chosen env var names (e.g., `CUSTX_API_KEY`, `CUSTX_API_BASE`).
+- **Headers/config dicts**: Some cells build headers or client configs (e.g., `{"Authorization": f"Bearer {os.environ['SAMBANOVA_API_KEY']}"}`). Point them to your env vars after renaming.
+
+### 4.2 How to update notebooks
+
+1) **Identify notebooks**  
+   - Quickstarts: `quickstart/*.ipynb` 
+   - Kit notebooks: `[kit]/notebooks/*.ipynb` (e.g., `function_calling/notebooks`, `multimodal_knowledge_retriever/notebooks`)
+
+2) **Search and replace** (per notebook)
+   - Look for `cloud.sambanova.ai`, `api.sambanova.ai`, `SAMBANOVA_API_KEY`, `SAMBANOVA_API_BASE`.
+   - Replace with your URLs and env var names (e.g., `cloud.custx.ai`, `<CUSTX>_API_KEY`, `<CUSTX>_API_BASE`).
+   - If a cell sets `os.environ["SAMBANOVA_API_KEY"] = "..."`, rename the key and remove any sample key values.
+
+### 4.3 Quick checklist
+
+- [ ] All base URLs in notebooks point to your domain
+- [ ] All env var names use your chosen keys (not `SAMBANOVA_API_KEY`)
+- [ ] Auth headers/config blocks reference the new env vars
+- [ ] No sample keys or old domains remain in markdown or code cells
 
 ## Section 5 Recommended White Labeling Tools and Automation
 
