@@ -188,42 +188,6 @@ You'll need to update all README files.
 
 #### **3.1.1 Logo Replacement**
 
-**Locations where logos are used:**
-
-1. **README Files** (11 files)
-   - Root README.md
-   - Each kit's README.md
-
-2. **Streamlit Applications** (9 apps)
-   - Page icon (browser tab)
-   - Sidebar logo
-   - Chat avatars
-
-**Logo Files to Replace**:
-
-```
-images/
-├── SambaNova-dark-logo-1.png    # Used in READMEs and Streamlit sidebars
-├── SambaNova-light-logo-1.png   # Used in READMEs (dark mode)
-└── SambaNova-icon.svg           # Used in browser tabs and chat avatars
-```
-
-**Replacement Steps**:
-
-```bash
-# 1. Prepare your logo files with the same names
-cp /path/to/your/dark-logo.png images/SambaNova-dark-logo-1.png
-cp /path/to/your/light-logo.png images/SambaNova-light-logo-1.png
-cp /path/to/your/icon.svg images/SambaNova-icon.svg
-
-# 2. Verify file sizes (recommended for web performance)
-du -h images/SambaNova-*.png images/SambaNova-*.svg
-
-# 3. Test logo display in a Streamlit app
-cd enterprise_knowledge_retriever
-streamlit run streamlit/app.py
-```
-
 **Logo Usage in Code**:
 No code changes needed if you keep the same filenames as suggested in documentation customization section!
 
