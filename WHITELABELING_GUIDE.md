@@ -626,7 +626,48 @@ Ensure those are set before sending your PR
 
 ## Section 7 Deployment overview
 
-####### TODO add deployment overview 
+The AI Starter kit ships with some utilities to help you move from customization to a production deployment, but the exact topology (Kubernetes, VMs, on-prem, managed cloud) is customer-specific. Use the building blocks below to assemble a deployment that matches your infra standards.
+
+### 7.1 What this repo provides for deployment
+
+- **Containerization**: `Dockerfile` builds a runnable image for Streamlit-based kits; `docker-startup.sh` handles env loading and app launch inside the container.
+- **Environment bootstrap**: `Makefile` installs Python, dependencies, parsing service, and system tools (Poppler/Tesseract/libheif) for local or image builds; `make docker-build` produces the test image used by CI scripts.
+- **Configuration hardening**: Each kit `config.yaml` supports `prod_mode`; `utils/prod/update_config.py` can batch-set `prod_mode`, disable risky tools (e.g., Python REPL), and set Streamlit ports.
+- **Secrets and env management**: `.env-example` defines required variables (`SAMBANOVA_API_KEY`, optional `SAMBANOVA_API_BASE`, third-party keys). Streamlit apps pull from env at startup.
+- **Smoke/regression checks**: `run_tests.sh` and `tests/test_framework.py` run CLI and Streamlit availability checks locally or in Docker; useful before promoting artifacts.
+
+### 7.2 Generic production deployment flow (adapt to your stack)
+
+1) **Prepare config**
+   - Copy `.env-example` to `.env` and set API keys, base URLs, and any third-party keys.
+   - For the kits you’ll host, set `prod_mode: true` and desired default models in `[kit]/config.yaml` (or run `python utils/prod/update_config.py --mode prod --port <port>`).
+   - Lock Streamlit port via `STREAMLIT_PORT := <port>` in `Makefile` if you need a fixed value behind a proxy.
+
+2) **Build the image**
+   ```bash
+   docker build -t <registry>/<image>:<tag> -f Dockerfile .
+   ```
+
+3) **Run and verify**
+   ```bash
+   docker run --rm -p 8501:8501 \
+     --env-file .env \
+     <registry>/<image>:<tag>
+   ```
+   - Smoke test with `./run_tests.sh local --skip-streamlit` (or include Streamlit if you allow browsers in your env). For air-gapped CI, mount `test_results/` as needed.
+
+4) **Harden and promote**
+   - Front with your standard reverse proxy (TLS termination, auth, rate limiting). Common choices: Nginx/Envoy/ALB/Ingress.
+   - Inject secrets at runtime via your secret manager (KMS/SM/HashiCorp Vault) instead of baking them into images.
+   - Add health checks hitting `/:` or a lightweight ping endpoint; container should be configured with `HEALTHCHECK` if your platform uses it.
+   - For Kubernetes, wrap the container in a Deployment/StatefulSet, mount config as ConfigMap/Secret, and expose via Service/Ingress.
+
+### 7.3 Production considerations (apply per environment)
+
+- **Data handling**: Mount temp storage for uploads if your kit processes documents; add lifecycle rules to clean uploads. Validate file size/type at the proxy and app layer.
+- **Network egress**: Whitelist outbound access only to your model endpoints and required third parties (e.g., search APIs) if using kits that call the web.
+- **Security**: Enforce TLS, origin restrictions, and authentication (OIDC/SAML header injection via proxy is common). Disable Python REPL/tooling via `prod_mode` where not needed.
+- **Updates**: Rebuild images when upstream kits change; use `make docker-build` in CI, then deploy with your standard promotion pipeline.
 
 ## Section 8 Keeping Up with SambaNova Updates
 
