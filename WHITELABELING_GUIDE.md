@@ -133,7 +133,7 @@ All READMEs contain the following SambaNova-specific elements:
 </a>
 ```
 
-2. **Cloud Platform URL**: `https://cloud.sambanova.ai`
+2. **Platform URL**: `https://cloud.sambanova.ai`
 3. **Community URL**: `https://community.sambanova.ai`
 4. **Company Website**: `https://sambanova.ai/`
 5. **GitHub Repository**: `https://github.com/sambanova/ai-starter-kit`
@@ -186,12 +186,12 @@ You'll need to update all README files.
 
 ### 3.1 Branding Customization
 
-> See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions
+> See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions.
 
 #### **3.1.1 Logo Replacement**
 
 **Logo Usage in Code**:
-No code changes needed if you keep the same filenames as suggested in documentation customization section!
+No code changes needed if you keep the same filenames as suggested in Section 2: Documentation Customization.
 
 #### **3.1.2 Color Scheme Updates**
 
@@ -199,7 +199,7 @@ Each Streamlit app has a theme configuration file:
 
 **Location**: `[kit_name]/.streamlit/config.toml`
 
-**Example**: `enterprise_knowledge_retriever/.streamlit/config.toml`
+**For example**: `enterprise_knowledge_retriever/.streamlit/config.toml`
 
 ```toml
 [theme]
@@ -220,26 +220,29 @@ font = "sans serif"
 
 Update all kit config files with your desired color scheme
 
-> Additionally there are some extra style configurations inside custom html in streamlits to modify fonts, button hover colors, etc. search for `<style>` labels inside `[kit_name]/.streamlit/app.py and replace if desired`
+> Additionally, there are some extra style configurations inside custom HTML in Streamlit apps to modify fonts, button hover colors, etc. Search for `<style>` labels inside `[kit_name]/.streamlit/app.py` and replace them if desired.
 
 #### **3.1.3 Platform URL Updates in Code**
 
-**Hardcoded URLs that need updating:**
+**Hardcoded Platform URLs that need updating:**
 
 1. **API Key Links in Streamlit Apps**
 
-All Streamlit apps contain this markdown:
+All Streamlit apps contain this code:
 ```python
 st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
 ```
 
-replace it with your apis portal link ie. `st.markdown('Get your Custx API key [here](https://custx.ai/apis)')`
+Replace it with your API portal link, for example: 
+```python
+st.markdown('Get your Custx API key [here](https://custx.ai/apis)')
+```
 
-#### **3.1.4 App description updates**
+#### **3.1.4 App Description Updates**
 
-Optionally you can customize the app description messages (default description in screen when a kit is launched)
+Optionally, you can customize the app description messages (the default description shown on the screen when a kit is launched)
 
-To change the kit description edit the `[kit]/strwamlit/app_description.yaml` with your desired description to display.
+To change the kit description, edit the `[kit]/strwamlit/app_description.yaml` with your desired description to display.
 
 ### 3.2 Configuration for API Keys and Base URLs
 
@@ -247,13 +250,13 @@ To change the kit description edit the `[kit]/strwamlit/app_description.yaml` wi
 
 The AI Starter Kit uses environment variables and config.yaml files for configuration:
 
-**Primary environment File**: `.env` see [.env-example](./env-exmple)
+**Primary environment file**: `.env` (see [.env-example](./env-exmple))
 
 ```bash
-# Your custom cloud APi key
+# Your custom cloud API key
 SAMBANOVA_API_KEY=your-api-key-here
 
-# Other Utils variables
+# Other utils variables
 ...
 ```
 
