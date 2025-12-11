@@ -120,6 +120,7 @@ This means customization is straightforward:
 > See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions
 
 #### Step 1: Identify Branding Elements to Replace
+#### Step 1: Identify Branding Elements to Replace
 
 All READMEs contain the following SambaNova-specific elements:
 
@@ -177,7 +178,7 @@ You'll need to update all README files.
 - Preserve license and attribution requirements
 - Test all links after replacement
 
-#### Step 4: Update the main README file
+#### Step 4: Update main Readme file
 
 - In the main [README file](./README.md), replace all instructions related to SambaCloud with your custom platform (e.g., CustxCloud)
 - Remove all specific instructions related to SambaManaged/SambaStack
@@ -189,10 +190,12 @@ You'll need to update all README files.
 > See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions.
 
 #### 3.1.1 Logo Replacement
+#### 3.1.1 Logo Replacement
 
 **Logo Usage in Code**:
 No code changes needed if you keep the same filenames as suggested in Section 2: Documentation Customization.
 
+#### 3.1.2 Color Scheme Updates
 #### 3.1.2 Color Scheme Updates
 
 Each Streamlit app has a theme configuration file:
@@ -237,7 +240,7 @@ Replace it with your API portal link, for example:
 st.markdown('Get your Custx API key [here](https://custx.ai/apis)')
 ```
 
-#### 3.1.4 App Description Updates
+#### 3.1.4 App description updates
 
 Optionally, you can customize the app description messages (the default description shown on the screen when a kit is launched)
 
@@ -288,7 +291,7 @@ To change the input fields text and prefilled values, rename the variables and u
 
 3- Change the default prefiled base API URL value in all kit streamlit apps (`[kit_name/streamlit/app.py]`)
 
--  Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dict for the url of your managed API 
+- Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dict for the url of your managed API
 
 ``` python
 additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.sambanova.ai/v1'}
