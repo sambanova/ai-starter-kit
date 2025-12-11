@@ -426,7 +426,7 @@ For each kit, test the following:
 
 ## Section 4 Notebooks and Quickstarts Customization:
 
-Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. These notebooks rely on SambaNova defaults under the hood (API base URL and API key names). Use your cloud URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
+Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. By default, these notebooks reference SambaNova’s cloud endpoints and environment variable names (API base URL and API key names). Use your cloud URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
 
 
 ### 4.1 What to change
