@@ -15,8 +15,7 @@
 8. [Section 6 Merging changes to your main](#section-6-merging-changes-to-your-main)
 9. [Section 7 Deployment overview](#section-7-deployment-overview)
 10. [Section 8 Keeping Up with SambaNova Updates](#section-8-keeping-up-with-sambanova-updates)
-11. [Appendix A: Required Code Changes](#appendix-a-required-code-changes)
-12. [Appendix B: Support & Resources](#appendix-b-support--resources)
+12. [Resources](#resources)
 13. [Document Changelog](#document-changelog)
 14. [License & Attribution](#license--attribution)
 
@@ -364,7 +363,6 @@ For each kit, test the following:
 - Verify chat avatar uses your icon
 - Check that API key link points to your cloud URL
 
-
 #### **3.4.2 Checklist**
 
 **Branding Checklist**:
@@ -678,32 +676,9 @@ Set up your own support channels (suggested):
 
 ---
 
-## Appendix A: Required Code Changes
+## Resources
 
-This appendix lists all code changes required to fully support white labeling.
-
-**Total files to modify**: ~30-35 files
-
-**Breakdown**:
-
-- Streamlit apps: 9 files
-- Config YAML files: 9 files
-- README files: 11 files
-- Environment utilities: 1 file
-- Logo files: 3 files (replacement)
-
-**Estimated effort**:
-
-- Code changes: 2-4 hours
-- Testing: 4-8 hours
-- Documentation updates: 2-3 hours
-- **Total**: 8-15 hours for experienced developer
-
----
-
-## Appendix B: Support & Resources
-
-### B.1 Official SambaNova Resources
+### Official SambaNova Resources
 
 **Documentation**:
 
@@ -723,7 +698,7 @@ This appendix lists all code changes required to fully support white labeling.
 - Agents: https://github.com/sambanova/agents
 - Integrations: https://github.com/sambanova/integrations
 
-### B.2 Third-Party Tools & Resources
+### Third-Party Tools & Resources
 
 **Development Tools**:
 
@@ -747,7 +722,7 @@ This appendix lists all code changes required to fully support white labeling.
 - LangSmith: https://docs.smith.langchain.com
 - MLflow: https://mlflow.org
 
-### B.3 Best Practices
+### Best Practices
 
 #### **Version Control**
 1. Always work in feature branches
@@ -785,7 +760,7 @@ This appendix lists all code changes required to fully support white labeling.
 4. Review code for security vulnerabilities
 5. Keep dependencies updated
 
-### B.4 Troubleshooting Common Issues
+### Troubleshooting Common Issues
 
 #### **Issue: "API Key Invalid" Error**
 
@@ -814,7 +789,7 @@ uv pip install -r [kit]/requirements.txt
 
 4. Check Python version (3.10+ required)
 
-#### **Issue: Streamlit App Won't Start**
+#### Issue: Streamlit App Won't Start
 
 **Symptoms**: Port already in use, or app crashes on startup
 
@@ -836,7 +811,7 @@ streamlit run app.py --server.port 8502
 3. Check logs for specific errors
 4. Verify all dependencies installed
 
-#### **Issue: Logo Not Displaying**
+#### Issue: Logo Not Displaying
 
 **Symptoms**: Broken image icon in UI or README
 
@@ -848,7 +823,7 @@ streamlit run app.py --server.port 8502
 4. Verify file format (PNG, SVG)
 5. Clear browser cache
 
-#### **Issue: Model Not Available**
+#### Issue: Model Not Available
 
 **Symptoms**: "Model not found" or similar error
 
