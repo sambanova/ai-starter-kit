@@ -295,7 +295,7 @@ To change the input field text and prefilled values, rename the variables and up
     ```
 
 4. Rename the base env variable in the [.env](./.env-sample) file:
-    - replace - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+    - Replace - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
 
 #### 3.2.3 Model List Customization
 
@@ -355,7 +355,7 @@ To check what models are available in your platform, run the following command:
 
 #### 3.4.1 Testing Procedures
 
-Verify Each Streamlit App. For example:
+Verify each Streamlit app. For example:
 
 ```bash
 # Test Enterprise Knowledge Retriever
@@ -422,7 +422,7 @@ Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit
 ### 4.1 What to Change
 
 - **Base URL strings**: Replace any hardcoded `https://api.sambanova.ai/v1` or `https://cloud.sambanova.ai` with your cloud URL (e.g., `https://api.custx.ai/v1`).
-- **Env var names**: Replace `SAMBANOVA_API_KEY` (and `SAMBANOVA_API_BASE` if present) with your chosen env var names (e.g., `CUSTX_API_KEY`, `CUSTX_API_BASE`).
+- **Env var names**: Replace `SAMBANOVA_API_KEY` (and `SAMBANOVA_API_BASE`, if present) with your chosen env var names (e.g., `CUSTX_API_KEY`, `CUSTX_API_BASE`).
 - **Headers/config dicts**: Some cells build headers or client configs (e.g., `{"Authorization": f"Bearer {os.environ['SAMBANOVA_API_KEY']}"}`). Point them to your env vars after renaming.
 
 ### 4.2 How to Update the Notebooks
@@ -607,7 +607,7 @@ mypy --explicit-package-bases .
 
 #### 6.1.3 GitHub Workflows (CI)
 
-Every Pull Request automatically triggers checks that:
+Every Pull Request (PR) automatically triggers checks that:
 
 - Format your code (ruff format)
 - Sort and validate imports
@@ -629,9 +629,9 @@ GitHub Workflows automatically run all of these checks on every PR.
 
 #### 6.2.1 Manual Usage
 
-**Quick per-kit checks** (run from repo root; requires `.env` with API keys)
+**Quick per-kit checks** (run from repo root; requires `.env` with API keys):
 
-In each kit run it's tests
+Run each kit’s tests:
 
    ```bash
    python [kit_name]/tests/*.py                         
@@ -668,7 +668,7 @@ This workflows require the current secrets to be set in your repository:
 - `<CUSTX>_API_KEY`
 - `SERPAPI_API_KEY`
 
-Ensure these are set before sending your PR
+Ensure these are set before sending your PR.
 
 ## Section 7: Deployment Overview
 
