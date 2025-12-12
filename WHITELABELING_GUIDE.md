@@ -649,14 +649,15 @@ In each kit run it's tests
 
 #### 6.2.2 Using the Makefile
 
+The Makefile provides a dedicated virtual environment for running the full test suite:
 - `make setup-test-suite` — create the dedicated test venv and install test deps.
 - `make clean-test-suite` — remove the test venv and unset the local pyenv pin.
 - Pair these with `./run_tests.sh ...` to execute the suites.
 
 #### 6.2.3 GitHub Workflows (CI)
 
-- Pull Requests trigger the same core Python checks plus the test harness (mirroring `./run_tests.sh`), subject to available secrets.
-- Ensure repo secrets like `<CUSTX>_API_KEY` and `SERPAPI_API_KEY` are set so API-dependent tests can run; otherwise they may be skipped or fail fast.
+- Pull Requests trigger the same core Python checks plus the test harness (equivalent to `./run_tests.sh`), depending on available secrets.
+- Ensure repo secrets such as `<CUSTX>_API_KEY` and `SERPAPI_API_KEY` are set. Tests that rely on external APIs will be skipped or fail early if these secrets are missing.
 
 #### Summary
 | Task                            | Manual Command / Script                        | Makefile Target      |
@@ -670,14 +671,14 @@ In each kit run it's tests
 
 ### 6.3 Merging changes
 
-After locally running all required checks you can make a Pull request to your main branch which will trigger python checks and testing Github workflows, and you safely merge to main if python checks and tests pass.
+After running all required checks locally, open a Pull Request to the main branch. The GitHub workflows will run Python checks and the full test suite. You may safely merge into main once all checks and tests pass.
 
 This workflows require the current secrets to be set in your repository:
 
 - `<CUSTX>_API_KEY`
 - `SERPAPI_API_KEY`
 
-Ensure those are set before sending your PR
+Ensure these are set before sending your PR
 
 ## Section 7 Deployment overview
 
