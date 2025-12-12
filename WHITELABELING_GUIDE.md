@@ -672,7 +672,7 @@ Ensure these are set before sending your PR.
 
 ## Section 7: Deployment Overview
 
-The AI Starter kits repository ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
+The AI Starter Kits repository ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
 
 ### 7.1 What This Repo Provides for Deployment
 
@@ -684,12 +684,12 @@ The AI Starter kits repository ships with utilities to help you move from custom
 
 ### 7.2 Generic Production Deployment Flow (Adapt to Your Stack)
 
-1) **Prepare config**
+1. **Prepare config**
    - Copy `.env-example` to `.env` and set API keys, base URLs, and any third-party keys.
    - For the kits you’ll host, set `prod_mode: true` and desired default models in `[kit]/config.yaml` (or run `python utils/prod/update_config.py --mode prod --port <port>`).
    - Lock Streamlit port via `STREAMLIT_PORT := <port>` in `Makefile` if you need a fixed value behind a proxy.
 
-2) **Build the image**
+2. **Build the image**
 
    ```bash
    docker build -t <registry>/<image>:<tag> -f Dockerfile .
@@ -697,7 +697,7 @@ The AI Starter kits repository ships with utilities to help you move from custom
 
    - If you need the parsing service, enable `PARSING=true` at build/run time and ensure its port is exposed internally.
 
-3) **Pick a kit to run (per container)**
+3. **Pick a kit to run (per container)**
    - The image includes all kits; you choose which one starts.
    - Simple option (auto-wires ports and `.env`):  
 
@@ -715,7 +715,7 @@ The AI Starter kits repository ships with utilities to help you move from custom
   
    - If the container exits immediately, check that you passed a command; the default `CMD ["make","run"]` is only a placeholder.
 
-4) **Run and verify**
+4. **Run and verify**
 
    ```bash
    docker run --rm -p 8501:8501 \
@@ -725,7 +725,7 @@ The AI Starter kits repository ships with utilities to help you move from custom
   
    - Smoke test with `./run_tests.sh local --skip-streamlit` (or include Streamlit if you allow browsers in your env). For air-gapped CI, mount `test_results/` as needed.
 
-5) **Harden and promote**
+5. **Harden and promote**
    - Front with your standard reverse proxy (TLS termination, auth, rate limiting). Common choices: Nginx/Envoy/ALB/Ingress.
    - Inject secrets at runtime via your secret manager (KMS/SM/HashiCorp Vault) instead of baking them into images.
    - Add health checks hitting `/:` or a lightweight ping endpoint; container should be configured with `HEALTHCHECK` if your platform uses it.
@@ -878,36 +878,32 @@ Set up your own support channels (suggested):
 <details>
     <summary>Best Practices</summary>
 
-#### Version Control
+**Version Control**:
 1. Always work in feature branches
 2. Use descriptive commit messages
 3. Tag releases (e.g., `v1.0.0-custx`)
 4. Document changes in CHANGELOG.md
 
-#### Configuration Management
-
+**Configuration Management**:
 1. Never commit `.env` files
 2. Use `.env.example` as template
 3. Document all configuration options
 4. Use environment-specific configs (dev, staging, prod)
 
-#### Testing
-
+**Testing**:
 1. Test each component individually
 2. Perform end-to-end integration tests
 3. Validate all external links
 4. Check UI responsiveness
 5. Test with different API keys and endpoints
 
-#### Documentation
-
+**Documentation**:
 1. Keep README files up to date
 2. Document all customizations
 3. Maintain a decision log
 4. Include troubleshooting guides
 
-#### Security
-
+**Security**:
 1. Rotate API keys regularly
 2. Use environment variables for secrets
 3. Enable authentication in production
