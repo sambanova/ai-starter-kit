@@ -1,19 +1,19 @@
 # White labeling and Customization Guide
 
-## SambaNova AI Starter Kit
+## SambaNova AI Starter Kits
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Section 1: Getting your AI Starter Kit Fork](#section-1-getting-your-ai-starter-kit-fork)
+2. [Section 1: Getting your AI Starter Kits Fork](#section-1-getting-your-ai-starter-kits-fork)
 3. [Section 2: Documentation Customization](#section-2-documentation-customization)
 5. [Section 3: AI Starter Kits UI Customization](#section-3-ai-starter-kits-ui-customization)
 6. [Section 4 Notebooks and Quickstarts Customization](#section-4-notebooks-and-quickstarts-customization)
 7. [Section 5 Recommended White Labeling Tools and Automation](#section-5-recommended-white-labeling-tools-and-automation)
-8. [Section 6 Merging changes to your main](#section-6-merging-changes-to-your-main)
-9. [Section 7 Deployment overview](#section-7-deployment-overview)
+8. [Section 6 Merging Changes to Your Main](#section-6-merging-changes-to-your-main)
+9. [Section 7 Deployment Overview](#section-7-deployment-overview)
 10. [Section 8 Keeping Up with SambaNova Updates](#section-8-keeping-up-with-sambanova-updates)
 12. [Resources](#resources)
 13. [Document Changelog](#document-changelog)
@@ -23,7 +23,7 @@
 
 ## Overview
 
-This guide provides comprehensive instructions for customizing and white-labeling SambaNova's AI Starter Kit and for your deployment. As a SambaManaged or SambaStack customer with your own branded API infrastructure, you can adapt these resources to:
+This guide provides comprehensive instructions for customizing and white labeling SambaNova's AI Starter Kits and for your deployment. As a SambaManaged or SambaStack customer with your own branded API infrastructure, you can adapt these resources to:
 
 - Replace SambaNova branding with your company's branding
 - Configure applications to use your custom platform URL (e.g., `cloud.custx.ai`)
@@ -47,7 +47,7 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
 ---
 
-## Section 1: Getting your AI Starter Kit Fork
+## Section 1: Getting your AI Starter Kits Fork
 
 - Fork the [SambaNova ai-starter-kit repository](https://github.com/sambanova/ai-starter-kit/)
 
@@ -70,7 +70,7 @@ This guide provides comprehensive instructions for customizing and white-labelin
 
 ### 2.1 Documentation Sources and Structure
 
-The AI Starter Kit documentation is organized as follows:
+The AI Starter Kits documentation is organized as follows:
 
 #### Main Documentation Files
 
@@ -117,9 +117,9 @@ This means customization is straightforward:
 
 ### 2.3 Customization Process
 
-> See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions
+> See Section 5 Recommended White Labeling Tools and Automation to see bulk edition suggestions.
 
-#### Step 1: Identify Branding Elements to Replace
+#### Step 1: Identify the Branding Elements to Replace
 
 All READMEs contain the following SambaNova-specific elements:
 
@@ -138,7 +138,7 @@ All READMEs contain the following SambaNova-specific elements:
 4. **Company Website**: `https://sambanova.ai/`
 5. **GitHub Repository**: `https://github.com/sambanova/ai-starter-kit`
 
-#### Step 2: Replace Logo Files
+#### Step 2: Replace the Logo Files
 
 Place your company's logo files in the `images/` directory:
 
@@ -159,9 +159,7 @@ cp /path/to/<your-icon>.svg images/icon.svg
 
 #### Step 3: Update Documentation URLs and Branding
 
-You'll need to update all README files.
-
-**Find and replace these patterns:**
+Update all README files by finding and replacing the following patterns:
 
 | Original | Replace with (for example) | Files Affected |
 |----------|--------------|----------------|
@@ -171,13 +169,13 @@ You'll need to update all README files.
 | `SambaNova` | `Custx` | All READMEs (carefully!) |
 | `github.com/sambanova/ai-starter-kit` | `github.com/custx/ai-starter-kit` | All READMEs |
 
-**Important Notes**:
+**Important notes**:
 
 - Be careful when replacing "SambaNova" - some references may need to remain (e.g., in technical attributions)
 - Preserve license and attribution requirements
 - Test all links after replacement
 
-#### Step 4: Update main Readme file
+#### Step 4: Update the main README file
 
 - In the main [README file](./README.md), replace all instructions related to SambaCloud with your custom platform (e.g., CustxCloud)
 - Remove all specific instructions related to SambaManaged/SambaStack
@@ -519,7 +517,7 @@ find . -name "README.md" -type f -exec sed -i '' \
 rg "cloud.sambanova.ai" -l | xargs sd "cloud.sambanova.ai" "cloud.custx.ai"
 ```
 
-## Section 6 Merging changes to your main
+## Section 6 Merging Changes to Your Main
 
 ### 6.1 Formatting & Linting
 
@@ -680,7 +678,7 @@ This workflows require the current secrets to be set in your repository:
 
 Ensure these are set before sending your PR
 
-## Section 7 Deployment overview
+## Section 7 Deployment Overview
 
 The AI Starter kit ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
 
