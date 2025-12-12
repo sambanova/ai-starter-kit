@@ -449,27 +449,27 @@ To efficiently customize documentation across multiple files, we recommend the f
 
 #### Option 1: IDE Find and Replace
 
-You can replace in bulk all links and constants using VS Code Fin and replace tool:
+You can replace in bulk all links and constants using the VS Code Find and Replace tool:
 
-- Open VS Code and open the ai starter kit workspace
+- Open VS Code and open the AI Starter Kit workspace
 - Open the search default panel in the extensions bar
-- Add the link or constant to change in the Search Field, and ensure `Match case` option is enabled
+- Add the link or constant to change in the Search field, and ensure `Match Case` option is enabled
 - Add the desired new link or constant in the Replace field
-- add the desired type files to search in files to include eg.(`*.md, *streamlit/app.py`)
+- Add the desired file types to search in files to include, eg.(`*.md, *streamlit/app.py`)
 
 #### Option 2: Code Assistants Editing
 
-Code assistants file editing feature allows you to apply AI-assisted changes across multiple files simultaneously.
+The code assistant's file editing feature allows you to apply AI-assisted changes across multiple files simultaneously.
 
 **Setup**:
 
-1. Install a code assitant powered IDE (Cursor, Windsurf) or VS Code with any code copilot extension (GithubCopilot, Cline, Codex, Roocode, etc...)
+1. Install a code assitant-powered IDE (Cursor, Windsurf) or VS Code with any code copilot extension (Github Copilot, Cline, Codex, Roocode, etc...)
 2. Open the AI Starter Kits repository in VS Code or your selected IDE
 
 **Usage**:
 
 ```txt
-# Example prompts for LLm assitant Edits:
+# Example prompts for LLm assitant edits:
 
 1. "Replace all occurrences of 'https://cloud.sambanova.ai' with
    'https://cloud.custx.ai' in all README.md files"
@@ -520,7 +520,7 @@ This guide explains how to run formatting, linting, and type-checking manually u
 Use these commands if you prefer running tools manually.
 
 **1. Install dependencies**
-with your virtual env activated ensure all dependencies are installed
+With your virtual env activated, ensure all dependencies are installed
 
 ``` bash
   pip install uv 
@@ -609,7 +609,7 @@ mypy --explicit-package-bases .
 
 Every Pull Request (PR) automatically triggers checks that:
 
-- Format your code (ruff format)
+- Format your code (`ruff format`)
 - Sort and validate imports
 - Run ruff lint checks
 - Run mypy --explicit-package-bases .
@@ -663,7 +663,7 @@ The Makefile provides a dedicated virtual environment for running the full test 
 
 After running all required checks locally, open a Pull Request to the main branch. The GitHub workflows will run Python checks and the full test suite. You may safely merge into main once all checks and tests pass.
 
-This workflows require the current secrets to be set in your repository:
+These workflows require the current secrets to be set in your repository:
 
 - `<CUSTX>_API_KEY`
 - `SERPAPI_API_KEY`
