@@ -10,10 +10,10 @@
 - [Section 1: Getting your AI Starter Kits Fork](#section-1-getting-your-ai-starter-kits-fork)
 - [Section 2: Documentation Customization](#section-2-documentation-customization)
 - [Section 3: AI Starter Kits UI Customization](#section-3-ai-starter-kits-ui-customization)
-- [Section 4 Notebooks and Quickstarts Customization](#section-4-notebooks-and-quickstarts-customization)
-- [Section 5 Recommended White Labeling Tools and Automation](#section-5-recommended-white-labeling-tools-and-automation)
-- [Section 6 Merging Changes to Your Main](#section-6-merging-changes-to-your-main)
-- [Section 7 Deployment Overview](#section-7-deployment-overview)
+- [Section 4: Notebooks and Quickstarts Customization](#section-4-notebooks-and-quickstarts-customization)
+- [Section 5: Recommended White Labeling Tools and Automation](#section-5-recommended-white-labeling-tools-and-automation)
+- [Section 6: Merging Changes to Your Main](#section-6-merging-changes-to-your-main)
+- [Section 7: Deployment Overview](#section-7-deployment-overview)
 - [Additional Documentation and Resources](#additional-documentation-and-resources)
 - [Document Changelog](#document-changelog)
 - [License & Attribution](#license--attribution)
@@ -359,9 +359,7 @@ To check what models are available in your platform, run the following command:
 
 #### 3.4.1 Testing Procedures
 
-- Verify Each Streamlit App
-
-Example:
+Verify Each Streamlit App. For example:
 
 ```bash
 # Test Enterprise Knowledge Retriever
@@ -421,7 +419,7 @@ For each kit, test the following:
 - [ ] No broken links in documentation
 - [ ] No references to old branding remain
 
-## Section 4 Notebooks and Quickstarts Customization:
+## Section 4: Notebooks and Quickstarts Customization:
 
 Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. By default, these notebooks reference SambaCloud's endpoints and environment variable names (API base URL and API key names). Use your cloud's URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
 
@@ -449,7 +447,7 @@ Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit
 - [ ] Auth headers/config blocks reference the new env vars
 - [ ] No sample keys or old domains remain in markdown or code cells
 
-## Section 5 Recommended White Labeling Tools and Automation
+## Section 5: Recommended White Labeling Tools and Automation
 
 To efficiently customize documentation across multiple files, we recommend the following tools:
 
@@ -515,7 +513,7 @@ find . -name "README.md" -type f -exec sed -i '' \
 rg "cloud.sambanova.ai" -l | xargs sd "cloud.sambanova.ai" "cloud.custx.ai"
 ```
 
-## Section 6 Merging Changes to Your Main
+## Section 6: Merging Changes to Your Main
 
 ### 6.1 Formatting & Linting
 
@@ -676,7 +674,7 @@ This workflows require the current secrets to be set in your repository:
 
 Ensure these are set before sending your PR
 
-## Section 7 Deployment Overview
+## Section 7: Deployment Overview
 
 The AI Starter kit ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
 
@@ -1018,4 +1016,4 @@ curl --request GET \
 
 This guide is provided for SambaManaged and SambaStack customers. The original SambaNova AI Starter Kits and Agents application are licensed under their respective licenses. Ensure you comply with all license requirements when customizing and deploying these applications.
 
-AI Starter Kit: Copyright © SambaNova Systems
+AI Starter Kits: Copyright © SambaNova Systems.
