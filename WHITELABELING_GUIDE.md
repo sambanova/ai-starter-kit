@@ -197,7 +197,7 @@ Each Streamlit app has a theme configuration file:
 
 **Location**: `[kit_name]/.streamlit/config.toml`
 
-**For example**: `enterprise_knowledge_retriever/.streamlit/config.toml`
+**Example**: `enterprise_knowledge_retriever/.streamlit/config.toml`
 
 ```toml
 [theme]
@@ -216,7 +216,7 @@ font = "sans serif"
 - Secondary Background: `______`
 - Text Color: `______`
 
-Update all kit config files with your desired color scheme
+Update all kit config files with your desired color scheme.
 
 > Additionally, there are some extra style configurations inside custom HTML in Streamlit apps to modify fonts, button hover colors, etc. Search for `<style>` labels inside `[kit_name]/.streamlit/app.py` and replace them if desired.
 
@@ -237,7 +237,7 @@ st.markdown('Get your Custx API key [here](https://custx.ai/apis)')
 
 #### 3.1.4 App description updates
 
-Optionally, you can customize the app description messages (the default description shown on the screen when a kit is launched)
+Optionally, you can customize the app description messages (the default description shown on the screen when a kit is launched).
 
 To change the kit description, edit the `[kit]/strwamlit/app_description.yaml` with your desired description to display.
 
@@ -245,7 +245,7 @@ To change the kit description, edit the `[kit]/strwamlit/app_description.yaml` w
 
 #### 3.2.1 Understanding Current Configuration
 
-The AI Starter Kit uses environment variables and config.yaml files for configuration:
+The AI Starter Kits repository uses environment variables and config.yaml files for configuration:
 
 **Primary environment file**: `.env` (see [.env-example](./env-exmple))
 
@@ -269,24 +269,24 @@ SAMBANOVA_API_KEY=your-api-key-here
 
 #### 3.2.2 Required Code Changes for Base URL Input
 
-Each kit requires the Base API URL and API keys, those are asked to the user when the streamlit app is launched (API Key is taken from the .env file if production mode is not enabled)
-Base API URL is prefilled with SambaNova cloud API URL and input fields by default contains SambaNova callouts eg. `Insert your SAMBANOVA_API_KEY`
+Each kit requires the Base API URL and API keys. These are requested from the user when the Streamlit app is launched (the API key is taken from the `.env` file if production mode is not enabled).
+The Base API URL is prefilled with the SambaCloud API URL, and the input fields contain SambaNova callouts by default; for example `Insert your SAMBANOVA_API_KEY`.
 
-To change the input fields text and prefilled values, rename the variables and update that are passed under the hood to the SambaNova LangChain wrappers, for this:
+To change the input field text and prefilled values, rename the variables and update the values passed under the hood to the SambaNova LangChain wrappers. To do this:
 
-1- In the [./utils/visual/env_utils.py](./utils/visual/env_utils.py) find and replace all apparitions of
-
-- `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
-- `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
-
-2- In each kit streamlit app `[kit_name]/streamlit/app.py` find replace all apparitions of
+1. In [./utils/visual/env_utils.py](./utils/visual/env_utils.py), find and replace all occurences of:
 
 - `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
 - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
 
-3- Change the default prefiled base API URL value in all kit streamlit apps (`[kit_name/streamlit/app.py]`)
+2. In each kit's Streamlit app `[kit_name]/streamlit/app.py`, find and replace all occurences of
 
-- Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dict for the url of your managed API
+- `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
+- `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+
+3. Change the default prefilled Base API URL in all kit Streamlit apps (`[kit_name/streamlit/app.py]`):
+
+- Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dictionary for the URL of your managed API:
 
 ``` python
 additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.sambanova.ai/v1'}
@@ -298,7 +298,7 @@ to:
 additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.custx.ai/v1'}
 ```
 
-4- Rename base env variable in [.env](./.env-sample) file
+4. Rename the base env variable in the [.env](./.env-sample) file:
 
 - replace - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
 
@@ -329,9 +329,9 @@ Some kits includes a model selector that allow users to try different models in 
 - Multimodal Knowledge Retriever
 - Search Assistant 
 
-When a user selects one of these models, it is used instead of the default model set in the `[kit]/config.yaml` configuration file. To modify the list of models displayed in the model selector field, update: the `LLM_MODELS` constant inside `[kit]/app.py`
+When a user selects one of these models, it is used instead of the default model set in the `[kit]/config.yaml` configuration file. To modify the list of models displayed in the model selector field, update: the `LLM_MODELS` constant inside `[kit]/app.py`.
 
-**Example from `enterprise_knowledge_retriever/streamlit/app.py` (lines 33-44)**:
+**Example** from `enterprise_knowledge_retriever/streamlit/app.py` (lines 33-44):
 
 ```python
 LLM_MODELS = [
@@ -362,7 +362,7 @@ To check what models are available in your platform, run the following command:
 
 - Verify Each Streamlit App
 
-running example
+Example:
 
 ```bash
 # Test Enterprise Knowledge Retriever
@@ -425,7 +425,6 @@ For each kit, test the following:
 ## Section 4 Notebooks and Quickstarts Customization:
 
 Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. By default, these notebooks reference SambaNova’s cloud endpoints and environment variable names (API base URL and API key names). Use your cloud URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
-
 
 ### 4.1 What to change
 
