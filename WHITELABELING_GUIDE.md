@@ -419,6 +419,9 @@ For each kit, test the following:
 
 Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. By default, these notebooks reference SambaCloud's endpoints and environment variable names (API base URL and API key names). Use your cloud's URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
 
+**Note**: By default, the backend uses the `ChatSambaNova` wrapper from the the `langchain-sambanova` package, which we recommend.
+Alternatively, you can use the `ChatOpenAI` wrapper from `langchain-openai` with your API key and base URL (our endpoints are OpenAI-compatible), or implement your own Langchain wrappers if needed.
+
 ### 4.1 What to Change
 
 - **Base URL strings**: Replace any hardcoded `https://api.sambanova.ai/v1` or `https://cloud.sambanova.ai` with your cloud URL (e.g., `https://api.custx.ai/v1`).
