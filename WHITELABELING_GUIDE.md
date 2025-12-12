@@ -415,6 +415,8 @@ For each kit, test the following:
 - [ ] No broken links in documentation
 - [ ] No references to old branding remain
 
+> Make sure the name of your virtual environment is the same as the Makefile variable name `VENV_PATH`
+
 ## Section 4: Notebooks and Quickstarts Customization:
 
 Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. By default, these notebooks reference SambaCloud's endpoints and environment variable names (API base URL and API key names). Use your cloud's URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
