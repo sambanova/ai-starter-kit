@@ -1,4 +1,4 @@
-# White labeling and Customization Guide
+# White Labeling and Customization Guide
 
 ## SambaNova AI Starter Kits
 
@@ -148,7 +148,7 @@ cp /path/to/<your-light-logo>.png images/light-logo.png
 cp /path/to/<your-icon>.svg images/icon.svg
 ```
 
-**Logo Specifications**:
+**Logo specifications**:
 
 - **Dark Logo**: Used on light backgrounds
 - **Light Logo**: Used on dark backgrounds
@@ -187,7 +187,7 @@ Update all README files by finding and replacing the following patterns:
 
 #### 3.1.1 Logo Replacement
 
-**Logo Usage in Code**:
+**Logo usage in code**:
 No code changes needed if you keep the same filenames as suggested in Section 2: Documentation Customization.
 
 #### 3.1.2 Color Scheme Updates
@@ -208,7 +208,7 @@ textColor = "#000000"
 font = "sans serif"
 ```
 
-**Your Brand Colors**:
+**Your brand colors**:
 
 - Primary Color: `______` (used for buttons, links, highlights)
 - Background: `______`
@@ -221,7 +221,7 @@ Update all kit config files with your desired color scheme.
 
 #### 3.1.3 Platform URL Updates in Code
 
-**API Key Links in Streamlit Apps**
+**API key links in Streamlit apps**
 
 All Streamlit apps contain this code:
 
@@ -234,7 +234,7 @@ Replace it with your API portal link, for example:
 st.markdown('Get your Custx API key [here](https://custx.ai/apis)')
 ```
 
-#### 3.1.4 App description updates
+#### 3.1.4 App Description Updates
 
 Optionally, you can customize the app description messages (the default description shown on the screen when a kit is launched).
 
@@ -394,7 +394,7 @@ For each kit, test the following:
 
 #### 3.4.2 Checklist
 
-**Branding Checklist**:
+**Branding checklist**:
 
 - [ ] All logos replaced (dark, light, icon)
 - [ ] All README files updated with your branding
@@ -403,14 +403,14 @@ For each kit, test the following:
 - [ ] API key links updated in all Streamlit apps
 - [ ] License and attribution preserved
 
-**Configuration Checklist**:
+**Configuration checklist**:
 
 - [ ] `.env` file created and configured
 - [ ] `SAMBANOVA_API_BASE`, and `SAMBANOVA_API_KEY` variables set to your API variables
 - [ ] API key valid and tested
 - [ ] Model lists reviewed and customized
 
-**Testing Checklist**:
+**Testing checklist**:
 
 - [ ] Streamlit apps launch successfully
 - [ ] API connection works with custom base URL
@@ -631,7 +631,7 @@ GitHub Workflows automatically run all of these checks on every PR.
 
 ### 6.2 Testing
 
-#### 6.2.1 Manual usage
+#### 6.2.1 Manual Usage
 
 **Quick per-kit checks** (run from repo root; requires `.env` with API keys)
 
@@ -663,7 +663,7 @@ The Makefile provides a dedicated virtual environment for running the full test 
 | Per-kit quick check             | `python tests/<kit>_test.py`                  | n/a                  |
 | Clean test env                  | `make clean-test-suite`                       | `clean-test-suite`   |
 
-### 6.3 Merging changes
+### 6.3 Merging Changes
 
 After running all required checks locally, open a Pull Request to the main branch. The GitHub workflows will run Python checks and the full test suite. You may safely merge into main once all checks and tests pass.
 
@@ -678,7 +678,7 @@ Ensure these are set before sending your PR
 
 The AI Starter kit ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
 
-### 7.1 What this repo provides for deployment
+### 7.1 What This Repo Provides for Deployment
 
 - **Containerization**: `Dockerfile` builds one reusable image that contains all kits. You choose which kit to start when you run the container. `docker-startup.sh` loads `.env`, applies prod/test tweaks, and then runs the command you pass.
 - **Environment bootstrap**: `Makefile` installs Python, dependencies, parsing service, and system tools (Poppler/Tesseract/libheif) for local or image builds; `make docker-build` produces the test image used by CI scripts.
@@ -686,7 +686,7 @@ The AI Starter kit ships with utilities to help you move from customization to p
 - **Secrets and env management**: `.env-example` defines required variables (`SAMBANOVA_API_KEY`, optional `SAMBANOVA_API_BASE`, third-party keys). Streamlit apps pull from env at startup.
 - **Smoke/regression checks**: `run_tests.sh` and `tests/test_framework.py` run CLI and Streamlit availability checks locally or in Docker; useful before promoting artifacts.
 
-### 7.2 Generic production deployment flow (adapt to your stack)
+### 7.2 Generic Production Deployment Flow (adapt to your stack)
 
 1) **Prepare config**
    - Copy `.env-example` to `.env` and set API keys, base URLs, and any third-party keys.
@@ -735,7 +735,7 @@ The AI Starter kit ships with utilities to help you move from customization to p
    - Add health checks hitting `/:` or a lightweight ping endpoint; container should be configured with `HEALTHCHECK` if your platform uses it.
    - For Kubernetes, wrap the container in a Deployment/StatefulSet, mount config as ConfigMap/Secret, and expose via Service/Ingress.
 
-### 7.3 Production considerations (apply per environment)
+### 7.3 Production Considerations (apply per environment)
 
 - **Data handling**: Mount temp storage for uploads if your kit processes documents; add lifecycle rules to clean uploads. Validate file size/type at the proxy and app layer.
 - **Network egress**: Whitelist outbound access only to your model endpoints and required third parties (e.g., search APIs) if using kits that call the web.
@@ -770,7 +770,7 @@ git merge upstream/main
 
 #### Monitoring for Updates
 
-**GitHub Watch**
+**GitHub watch**
 
 - Click "Watch" on the SambaNova repository
 - Select "Custom" → "Releases"
@@ -784,11 +784,11 @@ git merge upstream/main
    - Document any additional customizations
    - Keep a changelog of modifications
 
-2. **Issue Tracking**
+2. **Issue tracking**
    - Use GitHub Issues in your forked repository
    - Tag issues: `branding`, `configuration`, `upstream-merge`, `bug`, `enhancement`
 
-3. **Knowledge Base**
+3. **Knowledge base**
    - Document common issues and solutions
    - Create troubleshooting guides for your team
    - Maintain a FAQ
@@ -844,7 +844,7 @@ Set up your own support channels (suggested):
 - GitHub Issues: https://github.com/sambanova/ai-starter-kit/issues
 - GitHub Discussions: https://github.com/sambanova/ai-starter-kit/discussions
 
-**Code Repositories**:
+**Code repositories**:
 
 - AI Starter Kit: https://github.com/sambanova/ai-starter-kit
 - Agents: https://github.com/sambanova/agents
@@ -855,24 +855,24 @@ Set up your own support channels (suggested):
 <details>
     <summary>Third-Party Tools & Resources</summary>
 
-**Development Tools**:
+**Development tools**:
 
 - VS Code: https://code.visualstudio.com
 - GitHub Copilot: https://github.com/features/copilot
 - Streamlit: https://docs.streamlit.io
 
-**Documentation Tools**:
+**Documentation tools**:
 
 - Markdown Guide: https://www.markdownguide.org
 - Pandoc: https://pandoc.org
 - MkDocs: https://www.mkdocs.org
 
-**CI/CD & Automation**:
+**CI/CD & automation**:
 
 - GitHub Actions: https://docs.github.com/actions
 - Pre-commit hooks: https://pre-commit.com
 
-**Monitoring & Debugging**:
+**Monitoring & debugging**:
 
 - LangSmith: https://docs.smith.langchain.com
 - MLflow: https://mlflow.org
