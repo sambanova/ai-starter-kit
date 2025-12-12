@@ -71,7 +71,7 @@ This guide provides comprehensive instructions for customizing and white labelin
 
 The AI Starter Kits documentation is organized as follows:
 
-#### Main Documentation Files
+**Main documentation files**:
 
 ```
 ai-starter-kit/
@@ -88,7 +88,7 @@ ai-starter-kit/
         └── app_description.yaml                # Kit-specific UI description
 ```
 
-#### Kit-Specific READMEs
+**Kit-specific READMEs**:
 
 Each starter kit contains its own README:
 
@@ -273,33 +273,29 @@ The base API URL is prefilled with the SambaCloud API URL, and the input fields 
 
 To change the input field text and prefilled values, rename the variables and update the values passed under the hood to the SambaNova LangChain wrappers. To do this:
 
-1. In [./utils/visual/env_utils.py](./utils/visual/env_utils.py), find and replace all occurences of:
-
-- `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
-- `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+1. In `./utils/visual/env_utils.py`, find and replace all occurrences of:
+    - `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
+    - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
 
 2. In each kit's Streamlit app `[kit_name]/streamlit/app.py`, find and replace all occurences of
-
-- `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
-- `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+    - `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
+    - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
 
 3. Change the default prefilled base API URL in all kit Streamlit apps (`[kit_name/streamlit/app.py]`):
+    - Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dictionary for the URL of your managed API:
 
-- Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dictionary for the URL of your managed API:
+    ``` python
+    additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.sambanova.ai/v1'}
+    ```
 
-``` python
-additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.sambanova.ai/v1'}
-```
+    to:
 
-to:
-
-``` python
-additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.custx.ai/v1'}
-```
+    ``` python
+    additional_env_vars = {'<CUSTX>_API_BASE': 'https://api.custx.ai/v1'}
+    ```
 
 4. Rename the base env variable in the [.env](./.env-sample) file:
-
-- replace - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
+    - replace - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
 
 #### 3.2.3 Model List Customization
 
@@ -468,7 +464,7 @@ Code assistants file editing feature allows you to apply AI-assisted changes acr
 **Setup**:
 
 1. Install a code assitant powered IDE (Cursor, Windsurf) or VS Code with any code copilot extension (GithubCopilot, Cline, Codex, Roocode, etc...)
-2. Open the AI Starter Kit repository in VS Code or your selected IDE
+2. Open the AI Starter Kits repository in VS Code or your selected IDE
 
 **Usage**:
 
@@ -676,7 +672,7 @@ Ensure these are set before sending your PR
 
 ## Section 7: Deployment Overview
 
-The AI Starter kit ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
+The AI Starter kits repository ships with utilities to help you move from customization to production, but the exact topology (Kubernetes, VMs, on-prem) is customer-specific. Use the building blocks below to assemble a deployment that matches your standards/environments.
 
 ### 7.1 What This Repo Provides for Deployment
 
@@ -686,7 +682,7 @@ The AI Starter kit ships with utilities to help you move from customization to p
 - **Secrets and env management**: `.env-example` defines required variables (`SAMBANOVA_API_KEY`, optional `SAMBANOVA_API_BASE`, third-party keys). Streamlit apps pull from env at startup.
 - **Smoke/regression checks**: `run_tests.sh` and `tests/test_framework.py` run CLI and Streamlit availability checks locally or in Docker; useful before promoting artifacts.
 
-### 7.2 Generic Production Deployment Flow (adapt to your stack)
+### 7.2 Generic Production Deployment Flow (Adapt to Your Stack)
 
 1) **Prepare config**
    - Copy `.env-example` to `.env` and set API keys, base URLs, and any third-party keys.
@@ -735,7 +731,7 @@ The AI Starter kit ships with utilities to help you move from customization to p
    - Add health checks hitting `/:` or a lightweight ping endpoint; container should be configured with `HEALTHCHECK` if your platform uses it.
    - For Kubernetes, wrap the container in a Deployment/StatefulSet, mount config as ConfigMap/Secret, and expose via Service/Ingress.
 
-### 7.3 Production Considerations (apply per environment)
+### 7.3 Production Considerations (Apply per Environment)
 
 - **Data handling**: Mount temp storage for uploads if your kit processes documents; add lifecycle rules to clean uploads. Validate file size/type at the proxy and app layer.
 - **Network egress**: Whitelist outbound access only to your model endpoints and required third parties (e.g., search APIs) if using kits that call the web.
