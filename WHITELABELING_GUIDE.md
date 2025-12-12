@@ -6,18 +6,17 @@
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Section 1: Getting your AI Starter Kits Fork](#section-1-getting-your-ai-starter-kits-fork)
-3. [Section 2: Documentation Customization](#section-2-documentation-customization)
-5. [Section 3: AI Starter Kits UI Customization](#section-3-ai-starter-kits-ui-customization)
-6. [Section 4 Notebooks and Quickstarts Customization](#section-4-notebooks-and-quickstarts-customization)
-7. [Section 5 Recommended White Labeling Tools and Automation](#section-5-recommended-white-labeling-tools-and-automation)
-8. [Section 6 Merging Changes to Your Main](#section-6-merging-changes-to-your-main)
-9. [Section 7 Deployment Overview](#section-7-deployment-overview)
-10. [Section 8 Keeping Up with SambaNova Updates](#section-8-keeping-up-with-sambanova-updates)
-12. [Resources](#resources)
-13. [Document Changelog](#document-changelog)
-14. [License & Attribution](#license--attribution)
+- [Overview](#overview)
+- [Section 1: Getting your AI Starter Kits Fork](#section-1-getting-your-ai-starter-kits-fork)
+- [Section 2: Documentation Customization](#section-2-documentation-customization)
+- [Section 3: AI Starter Kits UI Customization](#section-3-ai-starter-kits-ui-customization)
+- [Section 4 Notebooks and Quickstarts Customization](#section-4-notebooks-and-quickstarts-customization)
+- [Section 5 Recommended White Labeling Tools and Automation](#section-5-recommended-white-labeling-tools-and-automation)
+- [Section 6 Merging Changes to Your Main](#section-6-merging-changes-to-your-main)
+- [Section 7 Deployment Overview](#section-7-deployment-overview)
+- [Additional Documentation and Resources](#additional-documentation-and-resources)
+- [Document Changelog](#document-changelog)
+- [License & Attribution](#license--attribution)
 
 ---
 
@@ -269,8 +268,8 @@ SAMBANOVA_API_KEY=your-api-key-here
 
 #### 3.2.2 Required Code Changes for Base URL Input
 
-Each kit requires the Base API URL and API keys. These are requested from the user when the Streamlit app is launched (the API key is taken from the `.env` file if production mode is not enabled).
-The Base API URL is prefilled with the SambaCloud API URL, and the input fields contain SambaNova callouts by default; for example `Insert your SAMBANOVA_API_KEY`.
+Each kit requires the base API URL and API keys. These are requested from the user when the Streamlit app is launched (the API key is taken from the `.env` file if production mode is not enabled).
+The base API URL is prefilled with the SambaCloud API URL, and the input fields contain SambaNova callouts by default; for example `Insert your SAMBANOVA_API_KEY`.
 
 To change the input field text and prefilled values, rename the variables and update the values passed under the hood to the SambaNova LangChain wrappers. To do this:
 
@@ -284,7 +283,7 @@ To change the input field text and prefilled values, rename the variables and up
 - `SAMBANOVA_API_BASE` to `<CUSTX>_API_BASE`
 - `SAMBANOVA_API_KEY` to `<CUSTX>_API_KEY`
 
-3. Change the default prefilled Base API URL in all kit Streamlit apps (`[kit_name/streamlit/app.py]`):
+3. Change the default prefilled base API URL in all kit Streamlit apps (`[kit_name/streamlit/app.py]`):
 
 - Update the `<CUSTX>_API_BASE` value in the `additional_env_vars` dictionary for the URL of your managed API:
 
@@ -424,26 +423,26 @@ For each kit, test the following:
 
 ## Section 4 Notebooks and Quickstarts Customization:
 
-Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. By default, these notebooks reference SambaNova’s cloud endpoints and environment variable names (API base URL and API key names). Use your cloud URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
+Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit’s capabilities. By default, these notebooks reference SambaCloud's endpoints and environment variable names (API base URL and API key names). Use your cloud's URL and API env variable names so they point to your platform instead of `cloud.sambanova.ai` or `api.sambanova.ai`.
 
-### 4.1 What to change
+### 4.1 What to Change
 
 - **Base URL strings**: Replace any hardcoded `https://api.sambanova.ai/v1` or `https://cloud.sambanova.ai` with your cloud URL (e.g., `https://api.custx.ai/v1`).
 - **Env var names**: Replace `SAMBANOVA_API_KEY` (and `SAMBANOVA_API_BASE` if present) with your chosen env var names (e.g., `CUSTX_API_KEY`, `CUSTX_API_BASE`).
 - **Headers/config dicts**: Some cells build headers or client configs (e.g., `{"Authorization": f"Bearer {os.environ['SAMBANOVA_API_KEY']}"}`). Point them to your env vars after renaming.
 
-### 4.2 How to update notebooks
+### 4.2 How to Update the Notebooks
 
-1) **Identify notebooks**  
+1. Identify notebooks
    - Quickstarts: `quickstart/*.ipynb` 
    - Kit notebooks: `[kit]/notebooks/*.ipynb` (e.g., `function_calling/notebooks`, `multimodal_knowledge_retriever/notebooks`)
 
-2) **Search and replace** (per notebook)
+2. Search and replace (per notebook)
    - Look for `cloud.sambanova.ai`, `api.sambanova.ai`, `SAMBANOVA_API_KEY`, `SAMBANOVA_API_BASE`.
    - Replace with your URLs and env var names (e.g., `cloud.custx.ai`, `<CUSTX>_API_KEY`, `<CUSTX>_API_BASE`).
    - If a cell sets `os.environ["SAMBANOVA_API_KEY"] = "..."`, rename the key and remove any sample key values.
 
-### 4.3 Quick checklist
+### 4.3 Quick Checklist
 
 - [ ] All base URLs in notebooks point to your domain
 - [ ] All env var names use your chosen keys (not `SAMBANOVA_API_KEY`)
@@ -454,9 +453,9 @@ Each AI Starter Kit includes a Jupyter notebook demonstrating how to use the kit
 
 To efficiently customize documentation across multiple files, we recommend the following tools:
 
-#### Option 1: IDE find and replace
+#### Option 1: IDE Find and Replace
 
-You can replace in bulk all links and constants using VS Code Fin and replace tool
+You can replace in bulk all links and constants using VS Code Fin and replace tool:
 
 - Open VS Code and open the ai starter kit workspace
 - Open the search default panel in the extensions bar
@@ -466,7 +465,7 @@ You can replace in bulk all links and constants using VS Code Fin and replace to
 
 #### Option 2: Code Assistants Editing
 
-code assistants file editing feature allows you to apply AI-assisted changes across multiple files simultaneously.
+Code assistants file editing feature allows you to apply AI-assisted changes across multiple files simultaneously.
 
 **Setup**:
 
@@ -745,7 +744,10 @@ The AI Starter kit ships with utilities to help you move from customization to p
 - **Security**: Enforce TLS, origin restrictions, and authentication (OIDC/SAML header injection via proxy is common). Disable Python REPL/tooling via `prod_mode` where not needed.
 - **Updates**: Rebuild images when upstream kits change; use `make docker-build` in CI, then deploy with your standard promotion pipeline.
 
-## Section 8 Keeping Up with SambaNova Updates
+## Additional Documentation and Resources
+
+<details>
+    <summary>Keeping Up with SambaNova Updates</summary>
 
 As SambaNova continues to improve the AI Starter Kit, you'll want to incorporate updates while maintaining your customizations.
 
@@ -827,9 +829,10 @@ Set up your own support channels (suggested):
 
 ---
 
-## Resources
+</details>
 
-### Official SambaNova Resources
+<details>
+    <summary>Official SambaNova Resources</summary>
 
 **Documentation**:
 
@@ -849,7 +852,10 @@ Set up your own support channels (suggested):
 - Agents: https://github.com/sambanova/agents
 - Integrations: https://github.com/sambanova/integrations
 
-### Third-Party Tools & Resources
+</details>
+
+<details>
+    <summary>Third-Party Tools & Resources</summary>
 
 **Development Tools**:
 
@@ -873,7 +879,10 @@ Set up your own support channels (suggested):
 - LangSmith: https://docs.smith.langchain.com
 - MLflow: https://mlflow.org
 
-### Best Practices
+</details>
+
+<details>
+    <summary>Best Practices</summary>
 
 #### Version Control
 1. Always work in feature branches
@@ -911,7 +920,10 @@ Set up your own support channels (suggested):
 4. Review code for security vulnerabilities
 5. Keep dependencies updated
 
-### Troubleshooting Common Issues
+</details>
+
+<details>
+    <summary>Troubleshooting Common Issues</summary>
 
 #### Issue: "API Key Invalid" Error
 
@@ -992,6 +1004,8 @@ curl --request GET \
 4. Try a different model
 5. Check model list configuration
 
+</details>
+
 ## Document Changelog
 
 | Version | Date | Changes |
@@ -1002,6 +1016,6 @@ curl --request GET \
 
 ## License & Attribution
 
-This guide is provided for SambaManaged customers. The original SambaNova AI Starter Kit and Agents application are licensed under their respective licenses. Ensure you comply with all license requirements when customizing and deploying these applications.
+This guide is provided for SambaManaged and SambaStack customers. The original SambaNova AI Starter Kits and Agents application are licensed under their respective licenses. Ensure you comply with all license requirements when customizing and deploying these applications.
 
 AI Starter Kit: Copyright © SambaNova Systems
