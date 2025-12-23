@@ -1,7 +1,7 @@
 model_configs_path: '../benchmarking/benchmarking_scripts/model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '../benchmarking/data/bundle_tests/chinese_rag_bundle/stack'
-consolidated_results_dir: '../benchmarking/data/bundle_tests/chinese_rag_bundle/stack/consolidated_results'
+output_files_dir: '../benchmarking/data/byoc_tests/qwen32b/stack'
+consolidated_results_dir: '../benchmarking/data/byoc_tests/qwen32b/stack/consolidated_results'
 timeout: 3600
 time_delay: 0
 use_multiple_prompts : False # Only available for synthetic performance evaluation
