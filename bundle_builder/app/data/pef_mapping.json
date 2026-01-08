@@ -1,0 +1,139 @@
+{
+  "deepseek-r1-0528": [
+    "deepseek-ss131072-bs1",
+    "deepseek-ss16384-bs1",
+    "deepseek-ss32768-bs1",
+    "deepseek-ss4096-bs1",
+    "deepseek-ss4096-bs4",
+    "deepseek-ss8192-bs1",
+    "deepseek-ss8192-bs4"
+  ],
+  "deepseek-r1-distill-llama-70b": [
+    "llama-3p1-70b-ss131072-bs1-sd5",
+    "llama-3p1-70b-ss16384-bs1-sd5",
+    "llama-3p1-70b-ss16384-bs2-sd5",
+    "llama-3p1-70b-ss16384-bs4-sd5",
+    "llama-3p1-70b-ss32768-bs1-sd5",
+    "llama-3p1-70b-ss32768-bs2-sd5",
+    "llama-3p1-70b-ss32768-bs4-sd5",
+    "llama-3p1-70b-ss4096-bs1-sd9",
+    "llama-3p1-70b-ss4096-bs16-sd5",
+    "llama-3p1-70b-ss4096-bs2-sd5",
+    "llama-3p1-70b-ss4096-bs32-sd5",
+    "llama-3p1-70b-ss4096-bs4-sd5",
+    "llama-3p1-70b-ss4096-bs8-sd5",
+    "llama-3p1-70b-ss65536-bs1-sd5",
+    "llama-3p1-70b-ss8192-bs1-sd5",
+    "llama-3p1-70b-ss8192-bs2-sd5",
+    "llama-3p1-70b-ss8192-bs4-sd5",
+    "llama-3p1-70b-ss8192-bs8-sd5"
+  ],
+  "e5-mistral-7b-instruct": [
+    "e5-mistral-7b-ss4096-bs1",
+    "e5-mistral-7b-ss4096-bs16",
+    "e5-mistral-7b-ss4096-bs32",
+    "e5-mistral-7b-ss4096-bs4",
+    "e5-mistral-7b-ss4096-bs8"
+  ],
+  "gpt-oss-120b": [
+    "gpt-oss-fp8-ss131072-bs2",
+    "gpt-oss-fp8-ss32768-bs2",
+    "gpt-oss-fp8-ss65536-bs2",
+    "gpt-oss-fp8-ss8192-bs2"
+  ],
+  "llama-3-3-swallow-70b-instruct-v0-4": [
+    "llama-3p1-70b-ss131072-bs1-sd5",
+    "llama-3p1-70b-ss16384-bs1-sd5",
+    "llama-3p1-70b-ss16384-bs2-sd5",
+    "llama-3p1-70b-ss16384-bs4-sd5",
+    "llama-3p1-70b-ss32768-bs1-sd5",
+    "llama-3p1-70b-ss32768-bs2-sd5",
+    "llama-3p1-70b-ss32768-bs4-sd5",
+    "llama-3p1-70b-ss4096-bs1-sd9",
+    "llama-3p1-70b-ss4096-bs16-sd5",
+    "llama-3p1-70b-ss4096-bs2-sd5",
+    "llama-3p1-70b-ss4096-bs32-sd5",
+    "llama-3p1-70b-ss4096-bs4-sd5",
+    "llama-3p1-70b-ss4096-bs8-sd5",
+    "llama-3p1-70b-ss65536-bs1-sd5",
+    "llama-3p1-70b-ss8192-bs1-sd5",
+    "llama-3p1-70b-ss8192-bs2-sd5",
+    "llama-3p1-70b-ss8192-bs4-sd5",
+    "llama-3p1-70b-ss8192-bs8-sd5"
+  ],
+  "llama-4-maverick-17b-128e-instruct": [
+    "llama-4-maverick-ss131072-bs1",
+    "llama-4-maverick-ss16384-bs1",
+    "llama-4-maverick-ss32768-bs1",
+    "llama-4-maverick-ss65536-bs1",
+    "llama-4-maverick-ss8192-bs1"
+  ],  
+  "meta-llama-3-1-405b-instruct": [
+    "llama-3p1-405b-ss16384-bs1-sd5",
+    "llama-3p1-405b-ss4096-bs1-sd11",
+    "llama-3p1-405b-ss4096-bs2-sd5",
+    "llama-3p1-405b-ss4096-bs4-sd5",
+    "llama-3p1-405b-ss8192-bs1-sd5"
+  ],
+  "meta-llama-3-1-8b-instruct": [
+    "llama-3p1-8b-ss16384-bs1"
+  ],
+  "meta-llama-3-2-1b-instruct": [
+    "llama-3p1-1b-ss131072-bs1",
+    "llama-3p1-1b-ss16384-bs1",
+    "llama-3p1-1b-ss16384-bs2",
+    "llama-3p1-1b-ss16384-bs4",
+    "llama-3p1-1b-ss32768-bs1",
+    "llama-3p1-1b-ss32768-bs2",
+    "llama-3p1-1b-ss32768-bs4",
+    "llama-3p1-1b-ss4096-bs1",
+    "llama-3p1-1b-ss4096-bs16",
+    "llama-3p1-1b-ss4096-bs2",
+    "llama-3p1-1b-ss4096-bs32",
+    "llama-3p1-1b-ss4096-bs4",
+    "llama-3p1-1b-ss4096-bs8",
+    "llama-3p1-1b-ss65536-bs1",
+    "llama-3p1-1b-ss8192-bs1",
+    "llama-3p1-1b-ss8192-bs2",
+    "llama-3p1-1b-ss8192-bs4",
+    "llama-3p1-1b-ss8192-bs8"
+  ],
+  "meta-llama-3-2-3b-instruct": [
+    "llama-3p1-3b-ss4096-bs1",
+    "llama-3p1-3b-ss4096-bs2",
+    "llama-3p1-3b-ss4096-bs4",
+    "llama-3p1-3b-ss8192-bs1"
+  ],
+  "meta-llama-3-3-70b-instruct": [
+    "llama-3p1-70b-ss131072-bs1-sd5",
+    "llama-3p1-70b-ss16384-bs1-sd5",
+    "llama-3p1-70b-ss16384-bs2-sd5",
+    "llama-3p1-70b-ss16384-bs4-sd5",
+    "llama-3p1-70b-ss32768-bs1-sd5",
+    "llama-3p1-70b-ss32768-bs2-sd5",
+    "llama-3p1-70b-ss32768-bs4-sd5",
+    "llama-3p1-70b-ss4096-bs1-sd9",
+    "llama-3p1-70b-ss4096-bs16-sd5",
+    "llama-3p1-70b-ss4096-bs2-sd5",
+    "llama-3p1-70b-ss4096-bs32-sd5",
+    "llama-3p1-70b-ss4096-bs4-sd5",
+    "llama-3p1-70b-ss4096-bs8-sd5",
+    "llama-3p1-70b-ss65536-bs1-sd5",
+    "llama-3p1-70b-ss8192-bs1-sd5",
+    "llama-3p1-70b-ss8192-bs2-sd5",
+    "llama-3p1-70b-ss8192-bs4-sd5",
+    "llama-3p1-70b-ss8192-bs8-sd5"
+  ],
+  "qwen3-32b": [
+    "qwen-3-32b-ss16384-bs1",
+    "qwen-3-32b-ss32768-bs1",
+    "qwen-3-32b-ss32768-bs2",
+    "qwen-3-32b-ss8192-bs1",
+    "qwen-3-32b-ss8192-bs4"
+  ],
+  "whisper-large-v3": [
+    "whisper-ss448-bs1",
+    "whisper-ss448-bs16",
+    "whisper-ss448-bs32"
+  ]
+}
