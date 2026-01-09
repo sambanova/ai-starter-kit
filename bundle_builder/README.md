@@ -1,0 +1,201 @@
+# Bundle Builder
+
+A web application for building and validating Kubernetes bundle manifests for SambaNova AI models.
+
+## Overview
+
+Bundle Builder provides an intuitive interface to:
+- Select AI models from an available catalog
+- Configure PEF (Processor Executable Format) settings including sequence size (SS) and batch size (BS)
+- Map models to checkpoints
+- Generate valid Kubernetes YAML manifests (BundleTemplate and Bundle resources)
+- Validate and apply bundles to a Kubernetes cluster
+- View bundle validation status and error messages
+
+## Features
+
+- **Model Selection**: Choose from multiple AI models including Meta-Llama, DeepSeek, Qwen, and more
+- **PEF Configuration**: Configure sequence sizes (16k, 32k, etc.) and batch sizes for each model
+- **Automatic Checkpoint Mapping**: Models are automatically mapped to their corresponding checkpoints
+- **YAML Generation**: Generates properly formatted Kubernetes manifests with:
+  - BundleTemplate with expert configurations
+  - Bundle with checkpoint mappings
+  - Checkpoint sharing UUIDs for resource optimization
+- **Editable YAML**: Manually edit generated YAML before validation
+- **Kubernetes Integration**: Validate bundles by applying them to your cluster via `kubectl`
+- **Real-time Status**: View bundle validation status and detailed error messages
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- `kubectl` CLI tool installed and configured
+- Access to a Kubernetes cluster with SambaNova bundle CRDs
+- Valid `kubeconfig.yaml` file in the project root
+
+## Getting Started
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Environment Variables
+
+Create a `.env.local` file in the project root directory:
+
+```bash
+# .env.local
+NEXT_PUBLIC_CHECKPOINTS_DIR=gs://your-bucket-name/path/to/checkpoints/
+```
+
+**Important**:
+- The `.env.local` file is gitignored for security
+- Replace `gs://your-bucket-name/path/to/checkpoints/` with your actual GCS checkpoint directory path
+- The path should end with a trailing slash (`/`)
+- This variable is used to construct full checkpoint paths by concatenating with checkpoint names from `checkpoint_mapping.json`
+
+### 3. Configure Kubernetes Access
+
+Place your `kubeconfig.yaml` file in the project root directory:
+
+```bash
+# Copy your kubeconfig to the project root
+cp /path/to/your/kubeconfig.yaml ./kubeconfig.yaml
+```
+
+**Important**:
+- The `kubeconfig.yaml` file is gitignored for security
+- The application automatically reads this file and sets the `KUBECONFIG` environment variable when executing `kubectl` commands
+- This happens in both the validation endpoint (`/api/validate`) and the PEF generation script (`generate_pef_configs.ts`)
+
+### 4. Run Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 5. Build for Production
+
+```bash
+npm run build
+npm start
+```
+
+## Usage
+
+1. **Select Models**: Choose one or more AI models from the dropdown
+2. **Configure PEFs**: For each model, select desired SS/BS combinations from the configuration table
+3. **Set Bundle Name**: Edit the auto-generated bundle name if desired
+4. **Review YAML**: The YAML manifest is generated automatically and can be edited manually
+5. **Validate**: Click "Validate" to apply the bundle to your Kubernetes cluster
+6. **View Status**: See the validation results including any error messages from the cluster
+
+## Project Structure
+
+```
+bundle_builder/
+├── app/
+│   ├── api/
+│   │   └── validate/          # API endpoint for bundle validation
+│   ├── components/
+│   │   ├── AppLayout.tsx      # Main layout with navigation
+│   │   └── BundleForm.tsx     # Main form component
+│   ├── data/
+│   │   ├── pef_configs.json       # PEF configuration data
+│   │   ├── pef_mapping.json       # Model to PEF mappings
+│   │   └── checkpoint_mapping.json # Model to checkpoint mappings
+│   ├── lib/
+│   │   ├── bundle-yaml-generator.ts  # YAML generation logic
+│   │   └── emotion-cache.ts   # MUI styling cache
+│   ├── types/
+│   │   └── bundle.ts          # TypeScript interfaces
+│   ├── theme.ts               # MUI theme configuration
+│   └── page.tsx               # Home page
+├── public/                    # Static assets
+└── temp/                      # Temporary YAML files (gitignored)
+```
+
+## Configuration Files
+
+The application uses three JSON configuration files in the `app/data/` directory:
+
+- **pef_configs.json**: Defines PEF configurations with SS, BS, and version info
+- **pef_mapping.json**: Maps model names to their available PEF configurations
+- **checkpoint_mapping.json**: Maps model names to their checkpoint GCS paths
+
+## API Endpoints
+
+### POST /api/validate
+
+Validates and applies a bundle YAML to the Kubernetes cluster.
+
+**Request Body:**
+```json
+{
+  "yaml": "apiVersion: sambanova.ai/v1alpha1\nkind: BundleTemplate\n..."
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Bundle validated and applied successfully",
+  "applyOutput": "bundletemplate.sambanova.ai/bt-name created\nbundle.sambanova.ai/b-name created",
+  "statusConditions": "Last Transition Time: ...\nMessage: ...",
+  "bundleName": "b-name",
+  "filePath": "/path/to/temp/bundle-123456.yaml"
+}
+```
+
+## Technology Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **UI Library**: Material-UI (MUI) v6
+- **Language**: TypeScript
+- **Styling**: Emotion (CSS-in-JS)
+- **Backend**: Next.js API Routes with Node.js child_process for kubectl
+
+## Development
+
+```bash
+# Run development server with hot reload
+npm run dev
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Build for production
+npm run build
+```
+
+## Notes
+
+- The application requires a valid Kubernetes cluster with SambaNova CRDs installed
+- Bundle validation involves applying resources to the cluster and checking their status
+- Temporary YAML files are stored in the `temp/` directory
+- The application uses `kubectl` commands via Node.js `execSync`, so ensure kubectl is in your PATH
+
+## Security Considerations
+
+- `.env.local` and `kubeconfig.yaml` are gitignored to prevent credential leaks
+- Temporary YAML files in `temp/` are also gitignored
+- The validation endpoint runs kubectl commands server-side with appropriate timeouts
+- Consider implementing authentication/authorization for production deployments
+- Never commit sensitive configuration files or credentials to version control
+
+## License
+
+This project is part of the SambaNova AI Starter Kit.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

@@ -1,0 +1,13 @@
+{
+  "deepseek-r1-distill-llama-70b": "DeepSeek-R1-Distill-Llama-70B",
+  "e5-mistral-7b-instruct": "e5-mistral-7b-instruct",
+  "gpt-oss-120b": "gpt-oss-120b-FP8-per-tensor-surgery",
+  "llama-4-maverick-17b-128e-instruct": "Llama-4-Maverick-17B-128E-Instruct_surgery-FP8-128E-RDU",
+  "meta-llama-3-1-405b-instruct": "Meta-Llama-3.1-405B-Instruct_0913",
+  "meta-llama-3-1-8b-instruct": "Meta-Llama-3.1-8B-Instruct",
+  "meta-llama-3-2-1b-instruct": "meta-llama-Llama-3.2-1B-Instruct_untie",
+  "meta-llama-3-2-3b-instruct": "meta-llama-Llama-3.2-3B-Instruct_untie",
+  "meta-llama-3-3-70b-instruct": "Llama-3.3-70B-Instruct",
+  "qwen3-32b": "Qwen3-32B",
+  "whisper-large-v3": "whisper-large-v3-untied-fp32"
+}

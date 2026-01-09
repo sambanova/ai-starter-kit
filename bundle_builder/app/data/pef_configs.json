@@ -1,0 +1,407 @@
+{
+  "deepseek-ss131072-bs1": {
+    "ss": "128k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "deepseek-ss16384-bs1": {
+    "ss": "16k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "deepseek-ss32768-bs1": {
+    "ss": "32k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "deepseek-ss4096-bs1": {
+    "ss": "4k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "deepseek-ss4096-bs4": {
+    "ss": "4k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "deepseek-ss8192-bs1": {
+    "ss": "8k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "deepseek-ss8192-bs4": {
+    "ss": "8k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "e5-mistral-7b-ss4096-bs1": {
+    "ss": "4k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "e5-mistral-7b-ss4096-bs16": {
+    "ss": "4k",
+    "bs": "16",
+    "latestVersion": "1"
+  },
+  "e5-mistral-7b-ss4096-bs32": {
+    "ss": "4k",
+    "bs": "32",
+    "latestVersion": "1"
+  },
+  "e5-mistral-7b-ss4096-bs4": {
+    "ss": "4k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "e5-mistral-7b-ss4096-bs8": {
+    "ss": "4k",
+    "bs": "8",
+    "latestVersion": "1"
+  },
+  "gpt-oss-fp8-ss131072-bs2": {
+    "ss": "128k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "gpt-oss-fp8-ss32768-bs2": {
+    "ss": "32k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "gpt-oss-fp8-ss65536-bs2": {
+    "ss": "64k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "gpt-oss-fp8-ss8192-bs2": {
+    "ss": "8k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss131072-bs1": {
+    "ss": "128k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss16384-bs1": {
+    "ss": "16k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss16384-bs2": {
+    "ss": "16k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss16384-bs4": {
+    "ss": "16k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss32768-bs1": {
+    "ss": "32k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss32768-bs2": {
+    "ss": "32k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss32768-bs4": {
+    "ss": "32k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss4096-bs1": {
+    "ss": "4k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss4096-bs16": {
+    "ss": "4k",
+    "bs": "16",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss4096-bs2": {
+    "ss": "4k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss4096-bs32": {
+    "ss": "4k",
+    "bs": "32",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss4096-bs4": {
+    "ss": "4k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss4096-bs8": {
+    "ss": "4k",
+    "bs": "8",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss65536-bs1": {
+    "ss": "64k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss8192-bs1": {
+    "ss": "8k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss8192-bs2": {
+    "ss": "8k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss8192-bs4": {
+    "ss": "8k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-1b-ss8192-bs8": {
+    "ss": "8k",
+    "bs": "8",
+    "latestVersion": "1"
+  },
+  "llama-3p1-3b-ss4096-bs1": {
+    "ss": "4k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-3b-ss4096-bs2": {
+    "ss": "4k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-3b-ss4096-bs4": {
+    "ss": "4k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-3b-ss8192-bs1": {
+    "ss": "8k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-405b-ss16384-bs1-sd5": {
+    "ss": "16k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-405b-ss4096-bs1-sd11": {
+    "ss": "4k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-405b-ss4096-bs2-sd5": {
+    "ss": "4k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-405b-ss4096-bs4-sd5": {
+    "ss": "4k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-405b-ss8192-bs1-sd5": {
+    "ss": "8k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss131072-bs1-sd5": {
+    "ss": "128k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss16384-bs1-sd5": {
+    "ss": "16k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss16384-bs2-sd5": {
+    "ss": "16k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss16384-bs4-sd5": {
+    "ss": "16k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss32768-bs1-sd5": {
+    "ss": "32k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss32768-bs2-sd5": {
+    "ss": "32k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss32768-bs4-sd5": {
+    "ss": "32k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss4096-bs1-sd9": {
+    "ss": "4k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss4096-bs16-sd5": {
+    "ss": "4k",
+    "bs": "16",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss4096-bs2-sd5": {
+    "ss": "4k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss4096-bs32-sd5": {
+    "ss": "4k",
+    "bs": "32",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss4096-bs4-sd5": {
+    "ss": "4k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss4096-bs8-sd5": {
+    "ss": "4k",
+    "bs": "8",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss65536-bs1-sd5": {
+    "ss": "64k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss8192-bs1-sd5": {
+    "ss": "8k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss8192-bs2-sd5": {
+    "ss": "8k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss8192-bs4-sd5": {
+    "ss": "8k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "llama-3p1-70b-ss8192-bs8-sd5": {
+    "ss": "8k",
+    "bs": "8",
+    "latestVersion": "1"
+  },
+  "llama-3p1-8b-ss16384-bs1": {
+    "ss": "16k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-4-maverick-ss131072-bs1": {
+    "ss": "128k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-4-maverick-ss16384-bs1": {
+    "ss": "16k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-4-maverick-ss32768-bs1": {
+    "ss": "32k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-4-maverick-ss65536-bs1": {
+    "ss": "64k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "llama-4-maverick-ss8192-bs1": {
+    "ss": "8k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "qwen-3-235b-ss131072-bs2": {
+    "ss": "128k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "qwen-3-235b-ss16384-bs2": {
+    "ss": "16k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "qwen-3-235b-ss32768-bs2": {
+    "ss": "32k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "qwen-3-235b-ss65536-bs2": {
+    "ss": "64k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "qwen-3-235b-ss8192-bs2": {
+    "ss": "8k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "qwen-3-235b-ss8192-bs8": {
+    "ss": "8k",
+    "bs": "8",
+    "latestVersion": "1"
+  },
+  "qwen-3-32b-ss16384-bs1": {
+    "ss": "16k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "qwen-3-32b-ss32768-bs1": {
+    "ss": "32k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "qwen-3-32b-ss32768-bs2": {
+    "ss": "32k",
+    "bs": "2",
+    "latestVersion": "1"
+  },
+  "qwen-3-32b-ss8192-bs1": {
+    "ss": "8k",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "qwen-3-32b-ss8192-bs4": {
+    "ss": "8k",
+    "bs": "4",
+    "latestVersion": "1"
+  },
+  "whisper-ss448-bs1": {
+    "ss": "448",
+    "bs": "1",
+    "latestVersion": "1"
+  },
+  "whisper-ss448-bs16": {
+    "ss": "448",
+    "bs": "16",
+    "latestVersion": "1"
+  },
+  "whisper-ss448-bs32": {
+    "ss": "448",
+    "bs": "32",
+    "latestVersion": "1"
+  }
+}
