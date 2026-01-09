@@ -35,55 +35,54 @@ function extractBundleName(yaml: string): string | null {
 }
 
 /**
- * Extract Status.Conditions section from kubectl describe output
- *
- * The challenge: Conditions contains fields that have multi-line unindented content.
- * Solution: Only stop when we find a sibling field (same indentation + looks like a field name)
+ * Extract validation status from kubectl JSON output
  */
-function extractStatusConditions(describeOutput: string): string {
-  const lines = describeOutput.split('\n');
-  const conditionsStartIndex = lines.findIndex(line => line.trim() === 'Conditions:');
+interface BundleCondition {
+  type: string;
+  status: string;
+  reason: string;
+  message: string;
+  lastTransitionTime?: string;
+  observedGeneration?: number;
+}
 
-  if (conditionsStartIndex === -1) {
-    return 'No conditions found in bundle status';
-  }
+interface BundleStatus {
+  status?: {
+    conditions?: BundleCondition[];
+  };
+}
 
-  // Determine the indentation level of the Conditions line
-  const conditionsLine = lines[conditionsStartIndex];
-  const conditionsIndent = conditionsLine.length - conditionsLine.trimStart().length;
+function extractValidationStatus(jsonOutput: string): {
+  reason: string;
+  message: string;
+  isValid: boolean;
+} {
+  try {
+    const bundle: BundleStatus = JSON.parse(jsonOutput);
 
-  // Find where the Conditions section ends
-  // Look for the next field at the SAME indentation level (sibling field)
-  // Fields at this level look like "  FieldName:" with exactly that indentation
-  let conditionsEndIndex = lines.length;
-  for (let i = conditionsStartIndex + 1; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Skip empty lines
-    if (line.trim() === '') {
-      continue;
+    if (!bundle.status?.conditions || bundle.status.conditions.length === 0) {
+      return {
+        reason: 'Unknown',
+        message: 'No validation conditions found in bundle status',
+        isValid: false,
+      };
     }
 
-    // Calculate indentation
-    const lineIndent = line.length - line.trimStart().length;
+    // Get the first condition (typically the validation result)
+    const condition = bundle.status.conditions[0];
 
-    // Check if this is a sibling field at the Status level
-    // It must have:
-    // 1. Exactly the same indentation as "Conditions:"
-    // 2. Start with spaces followed by a capital letter or number
-    // 3. End with a colon (be a field name)
-    if (lineIndent === conditionsIndent) {
-      const trimmed = line.trim();
-      // Check if it looks like a field name (starts with capital/digit, ends with colon)
-      if (trimmed.match(/^[A-Z0-9]/) && trimmed.endsWith(':')) {
-        conditionsEndIndex = i;
-        break;
-      }
-    }
+    return {
+      reason: condition.reason || 'Unknown',
+      message: condition.message || 'No message provided',
+      isValid: condition.reason === 'ValidationSucceeded' || condition.status === 'True',
+    };
+  } catch (error: any) {
+    return {
+      reason: 'ParseError',
+      message: `Failed to parse bundle status: ${error.message}`,
+      isValid: false,
+    };
   }
-
-  // Skip the "Conditions:" header line and return only the content beneath it
-  return lines.slice(conditionsStartIndex + 1, conditionsEndIndex).join('\n').trim();
 }
 
 export async function POST(request: NextRequest) {
@@ -153,22 +152,22 @@ export async function POST(request: NextRequest) {
     // Wait 5 seconds for bundle to be processed
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Get bundle status
-    let statusConditions = '';
+    // Get bundle status using JSON output
+    let validationStatus;
     try {
-      const describeOutput = execSync(`kubectl describe bundle ${bundleName}`, {
+      const jsonOutput = execSync(`kubectl get bundle ${bundleName} -o json`, {
         encoding: 'utf-8',
         env,
         timeout: 30000,
       });
 
-      statusConditions = extractStatusConditions(describeOutput);
+      validationStatus = extractValidationStatus(jsonOutput);
     } catch (error: any) {
-      // kubectl describe failed
+      // kubectl get bundle failed
       return NextResponse.json(
         {
           success: false,
-          error: 'kubectl describe bundle failed',
+          error: 'kubectl get bundle failed',
           message: 'Bundle was applied but status check failed',
           applyOutput: applyOutput.trim(),
           stderr: error.stderr?.toString() || '',
@@ -180,9 +179,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Bundle validated and applied successfully',
+      message: validationStatus.isValid
+        ? 'Bundle validation succeeded!'
+        : 'Bundle validation failed',
       applyOutput: applyOutput.trim(),
-      statusConditions,
+      validationStatus,
       bundleName,
       filePath,
     });

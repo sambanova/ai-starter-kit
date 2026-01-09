@@ -26,7 +26,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import type { PefConfigs, PefMapping, CheckpointMapping, ConfigSelection } from '../types/bundle';
-import { generateBundleYaml, generateBundleName } from '../lib/bundle-yaml-generator';
+import { generateBundleYaml } from '../lib/bundle-yaml-generator';
 
 // Import the JSON data
 import pefConfigsData from '../data/pef_configs.json';
@@ -48,14 +48,18 @@ interface ModelConfig {
 export default function BundleForm() {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [selectedConfigs, setSelectedConfigs] = useState<ConfigSelection[]>([]);
-  const [bundleName, setBundleName] = useState<string>('');
+  const [bundleName, setBundleName] = useState<string>('bundle1');
   const [generatedYaml, setGeneratedYaml] = useState<string>('');
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [validationResult, setValidationResult] = useState<{
     success: boolean;
     message: string;
     applyOutput?: string;
-    statusConditions?: string;
+    validationStatus?: {
+      reason: string;
+      message: string;
+      isValid: boolean;
+    };
     bundleName?: string;
   } | null>(null);
 
@@ -180,13 +184,8 @@ export default function BundleForm() {
     return configs.every((config) => isConfigSelected(modelName, config.ss, config.bs));
   };
 
-  // Auto-generate bundle name when models change
-  useMemo(() => {
-    if (selectedModels.length > 0 && bundleName === '') {
-      const generatedName = generateBundleName(selectedModels);
-      setBundleName(generatedName);
-    }
-  }, [selectedModels, bundleName]);
+  // Bundle name is manually set to 'bundle1' by default
+  // Auto-generation disabled per user request
 
   // Get selected PEFs grouped by model
   const selectedPefsByModel = useMemo(() => {
@@ -233,7 +232,7 @@ export default function BundleForm() {
           success: true,
           message: 'Bundle validated and applied successfully!',
           applyOutput: data.applyOutput,
-          statusConditions: data.statusConditions,
+          validationStatus: data.validationStatus,
           bundleName: data.bundleName,
         });
       } else {
@@ -447,44 +446,55 @@ export default function BundleForm() {
           {/* Validation Result */}
           {validationResult && (
             <Box sx={{ mt: 2 }}>
-              <Alert severity={validationResult.success ? 'success' : 'error'}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                  {validationResult.message}
-                </Typography>
-
-                {/* Apply Output */}
-                {validationResult.applyOutput && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-                      kubectl apply output:
-                    </Typography>
-                    <Box
-                      component="pre"
-                      sx={{
-                        p: 1,
-                        bgcolor: 'rgba(0, 0, 0, 0.05)',
-                        borderRadius: 1,
-                        fontSize: '0.75rem',
-                        overflow: 'auto',
-                        maxHeight: '150px',
-                      }}
-                    >
-                      {validationResult.applyOutput}
-                    </Box>
+              {/* Apply Output */}
+              {validationResult.applyOutput && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                    kubectl apply output:
+                  </Typography>
+                  <Box
+                    component="pre"
+                    sx={{
+                      p: 1.5,
+                      bgcolor: 'rgba(0, 0, 0, 0.05)',
+                      borderRadius: 1,
+                      fontSize: '0.75rem',
+                      overflow: 'auto',
+                      maxHeight: '150px',
+                    }}
+                  >
+                    {validationResult.applyOutput}
                   </Box>
-                )}
+                </Box>
+              )}
 
-                {/* Status Conditions */}
-                {validationResult.statusConditions && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-                      Bundle Status (kubectl describe bundle {validationResult.bundleName}):
-                    </Typography>
+              {/* Validation Status */}
+              {validationResult.validationStatus && (
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: validationResult.validationStatus.isValid
+                      ? 'success.light'
+                      : 'error.dark',
+                    color: validationResult.validationStatus.isValid
+                      ? 'success.contrastText'
+                      : 'white',
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                    {validationResult.validationStatus.isValid
+                      ? 'Validation succeeded!'
+                      : 'Validation failed with the following errors:'}
+                  </Typography>
+                  {!validationResult.validationStatus.isValid && (
                     <Box
                       component="pre"
                       sx={{
-                        p: 1,
-                        bgcolor: 'rgba(0, 0, 0, 0.05)',
+                        mt: 1,
+                        p: 1.5,
+                        bgcolor: 'black',
+                        color: 'white',
                         borderRadius: 1,
                         fontSize: '0.75rem',
                         overflow: 'auto',
@@ -493,11 +503,20 @@ export default function BundleForm() {
                         wordWrap: 'break-word',
                       }}
                     >
-                      {validationResult.statusConditions}
+                      {validationResult.validationStatus.message}
                     </Box>
-                  </Box>
-                )}
-              </Alert>
+                  )}
+                </Box>
+              )}
+
+              {/* Fallback for errors without validation status */}
+              {!validationResult.validationStatus && !validationResult.success && (
+                <Alert severity="error">
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    {validationResult.message}
+                  </Typography>
+                </Alert>
+              )}
             </Box>
           )}
 

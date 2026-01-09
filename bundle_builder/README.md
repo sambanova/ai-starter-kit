@@ -1,6 +1,13 @@
 # Bundle Builder
 
-A web application for building and validating Kubernetes bundle manifests for SambaNova AI models.
+This is a web application for building and validating SambaNova AI model bundles on [SambaStack](https://docs.sambanova.ai/docs/en/admin/overview/sambastack-overview).
+
+## Prerequisites
+
+- Access to a Kubernetes cluster with SambaStack [installed](https://docs.sambanova.ai/docs/en/admin/installation/prerequisites) (minimum helm version of `0.3.496`)
+- Valid `kubeconfig.yaml` for your SambaStack environment in the project root
+- Node.js 18+ and npm
+- `kubectl` CLI tool installed and configured
 
 ## Overview
 
@@ -25,12 +32,6 @@ Bundle Builder provides an intuitive interface to:
 - **Kubernetes Integration**: Validate bundles by applying them to your cluster via `kubectl`
 - **Real-time Status**: View bundle validation status and detailed error messages
 
-## Prerequisites
-
-- Node.js 18+ and npm
-- `kubectl` CLI tool installed and configured
-- Access to a Kubernetes cluster with SambaNova bundle CRDs
-- Valid `kubeconfig.yaml` file in the project root
 
 ## Getting Started
 
