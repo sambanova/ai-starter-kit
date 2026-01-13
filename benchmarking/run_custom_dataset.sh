@@ -1,16 +1,17 @@
 #!/bin/bash
 # run_custom_dataset.sh
-# Meta-Llama-3.3-70B-Instruct
+# Meta-Llama-3.1-8B-Instruct
+# Llama-4-Maverick-17B-128E-Instruct
 # gpt-oss-120b
 
 ulimit -n 4096
 python src/evaluator.py \
 --mode custom \
---model-name "DeepSeek-V3.1-Terminus" \
---results-dir "./data/bundle_tests/chinese_rag_bundle/custom_prompts" \
+--model-name "Meta-Llama-3.1-8B-Instruct" \
+--results-dir "./data/us_varun/bundlev2/custom_prompts" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "../benchmarking/prompts/bundle_tests/chinese_rag_bundle/dsterminus.jsonl" \
+--input-file-path "../benchmarking/prompts/bundle_tests/us_varun/us_varun_bundle-3d1_8b.jsonl" \
 --save-llm-responses True \
 --sampling-params '{"max_tokens_to_generate": 200}' \
 --use-debugging-mode False \
