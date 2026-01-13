@@ -1,13 +1,46 @@
 {
-  "deepseek-r1-distill-llama-70b": "DeepSeek-R1-Distill-Llama-70B",
-  "e5-mistral-7b-instruct": "e5-mistral-7b-instruct",
-  "gpt-oss-120b": "gpt-oss-120b-FP8-per-tensor-surgery",
-  "llama-4-maverick-17b-128e-instruct": "Llama-4-Maverick-17B-128E-Instruct_surgery-FP8-128E-RDU",
-  "meta-llama-3-1-405b-instruct": "Meta-Llama-3.1-405B-Instruct_0913",
-  "meta-llama-3-1-8b-instruct": "Meta-Llama-3.1-8B-Instruct",
-  "meta-llama-3-2-1b-instruct": "meta-llama-Llama-3.2-1B-Instruct_untie",
-  "meta-llama-3-2-3b-instruct": "meta-llama-Llama-3.2-3B-Instruct_untie",
-  "meta-llama-3-3-70b-instruct": "Llama-3.3-70B-Instruct",
-  "qwen3-32b": "Qwen3-32B",
-  "whisper-large-v3": "whisper-large-v3-untied-fp32"
+  "DeepSeek-R1-Distill-Llama-70B": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/DeepSeek-R1-Distill-Llama-70B",
+    "resource_name": "deepseek-r1-distill-llama-70b"
+  },
+  "E5-Mistral-7B-Instruct": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/e5-mistral-7b-instruct",
+    "resource_name": "e5-mistral-7b-instruct"
+  },
+  "gpt-oss-120b": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/gpt-oss-120b-FP8-per-tensor-surgery",
+    "resource_name": "gpt-oss-120b"
+  },
+  "Llama-4-Maverick-17B-128E-Instruct": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/Llama-4-Maverick-17B-128E-Instruct_surgery-FP8-128E-RDU",
+    "resource_name": "llama-4-maverick-17b-128e-instruct"
+  },
+  "Meta-Llama-3.1-405B-Instruct": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/Meta-Llama-3.1-405B-Instruct_0913",
+    "resource_name": "meta-llama-3-1-405b-instruct"
+  },
+  "Meta-Llama-3.1-8B-Instruct": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/Meta-Llama-3.1-8B-Instruct",
+    "resource_name": "meta-llama-3-1-8b-instruct"
+  },
+  "Meta-Llama-3.2-1B-Instruct": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/meta-llama-Llama-3.2-1B-Instruct_untie",
+    "resource_name": "meta-llama-3-2-1b-instruct"
+  },
+  "Meta-Llama-3.2-3B-Instruct": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/meta-llama-Llama-3.2-3B-Instruct_untie",
+    "resource_name": "meta-llama-3-2-3b-instruct"
+  },
+  "Meta-Llama-3.3-70B-Instruct": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/Llama-3.3-70B-Instruct",
+    "resource_name": "meta-llama-3-3-70b-instruct"
+  },
+  "Qwen3-32B": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/Qwen3-32B",
+    "resource_name": "qwen3-32b"
+  },
+  "Whisper-Large-v3": {
+    "path": "0.1.0/pefs-checkpoints/ckpts/whisper-large-v3-untied-fp32",
+    "resource_name": "whisper-large-v3"
+  }
 }

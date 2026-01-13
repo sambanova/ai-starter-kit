@@ -24,7 +24,13 @@ import {
   Button,
   Alert,
   CircularProgress,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteIcon from '@mui/icons-material/Delete';
+import HandymanIcon from '@mui/icons-material/Handyman';
 import type { PefConfigs, PefMapping, CheckpointMapping, ConfigSelection } from '../types/bundle';
 import { generateBundleYaml } from '../lib/bundle-yaml-generator';
 
@@ -51,6 +57,8 @@ export default function BundleForm() {
   const [bundleName, setBundleName] = useState<string>('bundle1');
   const [generatedYaml, setGeneratedYaml] = useState<string>('');
   const [isValidating, setIsValidating] = useState<boolean>(false);
+  const [draftModels, setDraftModels] = useState<{ [modelName: string]: string }>({});
+  const [copiedToClipboard, setCopiedToClipboard] = useState<boolean>(false);
   const [validationResult, setValidationResult] = useState<{
     success: boolean;
     message: string;
@@ -66,13 +74,31 @@ export default function BundleForm() {
   // Get available models (intersection of checkpoint and pef mapping keys with non-empty values)
   const availableModels = useMemo(() => {
     const checkpointKeys = Object.keys(checkpointMapping).filter(
-      (key) => checkpointMapping[key] !== ''
+      (key) => checkpointMapping[key]?.path !== ''
     );
     const pefMappingKeys = Object.keys(pefMapping).filter(
       (key) => pefMapping[key].length > 0
     );
     return checkpointKeys.filter((key) => pefMappingKeys.includes(key)).sort();
   }, []);
+
+  // Check if a model supports speculative decoding
+  const modelSupportsSpeculativeDecoding = useMemo(() => {
+    const sdSupport: { [modelName: string]: boolean } = {};
+
+    selectedModels.forEach((modelName) => {
+      const pefs = pefMapping[modelName] || [];
+      // A model supports SD only if ALL its PEF configs contain "-sd" followed by a number
+      const allConfigsSupportSD = pefs.length > 0 && pefs.every((pefName) => {
+        // Check if the config name contains "-sd" followed by digits in a hyphenated section
+        const parts = pefName.split('-');
+        return parts.some((part) => /^sd\d+$/.test(part));
+      });
+      sdSupport[modelName] = allConfigsSupportSD;
+    });
+
+    return sdSupport;
+  }, [selectedModels]);
 
   // Get available configurations for selected models
   const modelConfigurations = useMemo(() => {
@@ -115,6 +141,70 @@ export default function BundleForm() {
     setSelectedConfigs((prev) =>
       prev.filter((config) => models.includes(config.modelName))
     );
+
+    // Remove draft model selections for deselected models
+    setDraftModels((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((modelName) => {
+        if (!models.includes(modelName)) {
+          delete updated[modelName];
+        }
+      });
+      return updated;
+    });
+  };
+
+  const handleDraftModelChange = (targetModel: string, draftModel: string) => {
+    setDraftModels((prev) => ({
+      ...prev,
+      [targetModel]: draftModel,
+    }));
+
+    // If a draft model is selected (not "Skip"), add it to selectedModels if not already present
+    if (draftModel !== 'skip' && !selectedModels.includes(draftModel)) {
+      setSelectedModels((prev) => [...prev, draftModel]);
+    }
+
+    // If a draft model is selected (not "Skip") and the target model has configs selected,
+    // automatically select matching configs for the draft model
+    if (draftModel !== 'skip') {
+      const targetConfigs = selectedConfigs.filter((config) => config.modelName === targetModel);
+
+      if (targetConfigs.length > 0) {
+        const draftPefs = pefMapping[draftModel] || [];
+        const newDraftConfigs: ConfigSelection[] = [];
+
+        targetConfigs.forEach((targetConfig) => {
+          // Check if draft model already has this config selected
+          const draftConfigExists = selectedConfigs.some(
+            (config) => config.modelName === draftModel &&
+                       config.ss === targetConfig.ss &&
+                       config.bs === targetConfig.bs
+          );
+
+          if (!draftConfigExists) {
+            // Find matching draft model PEF for this config
+            const matchingDraftPef = draftPefs.find((pefName) => {
+              const config = pefConfigs[pefName];
+              return config && config.ss === targetConfig.ss && config.bs === targetConfig.bs;
+            });
+
+            if (matchingDraftPef) {
+              newDraftConfigs.push({
+                modelName: draftModel,
+                ss: targetConfig.ss,
+                bs: targetConfig.bs,
+                pefName: matchingDraftPef,
+              });
+            }
+          }
+        });
+
+        if (newDraftConfigs.length > 0) {
+          setSelectedConfigs((prev) => [...prev, ...newDraftConfigs]);
+        }
+      }
+    }
   };
 
   const handleConfigToggle = (modelName: string, ss: string, bs: string) => {
@@ -136,10 +226,57 @@ export default function BundleForm() {
       setSelectedConfigs((prev) => prev.filter((_, i) => i !== existingIndex));
     } else {
       // Add the config
-      setSelectedConfigs((prev) => [
-        ...prev,
+      const newConfigs: ConfigSelection[] = [
         { modelName, ss, bs, pefName: matchingPef },
-      ]);
+      ];
+
+      // If this model has a draft model selected, try to auto-select the same config for the draft model
+      const draftModel = draftModels[modelName];
+      if (draftModel && draftModel !== 'skip') {
+        const draftPefs = pefMapping[draftModel] || [];
+        const matchingDraftPef = draftPefs.find((pefName) => {
+          const config = pefConfigs[pefName];
+          return config && config.ss === ss && config.bs === bs;
+        });
+
+        // If the draft model has this config and it's not already selected, add it
+        if (matchingDraftPef) {
+          const draftConfigExists = selectedConfigs.some(
+            (config) => config.modelName === draftModel && config.ss === ss && config.bs === bs
+          );
+          if (!draftConfigExists) {
+            newConfigs.push({ modelName: draftModel, ss, bs, pefName: matchingDraftPef });
+          }
+        }
+      }
+
+      // Check if this model is used as a draft model by any other model
+      // If so, also select the same config for that target model if it exists
+      Object.entries(draftModels).forEach(([targetModel, targetDraftModel]) => {
+        if (targetDraftModel === modelName) {
+          // This model is used as a draft model for targetModel
+          const targetPefs = pefMapping[targetModel] || [];
+          const matchingTargetPef = targetPefs.find((pefName) => {
+            const config = pefConfigs[pefName];
+            return config && config.ss === ss && config.bs === bs;
+          });
+
+          if (matchingTargetPef) {
+            const targetConfigExists = selectedConfigs.some(
+              (config) => config.modelName === targetModel && config.ss === ss && config.bs === bs
+            );
+            // Also check if we're about to add it in this operation
+            const aboutToAddTargetConfig = newConfigs.some(
+              (config) => config.modelName === targetModel && config.ss === ss && config.bs === bs
+            );
+            if (!targetConfigExists && !aboutToAddTargetConfig) {
+              newConfigs.push({ modelName: targetModel, ss, bs, pefName: matchingTargetPef });
+            }
+          }
+        }
+      });
+
+      setSelectedConfigs((prev) => [...prev, ...newConfigs]);
     }
   };
 
@@ -199,15 +336,120 @@ export default function BundleForm() {
     return grouped;
   }, [selectedConfigs]);
 
+  // Check if a target model PEF has a corresponding draft model PEF selected
+  const pefHasDraftModelConfig = (modelName: string, pefName: string): boolean => {
+    const draftModel = draftModels[modelName];
+    if (!draftModel || draftModel === 'skip') return true; // No draft model required
+
+    const targetConfig = pefConfigs[pefName];
+    if (!targetConfig) return true;
+
+    // Check if a draft model config with matching SS/BS is currently SELECTED
+    const hasDraftConfigSelected = selectedConfigs.some((config) => {
+      return config.modelName === draftModel &&
+             config.ss === targetConfig.ss &&
+             config.bs === targetConfig.bs;
+    });
+
+    return hasDraftConfigSelected;
+  };
+
   // Generate YAML automatically when configs or bundle name change
   useEffect(() => {
     if (selectedConfigs.length === 0 || !bundleName) {
       setGeneratedYaml('');
       return;
     }
-    const yaml = generateBundleYaml(selectedConfigs, checkpointMapping, pefConfigs, bundleName, CHECKPOINTS_DIR);
+    const yaml = generateBundleYaml(selectedConfigs, checkpointMapping, pefConfigs, bundleName, CHECKPOINTS_DIR, draftModels);
     setGeneratedYaml(yaml);
-  }, [selectedConfigs, bundleName]);
+  }, [selectedConfigs, bundleName, draftModels]);
+
+  // Handle copy to clipboard
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedYaml);
+      setCopiedToClipboard(true);
+      setTimeout(() => setCopiedToClipboard(false), 2000); // Reset after 2 seconds
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+    }
+  };
+
+  // Handle removing a PEF configuration
+  const handleRemovePefConfig = (modelName: string, pefName: string) => {
+    const pefConfig = pefConfigs[pefName];
+    if (!pefConfig) return;
+
+    setSelectedConfigs((prev) =>
+      prev.filter(
+        (config) =>
+          !(config.modelName === modelName && config.ss === pefConfig.ss && config.bs === pefConfig.bs)
+      )
+    );
+  };
+
+  // Handle adding missing draft model configuration
+  const handleAddMissingDraftConfig = (modelName: string, pefName: string) => {
+    const draftModel = draftModels[modelName];
+    if (!draftModel || draftModel === 'skip') return;
+
+    const targetConfig = pefConfigs[pefName];
+    if (!targetConfig) return;
+
+    const draftPefs = pefMapping[draftModel] || [];
+    const matchingDraftPef = draftPefs.find((draftPefName) => {
+      const config = pefConfigs[draftPefName];
+      return config && config.ss === targetConfig.ss && config.bs === targetConfig.bs;
+    });
+
+    if (matchingDraftPef) {
+      const draftConfigExists = selectedConfigs.some(
+        (config) =>
+          config.modelName === draftModel &&
+          config.ss === targetConfig.ss &&
+          config.bs === targetConfig.bs
+      );
+
+      if (!draftConfigExists) {
+        setSelectedConfigs((prev) => [
+          ...prev,
+          {
+            modelName: draftModel,
+            ss: targetConfig.ss,
+            bs: targetConfig.bs,
+            pefName: matchingDraftPef,
+          },
+        ]);
+      }
+    }
+  };
+
+  // Check if a draft model config exists but is not selected
+  const draftConfigExistsButNotSelected = (modelName: string, pefName: string): boolean => {
+    const draftModel = draftModels[modelName];
+    if (!draftModel || draftModel === 'skip') return false;
+
+    const targetConfig = pefConfigs[pefName];
+    if (!targetConfig) return false;
+
+    const draftPefs = pefMapping[draftModel] || [];
+    const matchingDraftPef = draftPefs.find((draftPefName) => {
+      const config = pefConfigs[draftPefName];
+      return config && config.ss === targetConfig.ss && config.bs === targetConfig.bs;
+    });
+
+    if (!matchingDraftPef) return false;
+
+    // Check if the draft config is NOT selected
+    const draftConfigSelected = selectedConfigs.some(
+      (config) =>
+        config.modelName === draftModel &&
+        config.ss === targetConfig.ss &&
+        config.bs === targetConfig.bs
+    );
+
+    return !draftConfigSelected;
+  };
 
   // Handle validation
   const handleValidate = async () => {
@@ -295,9 +537,37 @@ export default function BundleForm() {
           </Typography>
           {selectedModels.map((modelName, idx) => (
             <Box key={modelName} sx={{ mb: idx < selectedModels.length - 1 ? 3 : 0 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
                 {modelName}
               </Typography>
+              {modelSupportsSpeculativeDecoding[modelName] && (
+                <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      This model supports speculative decoding. Enable it by choosing a draft model:
+                    </Typography>
+                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                      <Select
+                        value={draftModels[modelName] || 'skip'}
+                        onChange={(e) => handleDraftModelChange(modelName, e.target.value)}
+                        displayEmpty
+                      >
+                        <MenuItem value="skip">skip</MenuItem>
+                        {availableModels
+                          .filter((model) => model !== modelName)
+                          .map((model) => (
+                            <MenuItem key={model} value={model}>
+                              {model}
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
+              )}
+              {!modelSupportsSpeculativeDecoding[modelName] && (
+                <Box sx={{ mb: 1.5 }} />
+              )}
               <TableContainer>
                 <Table size="small" sx={{ border: '1px solid', borderColor: 'divider' }}>
                   <TableHead>
@@ -363,40 +633,44 @@ export default function BundleForm() {
               <Box component="ul" sx={{ pl: 3, mt: 0, mb: 1 }}>
                 {pefs.map((pef) => {
                   const version = pefConfigs[pef]?.latestVersion || '1';
+                  const hasDraftConfig = pefHasDraftModelConfig(modelName, pef);
+                  const canFixDraftConfig = draftConfigExistsButNotSelected(modelName, pef);
                   return (
-                    <Typography component="li" key={pef} variant="body2" sx={{ mb: 0.5 }}>
-                      {pef}:{version}
-                    </Typography>
+                    <Box component="li" key={pef} sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="body2">
+                        {pef}:{version}
+                      </Typography>
+                      {!hasDraftConfig && (
+                        <>
+                          <Tooltip title="No draft model assigned to this PEF for speculative decoding">
+                            <WarningAmberIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                          </Tooltip>
+                          <Tooltip title="Click here to remove this config">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleRemovePefConfig(modelName, pef)}
+                              sx={{ p: 0.25 }}
+                            >
+                              <DeleteIcon sx={{ fontSize: 16, color: 'error.main' }} />
+                            </IconButton>
+                          </Tooltip>
+                          {canFixDraftConfig && (
+                            <Tooltip title="Click here to add the missing draft model configuration">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleAddMissingDraftConfig(modelName, pef)}
+                                sx={{ p: 0.25 }}
+                              >
+                                <HandymanIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </>
+                      )}
+                    </Box>
                   );
                 })}
               </Box>
-            </Box>
-          ))}
-        </Paper>
-      )}
-
-      {/* Checkpoints Display */}
-      {selectedModels.length > 0 && (
-        <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-            4. Model Checkpoints
-          </Typography>
-          {selectedModels.map((modelName) => (
-            <Box key={modelName} sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                {modelName}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'text.secondary',
-                  fontFamily: 'monospace',
-                  fontSize: '0.875rem',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {checkpointMapping[modelName] ? `${CHECKPOINTS_DIR}${checkpointMapping[modelName]}` : 'No checkpoint available'}
-              </Typography>
             </Box>
           ))}
         </Paper>
@@ -406,7 +680,7 @@ export default function BundleForm() {
       {selectedConfigs.length > 0 && (
         <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-            5. Bundle YAML
+            4. Bundle YAML
           </Typography>
 
           {/* Bundle Name Input */}
@@ -424,9 +698,23 @@ export default function BundleForm() {
 
           {/* Generated YAML */}
           <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-              Generated YAML
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Generated YAML
+              </Typography>
+              <Tooltip title={copiedToClipboard ? "Copied!" : "Copy to clipboard"}>
+                <IconButton
+                  onClick={handleCopyToClipboard}
+                  size="small"
+                  disabled={!generatedYaml}
+                  sx={{
+                    color: copiedToClipboard ? 'success.main' : 'primary.main',
+                  }}
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
             <TextField
               fullWidth
               multiline

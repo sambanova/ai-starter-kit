@@ -13,7 +13,10 @@ export interface PefMapping {
 }
 
 export interface CheckpointMapping {
-  [modelName: string]: string;
+  [modelName: string]: {
+    path: string;
+    resource_name: string;
+  };
 }
 
 export interface ConfigSelection {
