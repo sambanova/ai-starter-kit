@@ -7,7 +7,7 @@ export default function Home() {
     <AppLayout>
       <Box>
         <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
-          Bundle Builder
+          SambaWiz
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
           Create and configure model bundles with PEF configurations

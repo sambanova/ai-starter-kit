@@ -46,9 +46,9 @@ function formatSsValue(ss: number): string {
  * Get the latest version number from PEF description
  * Parses the Versions section and returns the highest version number
  */
-function getLatestVersion(pefName: string, kubeconfigPath: string): string {
+function getLatestVersion(pefName: string, kubeconfigPath: string, namespace: string): string {
   try {
-    const description = execSync(`kubectl describe pef ${pefName}`, {
+    const description = execSync(`kubectl -n ${namespace} describe pef ${pefName}`, {
       encoding: 'utf-8',
       env: { ...process.env, KUBECONFIG: kubeconfigPath },
     });
@@ -88,11 +88,12 @@ function generatePefConfigs() {
   console.log('Running kubectl get pefs...');
 
   // Set KUBECONFIG environment variable
-  const kubeconfigPath = path.join(__dirname, 'kubeconfig.yaml');
+  const kubeconfigPath = path.join(__dirname, '..', process.env.KUBECONFIG_FILE!);
+  const namespace = process.env.NAMESPACE || 'default';
   process.env.KUBECONFIG = kubeconfigPath;
 
   // Run kubectl command to get PEF names
-  const kubectl = execSync('kubectl get pefs --no-headers', {
+  const kubectl = execSync(`kubectl -n ${namespace} get pefs --no-headers`, {
     encoding: 'utf-8',
     env: { ...process.env, KUBECONFIG: kubeconfigPath },
   });
@@ -116,7 +117,7 @@ function generatePefConfigs() {
     const parsed = parsePefName(pefName);
 
     if (parsed) {
-      const latestVersion = getLatestVersion(pefName, kubeconfigPath);
+      const latestVersion = getLatestVersion(pefName, kubeconfigPath, namespace);
 
       configs[pefName] = {
         ss: formatSsValue(parsed.ss),

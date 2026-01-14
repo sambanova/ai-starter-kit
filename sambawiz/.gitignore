@@ -41,7 +41,10 @@ yarn-error.log*
 next-env.d.ts
 
 # kubeconfig (contains sensitive cluster credentials)
-kubeconfig.yaml
+# Ignore all files in kubeconfigs directory
+kubeconfigs/*
+# Except the example file
+!kubeconfigs/kubeconfig_example.yaml
 
 # package manager lock files
 package-lock.json

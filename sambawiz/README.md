@@ -1,17 +1,17 @@
-# Bundle Builder
+# SambaWiz
 
-This is a web application for building and validating SambaNova AI model bundles on [SambaStack](https://docs.sambanova.ai/docs/en/admin/overview/sambastack-overview).
+SambaWiz is a GUI wizard that accelerates the creation and deployment of model bundles on [SambaStack](https://docs.sambanova.ai/docs/en/admin/overview/sambastack-overview).
 
 ## Prerequisites
 
 - Access to a Kubernetes cluster with SambaStack [installed](https://docs.sambanova.ai/docs/en/admin/installation/prerequisites) (minimum helm version of `0.3.496`)
-- Valid `kubeconfig.yaml` for your SambaStack environment in the project root
+- Valid `kubeconfig.yaml` for your SambaStack environment
 - Node.js 18+ and npm
-- `kubectl` CLI tool installed and configured
+- `kubectl` and `helm` CLI tools installed and configured
 
 ## Overview
 
-Bundle Builder provides an intuitive interface to:
+SambaWiz provides an intuitive interface to:
 - Select AI models from an available catalog
 - Configure PEF (Processor Executable Format) settings including sequence size (SS) and batch size (BS)
 - Map models to checkpoints
@@ -31,6 +31,7 @@ Bundle Builder provides an intuitive interface to:
 - **Editable YAML**: Manually edit generated YAML before validation
 - **Kubernetes Integration**: Validate bundles by applying them to your cluster via `kubectl`
 - **Real-time Status**: View bundle validation status and detailed error messages
+- **Environment Version Display**: Automatically validates kubeconfig and displays SambaStack Helm version in the navigation sidebar
 
 
 ## Getting Started
@@ -48,27 +49,34 @@ Create a `.env.local` file in the project root directory:
 ```bash
 # .env.local
 NEXT_PUBLIC_CHECKPOINTS_DIR=gs://your-bucket-name/path/to/checkpoints/
+KUBECONFIG_FILE=kubeconfigs/your-kubeconfig-name.yaml
+NAMESPACE=your-namespace
 ```
 
 **Important**:
 - The `.env.local` file is gitignored for security
-- Replace `gs://your-bucket-name/path/to/checkpoints/` with your actual GCS checkpoint directory path
-- The path should end with a trailing slash (`/`)
-- This variable is used to construct full checkpoint paths by concatenating with checkpoint names from `checkpoint_mapping.json`
+- `NEXT_PUBLIC_CHECKPOINTS_DIR`: Replace with your actual GCS checkpoint directory path (must end with `/`)
+- `KUBECONFIG_FILE`: **Required**. Path to your kubeconfig file relative to the sambawiz folder
+- `NAMESPACE`: The Kubernetes namespace to use (defaults to "default" if not specified)
+- The checkpoints directory variable is used to construct full checkpoint paths by concatenating with checkpoint names from `checkpoint_mapping.json`
 
 ### 3. Configure Kubernetes Access
 
-Place your `kubeconfig.yaml` file in the project root directory:
+Place your kubeconfig file in the `kubeconfigs/` directory:
 
 ```bash
-# Copy your kubeconfig to the project root
-cp /path/to/your/kubeconfig.yaml ./kubeconfig.yaml
+# Copy your kubeconfig to the kubeconfigs directory
+cp /path/to/your/kubeconfig.yaml ./kubeconfigs/your-kubeconfig-name.yaml
 ```
 
+Then update the `KUBECONFIG_FILE` variable in `.env.local` to match your filename.
+
 **Important**:
-- The `kubeconfig.yaml` file is gitignored for security
-- The application automatically reads this file and sets the `KUBECONFIG` environment variable when executing `kubectl` commands
-- This happens in both the validation endpoint (`/api/validate`) and the PEF generation script (`generate_pef_configs.ts`)
+- All files in the `kubeconfigs/` directory are gitignored for security (except `kubeconfig_example.yaml`)
+- The application reads the kubeconfig file path from the **required** `KUBECONFIG_FILE` environment variable
+- The kubeconfig is validated on app startup using `helm list` to verify cluster connectivity
+- If validation fails, an error alert is displayed with instructions to check your kubeconfig and network/VPN connection
+- The SambaStack Helm version is displayed in the navigation sidebar when validation succeeds
 
 ### 4. Run Development Server
 
@@ -97,26 +105,34 @@ npm start
 ## Project Structure
 
 ```
-bundle_builder/
+sambawiz/
 ├── app/
 │   ├── api/
-│   │   └── validate/          # API endpoint for bundle validation
+│   │   ├── kubeconfig-validate/    # API endpoint for kubeconfig validation
+│   │   └── validate/               # API endpoint for bundle validation
 │   ├── components/
-│   │   ├── AppLayout.tsx      # Main layout with navigation
-│   │   └── BundleForm.tsx     # Main form component
+│   │   ├── AppLayout.tsx           # Main layout with navigation and version display
+│   │   └── BundleForm.tsx          # Main form component
 │   ├── data/
-│   │   ├── pef_configs.json       # PEF configuration data
-│   │   ├── pef_mapping.json       # Model to PEF mappings
+│   │   ├── pef_configs.json        # PEF configuration data
+│   │   ├── pef_mapping.json        # Model to PEF mappings
 │   │   └── checkpoint_mapping.json # Model to checkpoint mappings
+│   ├── utils/
+│   │   └── bundle-yaml-generator.ts # YAML generation logic
 │   ├── lib/
-│   │   ├── bundle-yaml-generator.ts  # YAML generation logic
-│   │   └── emotion-cache.ts   # MUI styling cache
+│   │   └── emotion-cache.ts        # MUI styling cache
 │   ├── types/
-│   │   └── bundle.ts          # TypeScript interfaces
-│   ├── theme.ts               # MUI theme configuration
-│   └── page.tsx               # Home page
-├── public/                    # Static assets
-└── temp/                      # Temporary YAML files (gitignored)
+│   │   └── bundle.ts               # TypeScript interfaces
+│   ├── theme.ts                    # MUI theme configuration
+│   └── page.tsx                    # Home page
+├── kubeconfigs/                    # Kubeconfig files (gitignored except example)
+│   ├── your-kubeconfig-name.yaml   # Your kubeconfig (gitignored)
+│   └── kubeconfig_example.yaml     # Example template
+├── scripts/                        # Utility scripts
+│   ├── generate_pef_configs.ts     # Script to regenerate PEF configs
+│   └── test_parsing.ts             # Testing utilities
+├── public/                         # Static assets
+└── temp/                           # Temporary YAML files (gitignored)
 ```
 
 ## Configuration Files
@@ -128,6 +144,26 @@ The application uses three JSON configuration files in the `app/data/` directory
 - **checkpoint_mapping.json**: Maps model names to their checkpoint GCS paths
 
 ## API Endpoints
+
+### GET /api/kubeconfig-validate
+
+Validates kubeconfig and retrieves SambaStack Helm version.
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "version": "0.3.496"
+}
+```
+
+**Response (Error):**
+```json
+{
+  "success": false,
+  "error": "Your kubeconfig.yaml seems to be invalid. Please check it and re-run the app. Also ensure that you are on the right network/VPN to access the server."
+}
+```
 
 ### POST /api/validate
 
@@ -185,9 +221,10 @@ npm run build
 
 ## Security Considerations
 
-- `.env.local` and `kubeconfig.yaml` are gitignored to prevent credential leaks
+- `.env.local` and all files in `kubeconfigs/` (except the example) are gitignored to prevent credential leaks
 - Temporary YAML files in `temp/` are also gitignored
 - The validation endpoint runs kubectl commands server-side with appropriate timeouts
+- Kubeconfig validation is performed on app startup to ensure cluster connectivity
 - Consider implementing authentication/authorization for production deployments
 - Never commit sensitive configuration files or credentials to version control
 

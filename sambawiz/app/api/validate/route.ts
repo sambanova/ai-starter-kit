@@ -123,13 +123,14 @@ export async function POST(request: NextRequest) {
     writeFileSync(filePath, yaml, 'utf-8');
 
     // Set KUBECONFIG environment variable
-    const kubeconfigPath = path.join(process.cwd(), 'kubeconfig.yaml');
+    const kubeconfigPath = path.join(process.cwd(), process.env.KUBECONFIG_FILE!);
+    const namespace = process.env.NAMESPACE || 'default';
     const env = { ...process.env, KUBECONFIG: kubeconfigPath };
 
     let applyOutput = '';
     try {
       // Run kubectl apply
-      applyOutput = execSync(`kubectl apply -f "${filePath}"`, {
+      applyOutput = execSync(`kubectl -n ${namespace} apply -f "${filePath}"`, {
         encoding: 'utf-8',
         env,
         timeout: 30000, // 30 second timeout
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
     // Get bundle status using JSON output
     let validationStatus;
     try {
-      const jsonOutput = execSync(`kubectl get bundle ${bundleName} -o json`, {
+      const jsonOutput = execSync(`kubectl -n ${namespace} get bundle ${bundleName} -o json`, {
         encoding: 'utf-8',
         env,
         timeout: 30000,

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bundle Builder",
-  description: "Kubernetes Bundle Builder Application",
+  title: "SambaWiz",
+  description: "SambaWiz - GUI wizard for creating and deploying model bundles",
 };
 
 export const viewport: Viewport = {

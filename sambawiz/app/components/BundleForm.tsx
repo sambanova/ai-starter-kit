@@ -26,13 +26,19 @@ import {
   CircularProgress,
   Tooltip,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import HandymanIcon from '@mui/icons-material/Handyman';
+import SaveIcon from '@mui/icons-material/Save';
 import type { PefConfigs, PefMapping, CheckpointMapping, ConfigSelection } from '../types/bundle';
-import { generateBundleYaml } from '../lib/bundle-yaml-generator';
+import { generateBundleYaml } from '../utils/bundle-yaml-generator';
 
 // Import the JSON data
 import pefConfigsData from '../data/pef_configs.json';
@@ -70,6 +76,9 @@ export default function BundleForm() {
     };
     bundleName?: string;
   } | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Get available models (intersection of checkpoint and pef mapping keys with non-empty values)
   const availableModels = useMemo(() => {
@@ -495,6 +504,70 @@ export default function BundleForm() {
     }
   };
 
+  // Handle save button click
+  const handleSaveClick = () => {
+    setSaveResult(null);
+    setSaveDialogOpen(false);
+    handleSaveFile(false);
+  };
+
+  // Handle save file
+  const handleSaveFile = async (overwrite: boolean) => {
+    if (!generatedYaml || !bundleName) return;
+
+    setIsSaving(true);
+    setSaveResult(null);
+
+    const fileName = `${bundleName}.yaml`;
+
+    try {
+      const endpoint = overwrite ? '/api/save-artifact' : '/api/save-artifact';
+      const method = overwrite ? 'PUT' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName, content: generatedYaml }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSaveResult({
+          success: true,
+          message: `Bundle saved successfully to saved_artifacts/${fileName}`,
+        });
+      } else if (response.status === 409 && data.fileExists) {
+        // File exists, show overwrite dialog
+        setSaveDialogOpen(true);
+      } else {
+        setSaveResult({
+          success: false,
+          message: data.error || 'Failed to save bundle',
+        });
+      }
+    } catch (error: any) {
+      setSaveResult({
+        success: false,
+        message: 'Failed to connect to save service',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle overwrite confirmation
+  const handleOverwrite = () => {
+    setSaveDialogOpen(false);
+    handleSaveFile(true);
+  };
+
+  // Handle cancel save
+  const handleCancelSave = () => {
+    setSaveDialogOpen(false);
+    setSaveResult(null);
+  };
+
   return (
     <Box>
       {/* Model Selection */}
@@ -808,8 +881,30 @@ export default function BundleForm() {
             </Box>
           )}
 
-          {/* Validate Button */}
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          {/* Save Result */}
+          {saveResult && (
+            <Box sx={{ mt: 2 }}>
+              <Alert
+                severity={saveResult.success ? 'success' : 'error'}
+                onClose={() => setSaveResult(null)}
+              >
+                {saveResult.message}
+              </Alert>
+            </Box>
+          )}
+
+          {/* Validate and Save Buttons */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              onClick={handleSaveClick}
+              disabled={isSaving || !generatedYaml || !bundleName}
+              startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
             <Button
               variant="contained"
               color="primary"
@@ -823,6 +918,25 @@ export default function BundleForm() {
           </Box>
         </Paper>
       )}
+
+      {/* Save Overwrite Confirmation Dialog */}
+      <Dialog open={saveDialogOpen} onClose={handleCancelSave}>
+        <DialogTitle>File Already Exists</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            A file named <strong>{bundleName}.yaml</strong> already exists in saved_artifacts.
+            Do you want to overwrite it?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelSave} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleOverwrite} color="primary" variant="contained">
+            Overwrite
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
