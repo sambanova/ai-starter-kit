@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
+
+interface KubeconfigEntry {
+  file: string;
+  namespace: string;
+  apiKey?: string;
+}
+
+interface AppConfig {
+  checkpointsDir: string;
+  currentKubeconfig: string;
+  kubeconfigs: Record<string, KubeconfigEntry>;
+}
 
 /**
  * POST - Deploy a bundle by applying BundleDeployment YAML
@@ -34,9 +46,38 @@ export async function POST(request: NextRequest) {
     // Write YAML to file
     writeFileSync(filePath, yaml, 'utf-8');
 
+    // Read app-config.json to get current kubeconfig and namespace
+    const configPath = path.join(process.cwd(), 'app-config.json');
+    if (!existsSync(configPath)) {
+      return NextResponse.json(
+        { error: 'app-config.json not found. Please configure an environment first.' },
+        { status: 400 }
+      );
+    }
+
+    const configContent = readFileSync(configPath, 'utf-8');
+    const config: AppConfig = JSON.parse(configContent);
+
+    const currentEnv = config.currentKubeconfig;
+    if (!currentEnv || !config.kubeconfigs[currentEnv]) {
+      return NextResponse.json(
+        { error: 'No active environment configured. Please select an environment first.' },
+        { status: 400 }
+      );
+    }
+
+    const kubeconfigFile = config.kubeconfigs[currentEnv].file;
+    const namespace = config.kubeconfigs[currentEnv].namespace || 'default';
+
     // Set KUBECONFIG environment variable
-    const kubeconfigPath = path.join(process.cwd(), process.env.KUBECONFIG_FILE!);
-    const namespace = process.env.NAMESPACE || 'default';
+    const kubeconfigPath = path.join(process.cwd(), kubeconfigFile);
+    if (!existsSync(kubeconfigPath)) {
+      return NextResponse.json(
+        { error: `Kubeconfig file not found: ${kubeconfigFile}` },
+        { status: 400 }
+      );
+    }
+
     const env = { ...process.env, KUBECONFIG: kubeconfigPath };
 
     let applyOutput = '';

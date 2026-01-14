@@ -25,11 +25,18 @@ import {
   MenuItem,
   TextField,
   SelectChangeEvent,
+  Collapse,
+  IconButton,
+  LinearProgress,
+  Chip,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import SaveIcon from '@mui/icons-material/Save';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface BundleDeployment {
   name: string;
@@ -84,7 +91,15 @@ export default function BundleDeploymentManager() {
   // Section 3: Check Deployment Status
   const [podLogs, setPodLogs] = useState<string>('');
   const [podLogsError, setPodLogsError] = useState<string | null>(null);
+  const [defaultPodLogs, setDefaultPodLogs] = useState<string>('');
+  const [defaultPodLogsError, setDefaultPodLogsError] = useState<string | null>(null);
   const [monitoredDeployment, setMonitoredDeployment] = useState<string>('');
+  const [showCacheLogs, setShowCacheLogs] = useState<boolean>(false);
+  const [showDefaultLogs, setShowDefaultLogs] = useState<boolean>(false);
+  const [podStatus, setPodStatus] = useState<{
+    cachePod: { ready: number; total: number; status: string } | null;
+    defaultPod: { ready: number; total: number; status: string } | null;
+  }>({ cachePod: null, defaultPod: null });
 
   // Save functionality
   const [saveDialogOpen, setSaveDialogOpen] = useState<boolean>(false);
@@ -151,6 +166,88 @@ export default function BundleDeploymentManager() {
 
     // Set up interval to fetch every 3 seconds
     const intervalId = setInterval(fetchPodLogs, 3000);
+
+    // Cleanup interval on unmount or when monitoredDeployment changes
+    return () => clearInterval(intervalId);
+  }, [monitoredDeployment]);
+
+  // Auto-refresh default pod logs every 3 seconds
+  useEffect(() => {
+    if (!monitoredDeployment) {
+      setDefaultPodLogs('');
+      setDefaultPodLogsError(null);
+      return;
+    }
+
+    const fetchDefaultPodLogs = async () => {
+      const podName = `inf-${monitoredDeployment}-q-default-n-0`;
+      const container = 'inf';
+
+      try {
+        const response = await fetch(`/api/pod-logs?podName=${podName}&lines=5&container=${container}`);
+        const data = await response.json();
+
+        if (data.success) {
+          // Check if the last word is "PodInitializing"
+          const logs = data.logs.trim();
+          const lastWord = logs.split(/\s+/).pop();
+
+          if (lastWord === 'PodInitializing') {
+            setDefaultPodLogs('Pod Initializing... Waiting to show logs');
+          } else {
+            setDefaultPodLogs(logs);
+          }
+          setDefaultPodLogsError(null);
+        } else {
+          setDefaultPodLogsError(data.message || 'Failed to fetch logs');
+        }
+      } catch (err: any) {
+        setDefaultPodLogsError('Failed to connect to the server');
+      }
+    };
+
+    // Fetch immediately
+    fetchDefaultPodLogs();
+
+    // Set up interval to fetch every 3 seconds
+    const intervalId = setInterval(fetchDefaultPodLogs, 3000);
+
+    // Cleanup interval on unmount or when monitoredDeployment changes
+    return () => clearInterval(intervalId);
+  }, [monitoredDeployment]);
+
+  // Auto-refresh pod status every 3 seconds
+  useEffect(() => {
+    if (!monitoredDeployment) {
+      setPodStatus({ cachePod: null, defaultPod: null });
+      return;
+    }
+
+    const fetchPodStatus = async () => {
+      try {
+        const response = await fetch(`/api/pod-status?deploymentName=${monitoredDeployment}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setPodStatus(data.podStatus);
+
+          // Check if both pods are fully ready
+          const cacheReady = data.podStatus.cachePod?.ready === data.podStatus.cachePod?.total;
+          const defaultReady = data.podStatus.defaultPod?.ready === data.podStatus.defaultPod?.total;
+
+          // If both pods are ready, we could optionally stop auto-refresh
+          // For now, we'll keep refreshing but the user can see completion status
+        }
+      } catch (err: any) {
+        console.error('Failed to fetch pod status:', err);
+      }
+    };
+
+    // Fetch immediately
+    fetchPodStatus();
+
+    // Set up interval to fetch every 3 seconds
+    const intervalId = setInterval(fetchPodStatus, 3000);
 
     // Cleanup interval on unmount or when monitoredDeployment changes
     return () => clearInterval(intervalId);
@@ -688,45 +785,267 @@ spec:
       {/* Section 3: Check Deployment Status */}
       {monitoredDeployment && (
         <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
             3. Check Deployment Status
           </Typography>
 
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-            Last 5 lines of Cache Pod
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+            Pod Status
           </Typography>
 
-          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary', fontFamily: 'monospace', fontSize: '0.875rem' }}>
-            Monitoring: inf-{monitoredDeployment}-cache-0
-          </Typography>
+          {/* Cache Pod Status */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Cache Pod
+                </Typography>
+                {podStatus.cachePod && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
+                    (inf-{monitoredDeployment}-cache-0)
+                  </Typography>
+                )}
+              </Box>
+              {podStatus.cachePod && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                    {podStatus.cachePod.ready}/{podStatus.cachePod.total}
+                  </Typography>
+                  {podStatus.cachePod.ready === podStatus.cachePod.total ? (
+                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                  ) : (
+                    <CircularProgress size={16} />
+                  )}
+                </Box>
+              )}
+            </Box>
+            {podStatus.cachePod ? (
+              <Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={(podStatus.cachePod.ready / podStatus.cachePod.total) * 100}
+                  sx={{
+                    height: 8,
+                    borderRadius: 1,
+                    bgcolor: 'grey.200',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: podStatus.cachePod.ready === podStatus.cachePod.total ? 'success.main' : 'primary.main'
+                    }
+                  }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, mb: 2 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Status: {podStatus.cachePod.status}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {Math.round((podStatus.cachePod.ready / podStatus.cachePod.total) * 100)}%
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <CircularProgress size={16} />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Waiting for pod...
+                </Typography>
+              </Box>
+            )}
 
-          {podLogsError ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {podLogsError}
-            </Alert>
-          ) : (
+            {/* Cache Pod Logs Collapsible */}
             <Box
-              component="pre"
               sx={{
-                p: 2,
-                bgcolor: 'black',
-                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'action.hover' },
+                p: 1,
                 borderRadius: 1,
-                fontSize: '0.875rem',
-                fontFamily: 'monospace',
-                overflow: 'auto',
-                minHeight: '120px',
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word',
+                mb: 1,
               }}
+              onClick={() => setShowCacheLogs(!showCacheLogs)}
             >
-              {podLogs || 'Waiting for logs...'}
+              <IconButton size="small" sx={{ mr: 1 }}>
+                {showCacheLogs ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </IconButton>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Show Cache Pod Logs (last 5 lines)
+              </Typography>
+            </Box>
+
+            <Collapse in={showCacheLogs}>
+              <Box sx={{ pl: 2 }}>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary', fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                  Monitoring: inf-{monitoredDeployment}-cache-0
+                </Typography>
+
+                {podLogsError ? (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {podLogsError}
+                  </Alert>
+                ) : (
+                  <Box
+                    component="pre"
+                    sx={{
+                      p: 2,
+                      bgcolor: 'black',
+                      color: 'white',
+                      borderRadius: 1,
+                      fontSize: '0.875rem',
+                      fontFamily: 'monospace',
+                      overflow: 'auto',
+                      minHeight: '120px',
+                      whiteSpace: 'pre-wrap',
+                      wordWrap: 'break-word',
+                    }}
+                  >
+                    {podLogs || 'Waiting for logs...'}
+                  </Box>
+                )}
+
+                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                  Auto-refreshing every 3 seconds
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
+
+          {/* Default Pod Status */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Default Pod
+                </Typography>
+                {podStatus.defaultPod && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
+                    (inf-{monitoredDeployment}-q-default-n-0)
+                  </Typography>
+                )}
+              </Box>
+              {podStatus.defaultPod && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                    {podStatus.defaultPod.ready}/{podStatus.defaultPod.total}
+                  </Typography>
+                  {podStatus.defaultPod.ready === podStatus.defaultPod.total ? (
+                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                  ) : (
+                    <CircularProgress size={16} />
+                  )}
+                </Box>
+              )}
+            </Box>
+            {podStatus.defaultPod ? (
+              <Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={(podStatus.defaultPod.ready / podStatus.defaultPod.total) * 100}
+                  sx={{
+                    height: 8,
+                    borderRadius: 1,
+                    bgcolor: 'grey.200',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: podStatus.defaultPod.ready === podStatus.defaultPod.total ? 'success.main' : 'primary.main'
+                    }
+                  }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, mb: 2 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Status: {podStatus.defaultPod.status}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {Math.round((podStatus.defaultPod.ready / podStatus.defaultPod.total) * 100)}%
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <CircularProgress size={16} />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Waiting for pod...
+                </Typography>
+              </Box>
+            )}
+
+            {/* Default Pod Logs Collapsible */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'action.hover' },
+                p: 1,
+                borderRadius: 1,
+                mb: 1,
+              }}
+              onClick={() => setShowDefaultLogs(!showDefaultLogs)}
+            >
+              <IconButton size="small" sx={{ mr: 1 }}>
+                {showDefaultLogs ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </IconButton>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Show Default Pod Logs (last 5 lines)
+              </Typography>
+            </Box>
+
+            <Collapse in={showDefaultLogs}>
+              <Box sx={{ pl: 2 }}>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary', fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                  Monitoring: inf-{monitoredDeployment}-q-default-n-0 (container: inf)
+                </Typography>
+
+                {defaultPodLogsError ? (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {defaultPodLogsError}
+                  </Alert>
+                ) : (
+                  <Box
+                    component="pre"
+                    sx={{
+                      p: 2,
+                      bgcolor: 'black',
+                      color: 'white',
+                      borderRadius: 1,
+                      fontSize: '0.875rem',
+                      fontFamily: 'monospace',
+                      overflow: 'auto',
+                      minHeight: '120px',
+                      whiteSpace: 'pre-wrap',
+                      wordWrap: 'break-word',
+                    }}
+                  >
+                    {defaultPodLogs || 'Waiting for logs...'}
+                  </Box>
+                )}
+
+                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                  Auto-refreshing every 3 seconds
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
+
+          {/* Overall Status */}
+          {podStatus.cachePod && podStatus.defaultPod && (
+            <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+              {podStatus.cachePod.ready === podStatus.cachePod.total &&
+               podStatus.defaultPod.ready === podStatus.defaultPod.total ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircleIcon sx={{ color: 'success.main' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                    Deployment Complete! All pods are ready.
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} />
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.secondary' }}>
+                    Deployment in progress... Waiting for all pods to be ready.
+                  </Typography>
+                </Box>
+              )}
             </Box>
           )}
-
-          <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
-            Auto-refreshing every 3 seconds
-          </Typography>
         </Paper>
       )}
 

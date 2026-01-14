@@ -49,9 +49,6 @@ const pefConfigs: PefConfigs = pefConfigsData;
 const pefMapping: PefMapping = pefMappingData;
 const checkpointMapping: CheckpointMapping = checkpointMappingData;
 
-// Get checkpoints directory from environment
-const CHECKPOINTS_DIR = process.env.NEXT_PUBLIC_CHECKPOINTS_DIR || process.env.CHECKPOINTS_DIR || '';
-
 interface ModelConfig {
   ss: string;
   bs: string;
@@ -65,6 +62,7 @@ export default function BundleForm() {
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [draftModels, setDraftModels] = useState<{ [modelName: string]: string }>({});
   const [copiedToClipboard, setCopiedToClipboard] = useState<boolean>(false);
+  const [checkpointsDir, setCheckpointsDir] = useState<string>('');
   const [validationResult, setValidationResult] = useState<{
     success: boolean;
     message: string;
@@ -79,6 +77,22 @@ export default function BundleForm() {
   const [saveDialogOpen, setSaveDialogOpen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Fetch checkpointsDir from config on component mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/environments');
+        const data = await response.json();
+        if (data.success && data.checkpointsDir) {
+          setCheckpointsDir(data.checkpointsDir);
+        }
+      } catch (error) {
+        console.error('Failed to fetch checkpoints directory:', error);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   // Get available models (intersection of checkpoint and pef mapping keys with non-empty values)
   const availableModels = useMemo(() => {
@@ -369,9 +383,9 @@ export default function BundleForm() {
       setGeneratedYaml('');
       return;
     }
-    const yaml = generateBundleYaml(selectedConfigs, checkpointMapping, pefConfigs, bundleName, CHECKPOINTS_DIR, draftModels);
+    const yaml = generateBundleYaml(selectedConfigs, checkpointMapping, pefConfigs, bundleName, checkpointsDir, draftModels);
     setGeneratedYaml(yaml);
-  }, [selectedConfigs, bundleName, draftModels]);
+  }, [selectedConfigs, bundleName, draftModels, checkpointsDir]);
 
   // Handle copy to clipboard
   const handleCopyToClipboard = async () => {

@@ -35,6 +35,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Update selected item based on current pathname
   useEffect(() => {
     if (pathname === '/') {
+      setSelectedItem('home');
+    } else if (pathname === '/bundle-builder') {
       setSelectedItem('bundle-builder');
     } else if (pathname === '/bundle-deployment') {
       setSelectedItem('bundle-deployment');
@@ -98,7 +100,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           selected={selectedItem === 'bundle-builder'}
           onClick={() => {
             setSelectedItem('bundle-builder');
-            router.push('/');
+            router.push('/bundle-builder');
           }}
           sx={{
             mx: 2,
@@ -127,7 +129,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <BuildIcon />
           </ListItemIcon>
           <ListItemText
-            primary="SambaWiz"
+            primary="Bundle Builder"
             primaryTypographyProps={{
               fontSize: '0.875rem',
               fontWeight: selectedItem === 'bundle-builder' ? 600 : 500,
@@ -182,9 +184,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Spacer to push version display to bottom */}
       <Box sx={{ flexGrow: 1 }} />
 
-      {/* Environment version display */}
+      {/* Environment version display - clickable to go to home */}
       {envVersion && envName && (
         <Box
+          onClick={() => {
+            setSelectedItem('home');
+            router.push('/');
+          }}
           sx={{
             mx: 2,
             mt: 2,
@@ -192,6 +198,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
             borderRadius: 2,
             backgroundColor: 'rgb(232, 229, 234)',
             border: '1px solid rgb(209, 204, 213)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgb(220, 217, 224)',
+              border: '1px solid rgb(199, 194, 203)',
+              transform: 'scale(1.02)',
+            },
           }}
         >
           <Typography

@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
+import { readFileSync, existsSync } from 'fs';
 import path from 'path';
+
+interface KubeconfigEntry {
+  file: string;
+  namespace: string;
+  apiKey?: string;
+}
+
+interface AppConfig {
+  checkpointsDir: string;
+  currentKubeconfig: string;
+  kubeconfigs: Record<string, KubeconfigEntry>;
+}
 
 interface BundleDeployment {
   name: string;
@@ -22,8 +35,46 @@ interface BundleDeployment {
  */
 export async function GET() {
   try {
-    const kubeconfigPath = path.join(process.cwd(), process.env.KUBECONFIG_FILE!);
-    const namespace = process.env.NAMESPACE || 'default';
+    // Read app-config.json to get current kubeconfig and namespace
+    const configPath = path.join(process.cwd(), 'app-config.json');
+    if (!existsSync(configPath)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'app-config.json not found. Please configure an environment first.'
+        },
+        { status: 400 }
+      );
+    }
+
+    const configContent = readFileSync(configPath, 'utf-8');
+    const config: AppConfig = JSON.parse(configContent);
+
+    const currentEnv = config.currentKubeconfig;
+    if (!currentEnv || !config.kubeconfigs[currentEnv]) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No active environment configured. Please select an environment first.'
+        },
+        { status: 400 }
+      );
+    }
+
+    const kubeconfigFile = config.kubeconfigs[currentEnv].file;
+    const namespace = config.kubeconfigs[currentEnv].namespace || 'default';
+
+    const kubeconfigPath = path.join(process.cwd(), kubeconfigFile);
+    if (!existsSync(kubeconfigPath)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Kubeconfig file not found: ${kubeconfigFile}`
+        },
+        { status: 400 }
+      );
+    }
+
     const env = { ...process.env, KUBECONFIG: kubeconfigPath };
 
     const output = execSync(`kubectl -n ${namespace} get bundledeployment -o json`, {
@@ -76,8 +127,46 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const kubeconfigPath = path.join(process.cwd(), process.env.KUBECONFIG_FILE!);
-    const namespace = process.env.NAMESPACE || 'default';
+    // Read app-config.json to get current kubeconfig and namespace
+    const configPath = path.join(process.cwd(), 'app-config.json');
+    if (!existsSync(configPath)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'app-config.json not found. Please configure an environment first.'
+        },
+        { status: 400 }
+      );
+    }
+
+    const configContent = readFileSync(configPath, 'utf-8');
+    const config: AppConfig = JSON.parse(configContent);
+
+    const currentEnv = config.currentKubeconfig;
+    if (!currentEnv || !config.kubeconfigs[currentEnv]) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No active environment configured. Please select an environment first.'
+        },
+        { status: 400 }
+      );
+    }
+
+    const kubeconfigFile = config.kubeconfigs[currentEnv].file;
+    const namespace = config.kubeconfigs[currentEnv].namespace || 'default';
+
+    const kubeconfigPath = path.join(process.cwd(), kubeconfigFile);
+    if (!existsSync(kubeconfigPath)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Kubeconfig file not found: ${kubeconfigFile}`
+        },
+        { status: 400 }
+      );
+    }
+
     const env = { ...process.env, KUBECONFIG: kubeconfigPath };
 
     const output = execSync(`kubectl -n ${namespace} delete bundledeployment ${name}`, {

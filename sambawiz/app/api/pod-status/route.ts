@@ -15,19 +15,22 @@ interface AppConfig {
   kubeconfigs: Record<string, KubeconfigEntry>;
 }
 
+interface PodStatus {
+  cachePod: { ready: number; total: number; status: string } | null;
+  defaultPod: { ready: number; total: number; status: string } | null;
+}
+
 /**
- * GET - Fetch last N lines of pod logs
+ * GET - Fetch pod status for a bundle deployment
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const podName = searchParams.get('podName');
-    const lines = searchParams.get('lines') || '5';
-    const container = searchParams.get('container');
+    const deploymentName = searchParams.get('deploymentName');
 
-    if (!podName || typeof podName !== 'string') {
+    if (!deploymentName || typeof deploymentName !== 'string') {
       return NextResponse.json(
-        { error: 'Pod name is required' },
+        { error: 'Deployment name is required' },
         { status: 400 }
       );
     }
@@ -75,31 +78,55 @@ export async function GET(request: NextRequest) {
     const env = { ...process.env, KUBECONFIG: kubeconfigPath };
 
     try {
-      // Run kubectl logs with tail
-      const containerFlag = container ? ` -c ${container}` : '';
-      const output = execSync(`kubectl -n ${namespace} logs ${podName}${containerFlag} --tail=${lines}`, {
+      // Run kubectl get pods and grep for the deployment name
+      const output = execSync(`kubectl -n ${namespace} get pods | grep ${deploymentName}`, {
         encoding: 'utf-8',
         env,
         timeout: 10000, // 10 second timeout
       });
 
+      // Parse the output to extract pod status
+      const lines = output.trim().split('\n');
+      const podStatus: PodStatus = {
+        cachePod: null,
+        defaultPod: null,
+      };
+
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 3) continue;
+
+        const podName = parts[0];
+        const readyStatus = parts[1]; // e.g., "1/1" or "1/2"
+        const status = parts[2]; // e.g., "Running"
+
+        // Parse ready status
+        const [ready, total] = readyStatus.split('/').map(Number);
+
+        if (podName.includes('-cache-')) {
+          podStatus.cachePod = { ready, total, status };
+        } else if (podName.includes('-q-default-n-')) {
+          podStatus.defaultPod = { ready, total, status };
+        }
+      }
+
       return NextResponse.json({
         success: true,
-        logs: output,
-        podName,
+        podStatus,
+        deploymentName,
       });
     } catch (error: any) {
-      // Pod might not exist yet or kubectl command failed
+      // Pods might not exist yet or kubectl command failed
       return NextResponse.json({
         success: false,
-        error: 'Failed to fetch pod logs',
+        error: 'Failed to fetch pod status',
         message: error.message || 'Unknown error',
         stderr: error.stderr?.toString() || '',
-        podName,
+        deploymentName,
       });
     }
   } catch (error: any) {
-    console.error('Pod logs error:', error);
+    console.error('Pod status error:', error);
     return NextResponse.json(
       {
         success: false,

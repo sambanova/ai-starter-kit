@@ -3,10 +3,51 @@ import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
+interface KubeconfigEntry {
+  file: string;
+  namespace: string;
+  apiKey?: string;
+}
+
+interface AppConfig {
+  checkpointsDir: string;
+  currentKubeconfig: string;
+  kubeconfigs: Record<string, KubeconfigEntry>;
+}
+
 export async function GET() {
   try {
+    // Read app-config.json to get current configuration
+    const configPath = path.join(process.cwd(), 'app-config.json');
+    let kubeconfigFile = '';
+    let namespace = 'default';
+    let envName = '';
+
+    if (fs.existsSync(configPath)) {
+      try {
+        const configContent = fs.readFileSync(configPath, 'utf-8');
+        const config: AppConfig = JSON.parse(configContent);
+
+        const currentEnv = config.currentKubeconfig;
+        if (currentEnv && config.kubeconfigs[currentEnv]) {
+          kubeconfigFile = config.kubeconfigs[currentEnv].file;
+          namespace = config.kubeconfigs[currentEnv].namespace || 'default';
+          envName = currentEnv;
+        }
+      } catch (parseError) {
+        console.error('Error parsing app-config.json:', parseError);
+      }
+    }
+
+    if (!kubeconfigFile) {
+      return NextResponse.json({
+        success: false,
+        error: 'No kubeconfig file configured. Please set up your environment configuration.'
+      }, { status: 400 });
+    }
+
     // Check if kubeconfig file exists
-    const kubeconfigPath = path.join(process.cwd(), process.env.KUBECONFIG_FILE!);
+    const kubeconfigPath = path.join(process.cwd(), kubeconfigFile);
 
     if (!fs.existsSync(kubeconfigPath)) {
       return NextResponse.json({
@@ -17,7 +58,6 @@ export async function GET() {
     }
 
     // Set KUBECONFIG environment variable
-    const namespace = process.env.NAMESPACE || 'default';
     const env = { ...process.env, KUBECONFIG: kubeconfigPath };
 
     // Run helm list command
@@ -46,15 +86,10 @@ export async function GET() {
     const chartField = sambastackRelease.chart;
     const version = chartField.replace('sambastack-', '');
 
-    // Extract environment name from kubeconfig filename
-    // e.g., "kubeconfigs/sambastack-dev-2.yaml" -> "sambastack-dev-2"
-    const kubeconfigFile = process.env.KUBECONFIG_FILE!;
-    const filename = path.basename(kubeconfigFile, '.yaml');
-
     return NextResponse.json({
       success: true,
       version,
-      envName: filename,
+      envName,
       namespace
     });
 

@@ -1,8 +1,20 @@
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync } from 'fs';
 import path from 'path';
+
+interface KubeconfigEntry {
+  file: string;
+  namespace: string;
+  apiKey?: string;
+}
+
+interface AppConfig {
+  checkpointsDir: string;
+  currentKubeconfig: string;
+  kubeconfigs: Record<string, KubeconfigEntry>;
+}
 
 interface PefConfig {
   ss: string;
@@ -87,9 +99,35 @@ function getLatestVersion(pefName: string, kubeconfigPath: string, namespace: st
 function generatePefConfigs() {
   console.log('Running kubectl get pefs...');
 
-  // Set KUBECONFIG environment variable
-  const kubeconfigPath = path.join(__dirname, '..', process.env.KUBECONFIG_FILE!);
-  const namespace = process.env.NAMESPACE || 'default';
+  // Read app-config.json to get current kubeconfig and namespace
+  const configPath = path.join(__dirname, '..', 'app-config.json');
+  if (!existsSync(configPath)) {
+    console.error('Error: app-config.json not found. Please configure an environment first.');
+    process.exit(1);
+  }
+
+  const configContent = readFileSync(configPath, 'utf-8');
+  const config: AppConfig = JSON.parse(configContent);
+
+  const currentEnv = config.currentKubeconfig;
+  if (!currentEnv || !config.kubeconfigs[currentEnv]) {
+    console.error('Error: No active environment configured. Please select an environment first.');
+    process.exit(1);
+  }
+
+  const kubeconfigFile = config.kubeconfigs[currentEnv].file;
+  const namespace = config.kubeconfigs[currentEnv].namespace || 'default';
+
+  const kubeconfigPath = path.join(__dirname, '..', kubeconfigFile);
+  if (!existsSync(kubeconfigPath)) {
+    console.error(`Error: Kubeconfig file not found: ${kubeconfigFile}`);
+    process.exit(1);
+  }
+
+  console.log(`Using environment: ${currentEnv}`);
+  console.log(`Using namespace: ${namespace}`);
+  console.log(`Using kubeconfig: ${kubeconfigFile}`);
+
   process.env.KUBECONFIG = kubeconfigPath;
 
   // Run kubectl command to get PEF names

@@ -46,6 +46,11 @@ kubeconfigs/*
 # Except the example file
 !kubeconfigs/kubeconfig_example.yaml
 
+# app configuration (contains user-specific settings)
+app-config.json
+# Except the example file
+!app-config.example.json
+
 # package manager lock files
 package-lock.json
 yarn.lock
@@ -63,3 +68,6 @@ pnpm-lock.yaml
 
 # Claude AI conversation files
 CLAUDE.md
+
+# saved artifacts (user-generated bundle/deployment files)
+saved_artifacts/

@@ -1,7 +1,32 @@
 // Test file to debug kubectl describe bundle output parsing
 
-// Get checkpoints directory from environment variable
-const CHECKPOINTS_DIR = process.env.NEXT_PUBLIC_CHECKPOINTS_DIR || process.env.CHECKPOINTS_DIR || 'gs://your-bucket/path/to/checkpoints/';
+import { readFileSync, existsSync } from 'fs';
+import path from 'path';
+
+interface KubeconfigEntry {
+  file: string;
+  namespace: string;
+  apiKey?: string;
+}
+
+interface AppConfig {
+  checkpointsDir: string;
+  currentKubeconfig: string;
+  kubeconfigs: Record<string, KubeconfigEntry>;
+}
+
+// Get checkpoints directory from app-config.json
+let CHECKPOINTS_DIR = 'gs://your-bucket/path/to/checkpoints/';
+try {
+  const configPath = path.join(__dirname, '..', 'app-config.json');
+  if (existsSync(configPath)) {
+    const configContent = readFileSync(configPath, 'utf-8');
+    const config: AppConfig = JSON.parse(configContent);
+    CHECKPOINTS_DIR = config.checkpointsDir || CHECKPOINTS_DIR;
+  }
+} catch (error) {
+  console.warn('Warning: Could not read app-config.json, using default checkpoints directory');
+}
 
 const sampleOutput = `Name:         b-meta-llama-3-gpt-120b
 Namespace:    default

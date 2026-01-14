@@ -2,13 +2,6 @@
 
 SambaWiz is a GUI wizard that accelerates the creation and deployment of model bundles on [SambaStack](https://docs.sambanova.ai/docs/en/admin/overview/sambastack-overview).
 
-## Prerequisites
-
-- Access to a Kubernetes cluster with SambaStack [installed](https://docs.sambanova.ai/docs/en/admin/installation/prerequisites) (minimum helm version of `0.3.496`)
-- Valid `kubeconfig.yaml` for your SambaStack environment
-- Node.js 18+ and npm
-- `kubectl` and `helm` CLI tools installed and configured
-
 ## Overview
 
 SambaWiz provides an intuitive interface to:
@@ -18,6 +11,13 @@ SambaWiz provides an intuitive interface to:
 - Generate valid Kubernetes YAML manifests (BundleTemplate and Bundle resources)
 - Validate and apply bundles to a Kubernetes cluster
 - View bundle validation status and error messages
+
+## Prerequisites
+
+- Access to a Kubernetes cluster with SambaStack [installed](https://docs.sambanova.ai/docs/en/admin/installation/prerequisites) (minimum helm version of `0.3.496`)
+- Valid `kubeconfig.yaml` for your SambaStack environment
+- Node.js 18+ and npm
+- `kubectl` and `helm` CLI tools installed and configured
 
 ## Features
 
@@ -42,38 +42,58 @@ SambaWiz provides an intuitive interface to:
 npm install
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure Application Settings
 
-Create a `.env.local` file in the project root directory:
+Create an `app-config.json` file in the project root directory by copying the example:
 
 ```bash
-# .env.local
-NEXT_PUBLIC_CHECKPOINTS_DIR=gs://your-bucket-name/path/to/checkpoints/
-KUBECONFIG_FILE=kubeconfigs/your-kubeconfig-name.yaml
-NAMESPACE=your-namespace
+# Copy the example config file
+cp app-config.example.json app-config.json
+```
+
+Edit `app-config.json` with your settings:
+
+```json
+{
+  "checkpointsDir": "gs://your-bucket-name/path/to/checkpoints/",
+  "currentKubeconfig": "your-environment-name",
+  "kubeconfigs": {
+    "your-environment-name": {
+      "file": "kubeconfigs/your-environment.yaml",
+      "namespace": "default",
+      "apiKey": ""
+    }
+  }
+}
 ```
 
 **Important**:
-- The `.env.local` file is gitignored for security
-- `NEXT_PUBLIC_CHECKPOINTS_DIR`: Replace with your actual GCS checkpoint directory path (must end with `/`)
-- `KUBECONFIG_FILE`: **Required**. Path to your kubeconfig file relative to the sambawiz folder
-- `NAMESPACE`: The Kubernetes namespace to use (defaults to "default" if not specified)
-- The checkpoints directory variable is used to construct full checkpoint paths by concatenating with checkpoint names from `checkpoint_mapping.json`
+- `app-config.json` is gitignored for security
+- `checkpointsDir`: GCS checkpoint directory path (must end with `/`)
+- `currentKubeconfig`: Name of the currently selected environment
+- `kubeconfigs`: Object containing all configured environments
+  - Each environment has:
+    - `file`: Path to kubeconfig file relative to sambawiz folder
+    - `namespace`: Kubernetes namespace for this environment
+    - `apiKey`: Optional API key for environment-specific authentication
+- The checkpoints directory is used to construct full checkpoint paths
+- Configuration can be updated through the home page UI
+- You can configure multiple environments in the `kubeconfigs` object
 
 ### 3. Configure Kubernetes Access
 
-Place your kubeconfig file in the `kubeconfigs/` directory:
+Place your kubeconfig files in the `kubeconfigs/` directory:
 
 ```bash
 # Copy your kubeconfig to the kubeconfigs directory
-cp /path/to/your/kubeconfig.yaml ./kubeconfigs/your-kubeconfig-name.yaml
+cp /path/to/your/kubeconfig.yaml ./kubeconfigs/your-environment.yaml
 ```
 
-Then update the `KUBECONFIG_FILE` variable in `.env.local` to match your filename.
+Then add the environment to the `kubeconfigs` object in `app-config.json` with the corresponding file path, namespace, and optional API key.
 
 **Important**:
 - All files in the `kubeconfigs/` directory are gitignored for security (except `kubeconfig_example.yaml`)
-- The application reads the kubeconfig file path from the **required** `KUBECONFIG_FILE` environment variable
+- The application reads the kubeconfig file path from `app-config.json`
 - The kubeconfig is validated on app startup using `helm list` to verify cluster connectivity
 - If validation fails, an error alert is displayed with instructions to check your kubeconfig and network/VPN connection
 - The SambaStack Helm version is displayed in the navigation sidebar when validation succeeds
@@ -85,6 +105,8 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+The home page will display the environment selector where you can choose your kubeconfig and namespace.
 
 ### 5. Build for Production
 
@@ -221,12 +243,13 @@ npm run build
 
 ## Security Considerations
 
-- `.env.local` and all files in `kubeconfigs/` (except the example) are gitignored to prevent credential leaks
+- `app-config.json` and all files in `kubeconfigs/` (except the example) are gitignored to prevent credential leaks
 - Temporary YAML files in `temp/` are also gitignored
 - The validation endpoint runs kubectl commands server-side with appropriate timeouts
 - Kubeconfig validation is performed on app startup to ensure cluster connectivity
 - Consider implementing authentication/authorization for production deployments
 - Never commit sensitive configuration files or credentials to version control
+- Use `app-config.example.json` as a template (safe to commit)
 
 ## License
 
