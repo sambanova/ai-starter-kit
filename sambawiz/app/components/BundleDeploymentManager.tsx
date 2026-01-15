@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Box,
   Paper,
@@ -37,6 +38,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import DocumentationPanel from './DocumentationPanel';
 
 interface BundleDeployment {
   name: string;
@@ -64,7 +66,52 @@ interface Bundle {
   models: { [key: string]: any };
 }
 
+interface PodStatusInfo {
+  ready: number;
+  total: number;
+  status: string;
+}
+
+/**
+ * Determines the deployment status of a bundle based on its cache and default pod status.
+ *
+ * @param cachePod - The cache pod status information, or null if not found
+ * @param defaultPod - The default pod status information, or null if not found
+ * @returns "Deployed" if both pods are fully ready, "Deploying" if pods exist but not ready, "Not Deployed" if pods don't exist
+ */
+export function getBundleDeploymentStatus(
+  cachePod: PodStatusInfo | null,
+  defaultPod: PodStatusInfo | null
+): "Deployed" | "Deploying" | "Not Deployed" {
+  // If both pods are not found, the bundle is not deployed
+  if (!cachePod && !defaultPod) {
+    return "Not Deployed";
+  }
+
+  // If either pod exists but is not ready, the bundle is deploying
+  if (cachePod && cachePod.ready < cachePod.total) {
+    return "Deploying";
+  }
+
+  if (defaultPod && defaultPod.ready < defaultPod.total) {
+    return "Deploying";
+  }
+
+  // If we have at least one pod and it's ready, check if both are ready
+  const cacheReady = cachePod ? cachePod.ready === cachePod.total : false;
+  const defaultReady = defaultPod ? defaultPod.ready === defaultPod.total : false;
+
+  // Both pods are ready - fully deployed
+  if (cacheReady && defaultReady) {
+    return "Deployed";
+  }
+
+  // At least one pod exists but the other doesn't, or is not ready yet
+  return "Deploying";
+}
+
 export default function BundleDeploymentManager() {
+  const searchParams = useSearchParams();
   const [bundleDeployments, setBundleDeployments] = useState<BundleDeployment[]>([]);
   const [deploymentToDelete, setDeploymentToDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -100,11 +147,43 @@ export default function BundleDeploymentManager() {
     cachePod: { ready: number; total: number; status: string } | null;
     defaultPod: { ready: number; total: number; status: string } | null;
   }>({ cachePod: null, defaultPod: null });
+  const [allDeploymentStatuses, setAllDeploymentStatuses] = useState<Record<string, {
+    cachePod: PodStatusInfo | null;
+    defaultPod: PodStatusInfo | null;
+  }>>({});
 
   // Save functionality
   const [saveDialogOpen, setSaveDialogOpen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Fetch pod status for all deployments
+  const fetchAllDeploymentStatuses = async (deployments: BundleDeployment[]) => {
+    const statuses: Record<string, {
+      cachePod: PodStatusInfo | null;
+      defaultPod: PodStatusInfo | null;
+    }> = {};
+
+    // Fetch status for each deployment in parallel
+    await Promise.all(
+      deployments.map(async (deployment) => {
+        try {
+          const response = await fetch(`/api/pod-status?deploymentName=${deployment.name}`);
+          const data = await response.json();
+
+          if (data.success) {
+            statuses[deployment.name] = data.podStatus;
+          } else {
+            statuses[deployment.name] = { cachePod: null, defaultPod: null };
+          }
+        } catch (err) {
+          statuses[deployment.name] = { cachePod: null, defaultPod: null };
+        }
+      })
+    );
+
+    setAllDeploymentStatuses(statuses);
+  };
 
   // Fetch bundle deployments
   const fetchBundleDeployments = async () => {
@@ -118,6 +197,8 @@ export default function BundleDeploymentManager() {
 
       if (data.success) {
         setBundleDeployments(data.bundleDeployments);
+        // Fetch pod statuses for all deployments
+        await fetchAllDeploymentStatuses(data.bundleDeployments);
       } else {
         setError(data.error || 'Failed to fetch bundle deployments');
       }
@@ -134,6 +215,32 @@ export default function BundleDeploymentManager() {
     fetchBundleDeployments();
     fetchBundles();
   }, []);
+
+  // Handle query parameter for pre-selecting a bundle
+  useEffect(() => {
+    const bundleParam = searchParams.get('bundle');
+    if (bundleParam && validBundles.length > 0) {
+      // Check if the bundle from the query parameter exists in valid bundles
+      const bundleExists = validBundles.some((bundle) => bundle.name === bundleParam);
+      if (bundleExists) {
+        // Auto-select the bundle
+        setSelectedBundle(bundleParam);
+
+        // Auto-suggest deployment name
+        let suggestedName = '';
+        if (bundleParam.startsWith('b-')) {
+          suggestedName = bundleParam.replace('b-', 'bd-');
+        } else {
+          suggestedName = `bd-${bundleParam}`;
+        }
+        setDeploymentName(suggestedName);
+
+        // Generate YAML
+        const yaml = generateDeploymentYaml(bundleParam, suggestedName);
+        setDeploymentYaml(yaml);
+      }
+    }
+  }, [searchParams, validBundles]);
 
   // Auto-refresh pod logs every 3 seconds
   useEffect(() => {
@@ -440,17 +547,28 @@ spec:
     setMonitoredDeployment(name);
   };
 
-  // Get validation status display
+  // Get deployment status display using pod status
   const getStatusDisplay = (deployment: BundleDeployment) => {
-    if (!deployment.status?.conditions || deployment.status.conditions.length === 0) {
-      return { text: 'Unknown', color: 'text.secondary' };
+    const podStatusInfo = allDeploymentStatuses[deployment.name];
+
+    if (!podStatusInfo) {
+      return { text: 'Loading...', color: 'text.secondary' };
     }
 
-    const condition = deployment.status.conditions[0];
-    if (condition.reason === 'ValidationSucceeded' || condition.status === 'True') {
-      return { text: 'Valid', color: 'success.main' };
-    } else {
-      return { text: 'Invalid', color: 'error.main' };
+    const status = getBundleDeploymentStatus(
+      podStatusInfo.cachePod,
+      podStatusInfo.defaultPod
+    );
+
+    switch (status) {
+      case 'Deployed':
+        return { text: 'Deployed', color: 'success.main' };
+      case 'Deploying':
+        return { text: 'Deploying', color: 'warning.main' };
+      case 'Not Deployed':
+        return { text: 'Not Deployed', color: 'text.secondary' };
+      default:
+        return { text: 'Unknown', color: 'text.secondary' };
     }
   };
 
@@ -520,6 +638,9 @@ spec:
 
   return (
     <Box>
+      {/* Documentation Panel */}
+      <DocumentationPanel docFile="bundle-deployment.md" />
+
       {/* Section 1: Check for existing Bundle Deployments */}
       <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -868,7 +989,7 @@ spec:
                 {showCacheLogs ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               </IconButton>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                Show Cache Pod Logs (last 5 lines)
+                Show logs (last 5 lines)
               </Typography>
             </Box>
 
@@ -984,7 +1105,7 @@ spec:
                 {showDefaultLogs ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               </IconButton>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                Show Default Pod Logs (last 5 lines)
+                Show logs (last 5 lines)
               </Typography>
             </Box>
 

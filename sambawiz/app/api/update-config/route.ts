@@ -6,6 +6,8 @@ interface KubeconfigEntry {
   file: string;
   namespace: string;
   apiKey?: string;
+  apiDomain?: string;
+  uiDomain?: string;
 }
 
 interface AppConfig {
@@ -18,12 +20,14 @@ interface UpdateConfigRequest {
   environment: string;
   namespace: string;
   apiKey?: string;
+  apiDomain?: string;
+  uiDomain?: string;
 }
 
 export async function POST(request: Request) {
   try {
     const body: UpdateConfigRequest = await request.json();
-    const { environment, namespace, apiKey } = body;
+    const { environment, namespace, apiKey, apiDomain, uiDomain } = body;
 
     if (!environment || !namespace) {
       return NextResponse.json({
@@ -73,6 +77,16 @@ export async function POST(request: Request) {
     // Update API key if provided
     if (apiKey !== undefined) {
       config.kubeconfigs[environment].apiKey = apiKey;
+    }
+
+    // Update API domain if provided
+    if (apiDomain !== undefined) {
+      config.kubeconfigs[environment].apiDomain = apiDomain;
+    }
+
+    // Update UI domain if provided
+    if (uiDomain !== undefined) {
+      config.kubeconfigs[environment].uiDomain = uiDomain;
     }
 
     // Write updated config

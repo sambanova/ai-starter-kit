@@ -17,19 +17,136 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, ContentCopy } from '@mui/icons-material';
+import AppConfigDialog from './AppConfigDialog';
+import NoKubeconfigsDialog from './NoKubeconfigsDialog';
+import DocumentationPanel from './DocumentationPanel';
+
+interface KubeconfigEntry {
+  file: string;
+  namespace: string;
+  uiDomain?: string;
+  apiDomain?: string;
+  apiKey?: string;
+}
 
 export default function Home() {
   const router = useRouter();
   const [selectedEnvironment, setSelectedEnvironment] = useState<string>('');
   const [namespace, setNamespace] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
+  const [apiDomain, setApiDomain] = useState<string>('');
+  const [uiDomain, setUiDomain] = useState<string>('');
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
   const [environments, setEnvironments] = useState<string[]>([]);
+  const [kubeconfigs, setKubeconfigs] = useState<Record<string, KubeconfigEntry>>({});
   const [saving, setSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [prerequisiteWarning, setPrerequisiteWarning] = useState<string | null>(null);
+  const [showPrerequisiteDialog, setShowPrerequisiteDialog] = useState<boolean>(false);
+  const [showAppConfigDialog, setShowAppConfigDialog] = useState<boolean>(false);
+  const [showNoKubeconfigsDialog, setShowNoKubeconfigsDialog] = useState<boolean>(false);
+  const [showApiKeyInstructionsDialog, setShowApiKeyInstructionsDialog] = useState<boolean>(false);
+  const [keycloakUsername, setKeycloakUsername] = useState<string>('');
+  const [keycloakPassword, setKeycloakPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loadingCredentials, setLoadingCredentials] = useState<boolean>(false);
+  const [credentialsError, setCredentialsError] = useState<string | null>(null);
+
+  // Check prerequisites on component mount
+  useEffect(() => {
+    const checkPrerequisites = async () => {
+      try {
+        // Check kubectl and helm
+        const prereqResponse = await fetch('/api/check-prerequisites');
+        const prereqData = await prereqResponse.json();
+
+        if (prereqData.success) {
+          const missing = [];
+          if (!prereqData.prerequisites.kubectl) {
+            missing.push('kubectl');
+          }
+          if (!prereqData.prerequisites.helm) {
+            missing.push('helm');
+          }
+
+          if (missing.length > 0) {
+            setPrerequisiteWarning(
+              `The following required tools are not installed: ${missing.join(', ')}. Please install them on your system.`
+            );
+            setShowPrerequisiteDialog(true);
+            return;
+          }
+        }
+
+        // Check helm version after successful prerequisite check
+        const helmVersionResponse = await fetch('/api/kubeconfig-validate');
+        const helmVersionData = await helmVersionResponse.json();
+
+        if (!helmVersionData.success && helmVersionData.helmVersionError) {
+          setPrerequisiteWarning(helmVersionData.errorDetails || 'Helm version check failed');
+          setShowPrerequisiteDialog(true);
+          return;
+        }
+
+        // Check app-config.json
+        const configResponse = await fetch('/api/check-app-config');
+        const configData = await configResponse.json();
+
+        if (configData.success && (!configData.exists || !configData.valid)) {
+          setShowAppConfigDialog(true);
+          return;
+        }
+
+        // If config exists and is valid, check if we need to auto-populate kubeconfigs
+        if (configData.success && configData.exists && configData.valid) {
+          const config = configData.config;
+          const kubeconfigsEmpty = Object.keys(config.kubeconfigs || {}).length === 0;
+          const currentKubeconfigEmpty = !config.currentKubeconfig || config.currentKubeconfig.trim() === '';
+
+          if (kubeconfigsEmpty && currentKubeconfigEmpty) {
+            // Check if there are any kubeconfig files in the kubeconfigs directory
+            const kubeconfigFilesResponse = await fetch('/api/check-kubeconfig-files');
+            const kubeconfigFilesData = await kubeconfigFilesResponse.json();
+
+            if (kubeconfigFilesData.success && !kubeconfigFilesData.hasFiles) {
+              // No kubeconfig files found
+              setShowNoKubeconfigsDialog(true);
+              return;
+            }
+
+            // Try to auto-populate if files exist
+            if (kubeconfigFilesData.success && kubeconfigFilesData.hasFiles) {
+              try {
+                const autoPopResponse = await fetch('/api/auto-populate-kubeconfigs', {
+                  method: 'POST',
+                });
+                const autoPopData = await autoPopResponse.json();
+
+                if (autoPopData.success) {
+                  // Refresh the page to load the new config
+                  window.location.reload();
+                }
+              } catch (error) {
+                console.error('Failed to auto-populate kubeconfigs:', error);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check prerequisites:', error);
+      }
+    };
+
+    checkPrerequisites();
+  }, []);
 
   // Fetch available kubeconfig files on component mount
   useEffect(() => {
@@ -40,6 +157,7 @@ export default function Home() {
 
         if (data.success) {
           setEnvironments(data.environments);
+          setKubeconfigs(data.kubeconfigs || {});
           // Set default environment from app-config.json
           if (data.defaultEnvironment) {
             setSelectedEnvironment(data.defaultEnvironment);
@@ -52,6 +170,14 @@ export default function Home() {
           if (data.defaultApiKey) {
             setApiKey(data.defaultApiKey);
           }
+          // Set default API domain from app-config.json
+          if (data.defaultApiDomain) {
+            setApiDomain(data.defaultApiDomain);
+          }
+          // Set default UI domain from app-config.json
+          if (data.defaultUiDomain) {
+            setUiDomain(data.defaultUiDomain);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch environments:', error);
@@ -62,9 +188,23 @@ export default function Home() {
   }, []);
 
   const handleEnvironmentChange = (event: SelectChangeEvent<string>) => {
-    setSelectedEnvironment(event.target.value);
+    const envName = event.target.value;
+    setSelectedEnvironment(envName);
     setSaveSuccess(false);
     setSaveError(null);
+
+    // Auto-populate namespace, API key, and domains from kubeconfigs
+    if (envName && kubeconfigs[envName]) {
+      setNamespace(kubeconfigs[envName].namespace || 'default');
+      setApiKey(kubeconfigs[envName].apiKey || '');
+      setApiDomain(kubeconfigs[envName].apiDomain || '');
+      setUiDomain(kubeconfigs[envName].uiDomain || '');
+    } else {
+      setNamespace('default');
+      setApiKey('');
+      setApiDomain('');
+      setUiDomain('');
+    }
   };
 
   const handleNamespaceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,12 +219,69 @@ export default function Home() {
     setSaveError(null);
   };
 
+  const handleApiDomainChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setApiDomain(event.target.value);
+    setSaveSuccess(false);
+    setSaveError(null);
+  };
+
+  const handleUiDomainChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUiDomain(event.target.value);
+    setSaveSuccess(false);
+    setSaveError(null);
+  };
+
   const handleToggleShowApiKey = () => {
     setShowApiKey(!showApiKey);
   };
 
   const handleAddEnvironment = () => {
     router.push('/add-environment');
+  };
+
+  const handleGetApiKey = async () => {
+    setShowApiKeyInstructionsDialog(true);
+    setLoadingCredentials(true);
+    setCredentialsError(null);
+    setKeycloakUsername('');
+    setKeycloakPassword('');
+    setShowPassword(false);
+
+    if (!selectedEnvironment) {
+      setCredentialsError('Please select an environment first');
+      setLoadingCredentials(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/get-keycloak-credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          environment: selectedEnvironment,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setKeycloakUsername(data.username);
+        setKeycloakPassword(data.password);
+      } else {
+        setCredentialsError(data.error || 'Failed to retrieve credentials');
+      }
+    } catch (error) {
+      console.error('Error fetching credentials:', error);
+      setCredentialsError('Failed to retrieve credentials');
+    } finally {
+      setLoadingCredentials(false);
+    }
+  };
+
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
   };
 
   const handleApply = async () => {
@@ -107,6 +304,8 @@ export default function Home() {
           environment: selectedEnvironment,
           namespace: namespace,
           apiKey: apiKey,
+          apiDomain: apiDomain,
+          uiDomain: uiDomain,
         }),
       });
 
@@ -114,8 +313,10 @@ export default function Home() {
 
       if (data.success) {
         setSaveSuccess(true);
-        // Clear success message after 3 seconds
-        setTimeout(() => setSaveSuccess(false), 3000);
+        // Reload the page after a short delay to refresh the navbar and all app state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         setSaveError(data.error || 'Failed to save configuration');
       }
@@ -127,17 +328,198 @@ export default function Home() {
     }
   };
 
+  const handleAppConfigCreated = async () => {
+    // Refresh the page to load the new config
+    window.location.reload();
+  };
+
   return (
-    <Box
-      sx={{
-        minHeight: 'calc(100vh - 100px)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 4,
-      }}
-    >
+    <>
+      {/* Documentation Panel */}
+      <DocumentationPanel docFile="home.md" />
+
+      {/* Prerequisite Warning Dialog */}
+      <Dialog
+        open={showPrerequisiteDialog}
+        onClose={() => setShowPrerequisiteDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Prerequisites Missing</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {prerequisiteWarning}
+          </Alert>
+          <DialogContentText>
+            Please install the required tools and restart the application.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPrerequisiteDialog(false)} autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* App Config Dialog */}
+      <AppConfigDialog
+        open={showAppConfigDialog}
+        onClose={() => setShowAppConfigDialog(false)}
+        onConfigCreated={handleAppConfigCreated}
+      />
+
+      {/* No Kubeconfigs Dialog */}
+      <NoKubeconfigsDialog
+        open={showNoKubeconfigsDialog}
+        onClose={() => setShowNoKubeconfigsDialog(false)}
+      />
+
+      {/* API Key Instructions Dialog */}
+      <Dialog
+        open={showApiKeyInstructionsDialog}
+        onClose={() => setShowApiKeyInstructionsDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>API Key Instructions</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Login to the following UI domain using the following credentials to create your API key
+          </DialogContentText>
+
+          {/* Loading State */}
+          {loadingCredentials && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+              <CircularProgress size={40} />
+            </Box>
+          )}
+
+          {/* Error State */}
+          {credentialsError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {credentialsError}
+            </Alert>
+          )}
+
+          {/* UI Domain */}
+          {!loadingCredentials && uiDomain && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                UI Domain:
+              </Typography>
+              <Typography
+                component="a"
+                href={uiDomain}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                  wordBreak: 'break-all',
+                  '&:hover': {
+                    color: 'primary.dark',
+                  },
+                }}
+              >
+                {uiDomain}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Credentials */}
+          {!loadingCredentials && keycloakUsername && keycloakPassword && (
+            <Box>
+              {/* Username */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Username:
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    value={keycloakUsername}
+                    variant="outlined"
+                    size="small"
+                    slotProps={{
+                      input: {
+                        readOnly: true,
+                      },
+                    }}
+                  />
+                  <IconButton
+                    onClick={() => handleCopyToClipboard(keycloakUsername)}
+                    size="small"
+                    sx={{ color: 'primary.main' }}
+                  >
+                    <ContentCopy fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Box>
+
+              {/* Password */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Password:
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    type={showPassword ? 'text' : 'password'}
+                    value={keycloakPassword}
+                    variant="outlined"
+                    size="small"
+                    slotProps={{
+                      input: {
+                        readOnly: true,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                              size="small"
+                            >
+                              {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                  <IconButton
+                    onClick={() => handleCopyToClipboard(keycloakPassword)}
+                    size="small"
+                    sx={{ color: 'primary.main' }}
+                  >
+                    <ContentCopy fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {!loadingCredentials && !uiDomain && (
+            <Alert severity="warning">
+              Please select an environment with a UI domain configured.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowApiKeyInstructionsDialog(false)} autoFocus>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Box
+        sx={{
+          minHeight: 'calc(100vh - 100px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 4,
+        }}
+      >
       {/* Hero Section */}
       <Box
         sx={{
@@ -153,7 +535,7 @@ export default function Home() {
             fontWeight: 700,
             mb: 2,
             fontSize: { xs: '2.5rem', md: '3.5rem' },
-            background: 'linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%)',
+            background: 'linear-gradient(to right, #A2297D, #4E226B)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -170,7 +552,7 @@ export default function Home() {
             fontSize: { xs: '1.1rem', md: '1.5rem' },
           }}
         >
-          Your AI-Powered Bundle Configuration Wizard
+          Your SambaStack Bundle Configuration Wizard
         </Typography>
         <Typography
           variant="body1"
@@ -286,29 +668,10 @@ export default function Home() {
 
         <TextField
           fullWidth
-          label="API Key"
-          type={showApiKey ? 'text' : 'password'}
-          value={apiKey}
-          onChange={handleApiKeyChange}
+          label="API Domain"
+          value={apiDomain}
+          onChange={handleApiDomainChange}
           variant="outlined"
-          slotProps={{
-            input: {
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle api key visibility"
-                    onClick={handleToggleShowApiKey}
-                    edge="end"
-                  >
-                    {showApiKey ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            },
-            inputLabel: {
-              shrink: true,
-            },
-          }}
           sx={{
             mb: 3,
             '& .MuiOutlinedInput-root': {
@@ -321,6 +684,81 @@ export default function Home() {
             },
           }}
         />
+
+        <TextField
+          fullWidth
+          label="UI Domain"
+          value={uiDomain}
+          onChange={handleUiDomainChange}
+          variant="outlined"
+          sx={{
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: 'divider',
+              },
+              '&:hover fieldset': {
+                borderColor: 'primary.main',
+              },
+            },
+          }}
+        />
+
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+            <Typography
+              component="a"
+              onClick={handleGetApiKey}
+              sx={{
+                fontSize: '0.75rem',
+                color: 'primary.main',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                '&:hover': {
+                  color: 'primary.dark',
+                },
+              }}
+            >
+              Get API Key
+            </Typography>
+          </Box>
+          <TextField
+            fullWidth
+            label="API Key"
+            type={showApiKey ? 'text' : 'password'}
+            value={apiKey}
+            onChange={handleApiKeyChange}
+            variant="outlined"
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle api key visibility"
+                      onClick={handleToggleShowApiKey}
+                      edge="end"
+                    >
+                      {showApiKey ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'divider',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+            }}
+          />
+        </Box>
 
         {/* Success/Error Messages */}
         {saveSuccess && (
@@ -346,9 +784,9 @@ export default function Home() {
             fontWeight: 600,
             fontSize: '1rem',
             textTransform: 'none',
-            background: 'linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%)',
+            background: '#A2297D',
             '&:hover': {
-              background: 'linear-gradient(135deg, #FF5722 0%, #FF7043 100%)',
+              background: '#8B2268',
             },
             '&:disabled': {
               background: '#ccc',
@@ -379,6 +817,7 @@ export default function Home() {
           Ready to build? Use the navigation menu to access the bundle builder and deployment tools.
         </Typography>
       </Box>
-    </Box>
+      </Box>
+    </>
   );
 }

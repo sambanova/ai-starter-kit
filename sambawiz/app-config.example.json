@@ -5,12 +5,16 @@
     "your-environment-name": {
       "file": "kubeconfigs/your-environment.yaml",
       "namespace": "default",
-      "apiKey": ""
+      "uiDomain": "https://ui-your-environment.example.com/",
+      "apiDomain": "https://api-your-environment.example.com/",
+      "apiKey": "your-api-key-here"
     },
     "another-environment": {
       "file": "kubeconfigs/another-environment.yaml",
       "namespace": "default",
-      "apiKey": ""
+      "uiDomain": "https://ui-another-environment.example.com/",
+      "apiDomain": "https://api-another-environment.example.com/",
+      "apiKey": "another-api-key-here"
     }
   }
 }

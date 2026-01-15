@@ -21,17 +21,33 @@ SambaWiz provides an intuitive interface to:
 
 ## Features
 
-- **Model Selection**: Choose from multiple AI models including Meta-Llama, DeepSeek, Qwen, and more
+### 1. Home
+- **Prerequisites Validation**: Automatically checks kubeconfig validity and cluster connectivity
+- **Environment Configuration**: Configure API keys, domains, and checkpoint directories for each environment
+- **Multi-Environment Support**: Switch between multiple SambaStack environments seamlessly
+- **Version Display**: Shows SambaStack Helm version in the navigation sidebar when connected
+
+### 2. Bundle Builder
+- **Model Selection**: Choose from multiple AI models including Meta-Llama and more
 - **PEF Configuration**: Configure sequence sizes (16k, 32k, etc.) and batch sizes for each model
 - **Automatic Checkpoint Mapping**: Models are automatically mapped to their corresponding checkpoints
-- **YAML Generation**: Generates properly formatted Kubernetes manifests with:
-  - BundleTemplate with expert configurations
-  - Bundle with checkpoint mappings
-  - Checkpoint sharing UUIDs for resource optimization
+- **YAML Generation**: Generates properly formatted Kubernetes manifests with BundleTemplate and Bundle resources
 - **Editable YAML**: Manually edit generated YAML before validation
-- **Kubernetes Integration**: Validate bundles by applying them to your cluster via `kubectl`
-- **Real-time Status**: View bundle validation status and detailed error messages
-- **Environment Version Display**: Automatically validates kubeconfig and displays SambaStack Helm version in the navigation sidebar
+- **Bundle Validation**: Validate bundle deployability by applying resources to your cluster
+
+### 3. Bundle Deployment
+- **Deployment Management**: Deploy validated bundles to your Kubernetes cluster
+- **Status Monitoring**: Real-time monitoring of deployment status including pod readiness
+- **Error Reporting**: View detailed error messages and status conditions from the cluster
+- **Deployment History**: Track all deployed bundles with creation timestamps
+
+### 4. Playground
+- **Interactive Chat Interface**: Test deployed models with an intuitive chat interface
+- **Multi-Turn Conversations**: Full conversation history maintained for contextual responses
+- **Performance Metrics**: Real-time display of tokens/second, total latency, and time-to-first-token
+- **Code Examples**: View and copy cURL and Python code snippets with syntax highlighting
+- **Model Selection**: Choose from available deployed models to interact with
+- **Chat Management**: Clear conversation history to start fresh interactions
 
 
 ## Getting Started
@@ -61,7 +77,9 @@ Edit `app-config.json` with your settings:
     "your-environment-name": {
       "file": "kubeconfigs/your-environment.yaml",
       "namespace": "default",
-      "apiKey": ""
+      "uiDomain": "https://ui-your-environment.example.com/",
+      "apiDomain": "https://api-your-environment.example.com/",
+      "apiKey": "your-api-key-here"
     }
   }
 }
@@ -75,7 +93,9 @@ Edit `app-config.json` with your settings:
   - Each environment has:
     - `file`: Path to kubeconfig file relative to sambawiz folder
     - `namespace`: Kubernetes namespace for this environment
-    - `apiKey`: Optional API key for environment-specific authentication
+    - `uiDomain`: Optional UI domain URL for the environment (used to create an API key)
+    - `apiDomain`: API domain URL for the environment (required for Playground chat functionality)
+    - `apiKey`: API key for environment-specific authentication (required for Playground chat functionality)
 - The checkpoints directory is used to construct full checkpoint paths
 - Configuration can be updated through the home page UI
 - You can configure multiple environments in the `kubeconfigs` object
@@ -158,6 +178,22 @@ sambawiz/
 ```
 
 ## Configuration Files
+
+### VERSION File
+
+The `VERSION` file in the project root contains version compatibility information:
+
+```
+app: 1.0
+minimum-sambastack-helm: 0.3.496
+```
+
+- **app**: The current version of the SambaWiz application
+- **minimum-sambastack-helm**: The minimum SambaStack environment Helm chart version required to run this version of the app
+
+This ensures that the application is deployed against compatible SambaStack infrastructure. The minimum Helm version requirement is also enforced during kubeconfig validation.
+
+### Data Configuration Files
 
 The application uses three JSON configuration files in the `app/data/` directory:
 

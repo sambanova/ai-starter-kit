@@ -6,6 +6,8 @@ interface KubeconfigEntry {
   file: string;
   namespace: string;
   apiKey?: string;
+  apiDomain?: string;
+  uiDomain?: string;
 }
 
 interface AppConfig {
@@ -22,7 +24,10 @@ export async function GET() {
     let defaultEnvironment: string | null = null;
     let defaultNamespace = 'default';
     let defaultApiKey = '';
+    let defaultApiDomain = '';
+    let defaultUiDomain = '';
     let checkpointsDir = '';
+    let kubeconfigs: Record<string, KubeconfigEntry> = {};
 
     if (fs.existsSync(configPath)) {
       try {
@@ -35,11 +40,14 @@ export async function GET() {
         // Get current environment and its settings
         defaultEnvironment = config.currentKubeconfig || null;
         checkpointsDir = config.checkpointsDir || '';
+        kubeconfigs = config.kubeconfigs || {};
 
-        // Get namespace and API key for current environment
+        // Get namespace, API key, and domains for current environment
         if (defaultEnvironment && config.kubeconfigs[defaultEnvironment]) {
           defaultNamespace = config.kubeconfigs[defaultEnvironment].namespace || 'default';
           defaultApiKey = config.kubeconfigs[defaultEnvironment].apiKey || '';
+          defaultApiDomain = config.kubeconfigs[defaultEnvironment].apiDomain || '';
+          defaultUiDomain = config.kubeconfigs[defaultEnvironment].uiDomain || '';
         }
       } catch (parseError) {
         console.error('Error parsing app-config.json:', parseError);
@@ -52,7 +60,10 @@ export async function GET() {
       defaultEnvironment,
       defaultNamespace,
       defaultApiKey,
-      checkpointsDir
+      defaultApiDomain,
+      defaultUiDomain,
+      checkpointsDir,
+      kubeconfigs
     });
 
   } catch (error) {

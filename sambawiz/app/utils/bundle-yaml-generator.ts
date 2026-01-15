@@ -24,24 +24,6 @@ interface BundleTemplateModels {
 }
 
 /**
- * Generate a shortened bundle name from model names
- */
-export function generateBundleName(modelNames: string[]): string {
-  if (modelNames.length === 0) return 'bundle';
-
-  // Create abbreviated names from model names
-  const abbreviated = modelNames.map(name => {
-    // Extract key parts from model name
-    const parts = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').split('-');
-    // Take meaningful parts (numbers and key words)
-    const meaningful = parts.filter(p => /\d/.test(p) || ['llama', 'meta', 'qwen', 'gpt', 'whisper', 'deepseek', 'e5', 'mistral', 'maverick'].includes(p));
-    return meaningful.slice(0, 3).join('-');
-  }).join('-');
-
-  return abbreviated || 'bundle';
-}
-
-/**
  * Generate checkpoint name from model name
  */
 export function generateCheckpointName(modelName: string): string {

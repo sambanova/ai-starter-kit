@@ -14,8 +14,10 @@ import KeyIcon from '@mui/icons-material/Key';
 import PersonIcon from '@mui/icons-material/Person';
 import BuildIcon from '@mui/icons-material/Build';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
+import KubeconfigErrorDialog from './KubeconfigErrorDialog';
 
 const drawerWidth = 240;
 
@@ -31,6 +33,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [envName, setEnvName] = useState<string | null>(null);
   const [namespace, setNamespace] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showErrorDialog, setShowErrorDialog] = useState<boolean>(false);
+  const [helmCommand, setHelmCommand] = useState<string>('');
+  const [errorDetails, setErrorDetails] = useState<string>('');
+  const [helmVersionError, setHelmVersionError] = useState<boolean>(false);
+  const [appVersion, setAppVersion] = useState<string | null>(null);
 
   // Update selected item based on current pathname
   useEffect(() => {
@@ -40,6 +47,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
       setSelectedItem('bundle-builder');
     } else if (pathname === '/bundle-deployment') {
       setSelectedItem('bundle-deployment');
+    } else if (pathname === '/playground') {
+      setSelectedItem('playground');
     }
   }, [pathname]);
 
@@ -50,27 +59,59 @@ export default function AppLayout({ children }: AppLayoutProps) {
         const response = await fetch('/api/kubeconfig-validate');
         const data = await response.json();
 
+        console.log('Kubeconfig validation response:', data);
+
         if (data.success) {
           setEnvVersion(data.version);
           setEnvName(data.envName);
           setNamespace(data.namespace);
           setValidationError(null);
+          setShowErrorDialog(false);
+          setHelmVersionError(false);
         } else {
-          setValidationError(data.error);
+          console.log('Validation failed, showing error dialog');
+          setValidationError(data.error || 'Failed to validate kubeconfig');
+          setHelmCommand(data.helmCommand || '');
+          setErrorDetails(data.errorDetails || data.error || '');
+          setShowErrorDialog(true);
           setEnvVersion(null);
           setEnvName(null);
           setNamespace(null);
+          // Check if this is a helm version error
+          setHelmVersionError(data.helmVersionError || false);
         }
       } catch (error) {
         console.error('Failed to validate kubeconfig:', error);
-        setValidationError('Your kubeconfig.yaml seems to be invalid. Please check it and re-run the app. Also ensure that you are on the right network/VPN to access the server.');
+        setValidationError('Failed to validate kubeconfig');
+        setHelmCommand('');
+        setErrorDetails('Network error or server unreachable');
+        setShowErrorDialog(true);
         setEnvVersion(null);
         setEnvName(null);
         setNamespace(null);
+        setHelmVersionError(false);
       }
     };
 
     validateKubeconfig();
+  }, []);
+
+  // Fetch app version on component mount
+  useEffect(() => {
+    const fetchAppVersion = async () => {
+      try {
+        const response = await fetch('/api/app-version');
+        const data = await response.json();
+
+        if (data.success) {
+          setAppVersion(data.version);
+        }
+      } catch (error) {
+        console.error('Failed to fetch app version:', error);
+      }
+    };
+
+    fetchAppVersion();
   }, []);
 
   const drawer = (
@@ -98,9 +139,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <ListItemButton
           selected={selectedItem === 'bundle-builder'}
+          disabled={helmVersionError}
           onClick={() => {
-            setSelectedItem('bundle-builder');
-            router.push('/bundle-builder');
+            if (!helmVersionError) {
+              setSelectedItem('bundle-builder');
+              router.push('/bundle-builder');
+            }
           }}
           sx={{
             mx: 2,
@@ -115,8 +159,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
               },
             },
             '&:hover': {
-              backgroundColor: 'rgb(232, 229, 234)',
+              backgroundColor: helmVersionError ? 'transparent' : 'rgb(232, 229, 234)',
               borderRadius: 2,
+            },
+            '&.Mui-disabled': {
+              opacity: 0.5,
             },
           }}
         >
@@ -140,9 +187,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
         <ListItemButton
           selected={selectedItem === 'bundle-deployment'}
+          disabled={helmVersionError}
           onClick={() => {
-            setSelectedItem('bundle-deployment');
-            router.push('/bundle-deployment');
+            if (!helmVersionError) {
+              setSelectedItem('bundle-deployment');
+              router.push('/bundle-deployment');
+            }
           }}
           sx={{
             mx: 2,
@@ -157,8 +207,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
               },
             },
             '&:hover': {
-              backgroundColor: 'rgb(232, 229, 234)',
+              backgroundColor: helmVersionError ? 'transparent' : 'rgb(232, 229, 234)',
               borderRadius: 2,
+            },
+            '&.Mui-disabled': {
+              opacity: 0.5,
             },
           }}
         >
@@ -175,6 +228,54 @@ export default function AppLayout({ children }: AppLayoutProps) {
             primaryTypographyProps={{
               fontSize: '0.875rem',
               fontWeight: selectedItem === 'bundle-deployment' ? 600 : 500,
+              fontFamily: 'var(--font-geist-sans)',
+            }}
+          />
+        </ListItemButton>
+
+        <ListItemButton
+          selected={selectedItem === 'playground'}
+          disabled={helmVersionError}
+          onClick={() => {
+            if (!helmVersionError) {
+              setSelectedItem('playground');
+              router.push('/playground');
+            }
+          }}
+          sx={{
+            mx: 2,
+            px: 1,
+            py: 1.25,
+            borderRadius: 2,
+            gap: 2,
+            '&.Mui-selected': {
+              backgroundColor: 'rgb(232, 229, 234)',
+              '&:hover': {
+                backgroundColor: 'rgb(232, 229, 234)',
+              },
+            },
+            '&:hover': {
+              backgroundColor: helmVersionError ? 'transparent' : 'rgb(232, 229, 234)',
+              borderRadius: 2,
+            },
+            '&.Mui-disabled': {
+              opacity: 0.5,
+            },
+          }}
+        >
+          <ListItemIcon
+            sx={{
+              minWidth: 'auto',
+              color: selectedItem === 'playground' ? 'primary.main' : '#71717A',
+            }}
+          >
+            <SmartToyIcon />
+          </ListItemIcon>
+          <ListItemText
+            primary="Playground"
+            primaryTypographyProps={{
+              fontSize: '0.875rem',
+              fontWeight: selectedItem === 'playground' ? 600 : 500,
               fontFamily: 'var(--font-geist-sans)',
             }}
           />
@@ -245,41 +346,75 @@ export default function AppLayout({ children }: AppLayoutProps) {
           )}
         </Box>
       )}
+
+      {/* App version display */}
+      {appVersion && (
+        <Box
+          sx={{
+            mx: 2,
+            mt: 1.5,
+            mb: 1,
+            p: 1,
+            borderRadius: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.02)',
+            textAlign: 'center',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.7rem',
+              fontWeight: 500,
+              color: '#71717A',
+              fontFamily: 'var(--font-geist-sans)',
+            }}
+          >
+            SambaWiz v{appVersion}
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
+    <>
+      <KubeconfigErrorDialog
+        open={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+        helmCommand={helmCommand}
+        errorDetails={errorDetails}
+      />
+      <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+        <Drawer
+          variant="permanent"
+          sx={{
             width: drawerWidth,
-            boxSizing: 'border-box',
-            border: 'none',
-          },
-        }}
-      >
-        {drawer}
-      </Drawer>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          backgroundColor: 'background.default',
-          minHeight: '100vh',
-        }}
-      >
-        {validationError && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {validationError}
-          </Alert>
-        )}
-        {children}
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              border: 'none',
+            },
+          }}
+        >
+          {drawer}
+        </Drawer>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            backgroundColor: 'background.default',
+            minHeight: '100vh',
+          }}
+        >
+          {validationError && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {validationError}
+            </Alert>
+          )}
+          {children}
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 }

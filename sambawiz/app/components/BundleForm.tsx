@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Paper,
@@ -37,8 +38,10 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import SaveIcon from '@mui/icons-material/Save';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import type { PefConfigs, PefMapping, CheckpointMapping, ConfigSelection } from '../types/bundle';
 import { generateBundleYaml } from '../utils/bundle-yaml-generator';
+import DocumentationPanel from './DocumentationPanel';
 
 // Import the JSON data
 import pefConfigsData from '../data/pef_configs.json';
@@ -55,6 +58,7 @@ interface ModelConfig {
 }
 
 export default function BundleForm() {
+  const router = useRouter();
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [selectedConfigs, setSelectedConfigs] = useState<ConfigSelection[]>([]);
   const [bundleName, setBundleName] = useState<string>('bundle1');
@@ -582,8 +586,18 @@ export default function BundleForm() {
     setSaveResult(null);
   };
 
+  // Handle create deployment button click
+  const handleCreateDeployment = () => {
+    // Navigate to bundle-deployment page with bundle name as query parameter
+    const bundleNameToPass = validationResult?.bundleName || bundleName;
+    router.push(`/bundle-deployment?bundle=${encodeURIComponent(bundleNameToPass)}`);
+  };
+
   return (
     <Box>
+      {/* Documentation Panel */}
+      <DocumentationPanel docFile="bundle-builder.md" />
+
       {/* Model Selection */}
       <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
@@ -802,6 +816,18 @@ export default function BundleForm() {
                 </IconButton>
               </Tooltip>
             </Box>
+            <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
+              Please refer to our{' '}
+              <a
+                href="https://docs.sambanova.ai/docs/en/admin/administration/custom-bundle-deployment"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'inherit', textDecoration: 'underline' }}
+              >
+                documentation
+              </a>
+              {' '}for an explanation of fields in the YAML.
+            </Typography>
             <TextField
               fullWidth
               multiline
@@ -907,8 +933,18 @@ export default function BundleForm() {
             </Box>
           )}
 
-          {/* Validate and Save Buttons */}
+          {/* Validate, Save, and Create Deployment Buttons */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              onClick={handleValidate}
+              disabled={isValidating || !generatedYaml}
+              startIcon={isValidating ? <CircularProgress size={20} /> : null}
+            >
+              {isValidating ? 'Validating...' : 'Validate'}
+            </Button>
             <Button
               variant="outlined"
               color="primary"
@@ -921,13 +957,13 @@ export default function BundleForm() {
             </Button>
             <Button
               variant="contained"
-              color="primary"
+              color="success"
               size="large"
-              onClick={handleValidate}
-              disabled={isValidating || !generatedYaml}
-              startIcon={isValidating ? <CircularProgress size={20} /> : null}
+              onClick={handleCreateDeployment}
+              disabled={!validationResult?.validationStatus?.isValid}
+              startIcon={<RocketLaunchIcon />}
             >
-              {isValidating ? 'Validating...' : 'Validate'}
+              Create Deployment
             </Button>
           </Box>
         </Paper>
