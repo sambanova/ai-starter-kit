@@ -129,7 +129,7 @@ class SyntheticDataGen:
         None
 
         Returns:
-        SambaStudio, or SambaNovaCloud instance
+        SambaNovaCloud instance
         """
         llm = ChatSambaNova(
             api_key=self.sambanova_api_key,
