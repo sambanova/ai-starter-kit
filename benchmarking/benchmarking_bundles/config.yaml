@@ -1,0 +1,9 @@
+model_configs_path: '../benchmarking/benchmarking_bundles/model_configs_example.csv'
+llm_api: 'sncloud'
+output_files_dir: '../benchmarking/data/tests/new_switchingtime'
+consolidated_results_dir: '../benchmarking/data/tests/new_switchingtime/consolidated_results'
+timeout: 3600
+time_delay: 0
+use_multiple_prompts : False # Only available for synthetic performance evaluation
+concurrency_enabled: True
+max_workers: 4 # Only used if concurrency_enabled is True
