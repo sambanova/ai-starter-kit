@@ -976,76 +976,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
 
         return new_metrics_dict
 
-    def calculate_switching_time(self, llm_responses: list[LLMResponse]) -> list[LLMResponse]:
-        """Logic to calculate switching time. Based on the first request TTFT,
-        if this value is significantly larger (more than 3 standard deviations) than the average TTFT
-        of the rest requests, then switching time will be the difference between first TTFT
-        and average of the coming TTFTs.
-
-        Args:
-            llm_responses (list[LLMResponse]): list of LLMResponse objects
-
-        Returns:
-            list[LLMResponse]: list of LLMResponse objects including switching time
-        """
-        # collect necessary information for switching time calculation
-        responses_ttfts = []
-
-        for llm_response in llm_responses:
-            if pd.isnull(llm_response.metrics['error_code']):
-                request_idx = llm_response.request_config.request_idx
-                start_time = llm_response.metrics['start_time']
-                server_ttft_s = llm_response.metrics['server_ttft_s']
-                responses_ttfts.append(
-                    {
-                        'request_idx': request_idx,
-                        'start_time': start_time,
-                        'server_ttft_s': server_ttft_s,
-                    }
-                )
-
-        df_valid_responses = pd.DataFrame(responses_ttfts)
-
-        # transforming str to date time for sorting
-        df_valid_responses['start_time'] = pd.to_datetime(df_valid_responses['start_time'])
-        df_valid_responses = df_valid_responses.sort_values(by=['start_time'])
-
-        # initialize a column for the switching time
-        df_valid_responses['server_switching_time'] = None
-
-        # check server ttft in case metric is not coming in response
-        if df_valid_responses['server_ttft_s'].notna().all():
-            # calculate switching time
-            first_ttft = df_valid_responses['server_ttft_s'].iloc[0]
-            mean_ttft = df_valid_responses['server_ttft_s'].iloc[1:].mean()
-            std_ttft = df_valid_responses['server_ttft_s'].iloc[1:].std()
-            std_ttft = 1e-16 if np.isnan(std_ttft) else std_ttft
-
-            switching_time = first_ttft - mean_ttft
-            outlier_switching_time = None
-
-            if switching_time > (mean_ttft + 3 * std_ttft):
-                outlier_switching_time = switching_time
-                df_valid_responses['server_switching_time'].iloc[0] = outlier_switching_time
-
-        # assign switching time back to request object
-        for llm_response in llm_responses:
-            metrics = llm_response.metrics
-
-            if llm_response.request_config.request_idx == df_valid_responses.head(1)['request_idx'].values[0]:
-                server_switching_time = df_valid_responses.head(1)['server_switching_time'].values[0]
-            else:
-                server_switching_time = None
-
-            llm_response.metrics = self.add_metric_after_key(
-                metrics,
-                new_key='server_switching_time',
-                new_value=server_switching_time,
-                after_key=common_metrics.TTFT_SERVER,
-            )
-
-        return llm_responses
-
     def get_token_throughput_latencies(
         self,
         num_input_tokens: int,
@@ -1166,9 +1096,6 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         end_time = time.monotonic()
         logger.info('Tasks Executed!')
         logger.info(f'Benchmarking results obtained for model {self.model_name} queried with the {self.llm_api} API.')
-
-        # Calculate switching time
-        llm_responses = self.calculate_switching_time(llm_responses)
 
         # Build a metrics summary for the results of the benchmarking run
         results = self.build_metrics_summary(
