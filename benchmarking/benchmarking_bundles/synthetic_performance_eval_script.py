@@ -320,9 +320,68 @@ class BenchmarkRunner:
         self.batch_analyzer = batch_analyzer
         self.rep_finder = rep_finder
 
+    def _run_single_row(self, row, output_files_dir: str):
+        from benchmarking.src.performance_evaluation import (
+            RealWorkLoadPerformanceEvaluator,
+            SyntheticPerformanceEvaluator,
+        )
+
+        model_name = row['model_name']
+        num_requests = int(row['num_requests'])
+        input_tokens = int(row['input_tokens'])
+        output_tokens = int(row['output_tokens'])
+        concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
+        qps = float(row.get('qps', 0.0) or 0.0)
+        multimodal_img_size = (
+            row.get('multimodal_img_size')
+            if pd.notna(row.get('multimodal_img_size'))
+            else 'na'
+        )
+
+        evaluator = None
+        try:
+            if concurrent_requests:
+                evaluator = SyntheticPerformanceEvaluator(
+                    multimodal_image_size=multimodal_img_size,
+                    model_name=model_name,
+                    results_dir=os.path.expanduser(output_files_dir),
+                    num_concurrent_requests=concurrent_requests,
+                    timeout=self.config['timeout'],
+                    user_metadata={'model_idx': 0},
+                    llm_api=self.config['llm_api'],
+                    use_multiple_prompts=self.config['use_multiple_prompts'],
+                )
+            elif qps:
+                evaluator = RealWorkLoadPerformanceEvaluator(
+                    multimodal_image_size=multimodal_img_size,
+                    model_name=model_name,
+                    results_dir=os.path.expanduser(output_files_dir),
+                    qps=qps,
+                    qps_distribution=row.get('qps_distribution', 'constant'),
+                    timeout=self.config['timeout'],
+                    user_metadata={'model_idx': 0},
+                    llm_api=self.config['llm_api'],
+                )
+            else:
+                logger.warning(f'Skipping {model_name}: missing concurrency or QPS.')
+                return
+
+            evaluator.run_benchmark(
+                num_input_tokens=input_tokens,
+                num_output_tokens=output_tokens,
+                num_requests=num_requests,
+                sampling_params={},
+            )
+
+        except Exception as e:
+            logger.exception(f"Error running evaluator for model {model_name}: {e}")
+
+        time.sleep(self.config.get('time_delay', 0))
+
     def run(self, run_name: Optional[str] = None) -> None:
         from benchmarking.src.performance_evaluation import RealWorkLoadPerformanceEvaluator, SyntheticPerformanceEvaluator
-
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
         model_configs_df = pd.read_csv(self.config['model_configs_path'])
         model_configs_df = model_configs_df.astype({'input_tokens': 'Int64', 'output_tokens': 'Int64', 'num_requests': 'Int64'})
 
@@ -331,54 +390,26 @@ class BenchmarkRunner:
             run_name = run_time
         output_files_dir = os.path.join(self.config['output_files_dir'], run_name)
 
-        for _, row in model_configs_df.iterrows():
-            model_name = row['model_name']
-            num_requests = int(row['num_requests'])
-            input_tokens = int(row['input_tokens'])
-            output_tokens = int(row['output_tokens'])
-            concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
-            qps = float(row.get('qps', 0.0) or 0.0)
-            multimodal_img_size = row.get('multimodal_img_size') if pd.notna(row.get('multimodal_img_size')) else 'na'
-            
-            evaluator = None
-            try:
-                if concurrent_requests:
-                    evaluator = SyntheticPerformanceEvaluator(
-                        multimodal_image_size=multimodal_img_size,
-                        model_name=model_name,
-                        results_dir=os.path.expanduser(output_files_dir),
-                        num_concurrent_requests=concurrent_requests,
-                        timeout=self.config['timeout'],
-                        user_metadata={'model_idx': 0},
-                        llm_api=self.config['llm_api'],
-                        use_multiple_prompts=self.config['use_multiple_prompts'],
-                    )
-                elif qps:
-                    evaluator = RealWorkLoadPerformanceEvaluator(
-                        multimodal_image_size=multimodal_img_size,
-                        model_name=model_name,
-                        results_dir=os.path.expanduser(output_files_dir),
-                        qps=qps,
-                        qps_distribution=row.get('qps_distribution', 'constant'),
-                        timeout=self.config['timeout'],
-                        user_metadata={'model_idx': 0},
-                        llm_api=self.config['llm_api'],
-                    )
-                else:
-                    logger.warning(f'Skipping {model_name}: missing concurrency or QPS.')
-                    continue
+        if self.config['concurrency_enabled']:
+            logger.info(
+                f"🚀 Running benchmarks with row-level concurrency "
+                f"(max_workers={self.config['max_workers']})"
+            )
+            with ThreadPoolExecutor(max_workers=self.config['max_workers']) as executor:
+                futures = [
+                    executor.submit(self._run_single_row, row, output_files_dir)
+                    for _, row in model_configs_df.iterrows()
+                ]
 
-                evaluator.run_benchmark(
-                    num_input_tokens=input_tokens,
-                    num_output_tokens=output_tokens,
-                    num_requests=num_requests,
-                    sampling_params={},
-                )
-
-            except Exception as e:
-                logger.exception(f"Error running evaluator for model {model_name}: {e}")
-
-            time.sleep(self.config.get('time_delay', 0))
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                    except Exception as e:
+                        logger.exception(f"Unhandled exception in concurrent run: {e}")
+        else:
+            logger.info("🐢 Running benchmarks sequentially")
+            for _, row in model_configs_df.iterrows():
+                self._run_single_row(row, output_files_dir)
 
         # Consolidation phase
         # For debugging, you can set a specific run_name here
