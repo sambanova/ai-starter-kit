@@ -57,18 +57,11 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 ## Set up the inference endpoint, and environment variables
 
-The next step is to set up your environment variables to use one of the models available from SambaNova. If you're a current SambaNova customer, you can deploy your models with SambaStudio. If you are not a SambaNova customer, you can self-service provision API endpoints using SambaNova Cloud.
+The next step is to set up your environment variables to use one of the models available from SambaNova. You can self-service provision API endpoints using SambaNova Cloud.
 
-- If using **SambaNova Cloud** Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
 
-- If using **SambaStudio** Please follow the instructions [here](../README.md#use-sambastudio-option-2) for setting up endpoint and your environment variables. 
-_Note: In case of OpenAI compatible SambaNova endpoints, dynamic batching is already supported. However, in case you're using a **SambaStudio Turbo** endpoint, please update the URL variable and include `api/v2` like the following to ensure the use of dynamic batching:_
-``` bash
-SAMBASTUDIO_URL="https://api-stage.sambanova.net/api/v2/predict/generic/12345678-9abc-def0-1234-56789abcdef0/456789ab-cdef-0123-4567-89abcdef0123"
-```
-
-
-**Note**: You can also use an OpenAI compatible endpoint from other providers. You will need to generate respective API keys on their platforms and map the URL and API Key to either SambaStudio or SambaNova Cloud environment variables.
+**Note**: You can also use an OpenAI compatible endpoint from other providers. You will need to generate respective API keys on their platforms and map the URL and API Key SambaNova Cloud environment variables.
 
 ## Create the (virtual) environment
 1. (Recommended) Create a virtual environment and activate it (python version 3.11 recommended): 
@@ -118,12 +111,9 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 1. Enter a model name and choose the right API type
 
-     _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
+     _Note: Currently we have specific prompting support for GPT, Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-  - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card. E.g. `Meta-Llama-3.3-70B-Instruct`.
-  - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
 2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A. 
 
@@ -134,7 +124,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 - **Number of input tokens**: The number of input tokens in the generated prompt. *Default*: 1000.
 - **Number of output tokens**: The number of output tokens the LLM can generate. *Default*: 1000.
 - **Number of total requests**: Number of requests sent. *Default*: 10. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
-- **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
+- **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing batching-enabled models, this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 
 4. Run the performance evaluation
