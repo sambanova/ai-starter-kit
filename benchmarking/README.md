@@ -167,8 +167,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     1. Dynamic batching speed  
 
         Parameters:
-        - Model name: Bundle/Meta-Llama-3.3-70B-Instruct
-        - API type: SambaStudio
+        - Model name: Meta-Llama-3.3-70B-Instruct
         - Number of input tokens: 250
         - Number of output tokens: 250
         - Number of total requests: 80
@@ -186,8 +185,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     2. High input and ouput tokens
 
         Parameters:
-        - Model name: Bundle/Meta-Llama-3.3-70B-Instruct
-        - API type: SambaStudio
+        - Model name: Meta-Llama-3.3-70B-Instruct
         - Number of input tokens: 2000
         - Number of output tokens: 2000
         - Number of total requests: 80
@@ -205,12 +203,11 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     3. Running multiple concurrent requests
 
         Parameters:
-        - Model name: Bundle/Meta-Llama-3.3-70B-Instruct
-        - API type: SambaStudio
+        - Model name: Meta-Llama-3.3-70B-Instruct
         - Number of input tokens: 250
         - Number of output tokens: 250
-        - Number of total requests: 1000
-        - Number of concurrent requests: 100
+        - Number of total requests: 400
+        - Number of concurrent requests: 80
         - Timeout: 600
 
         Results:
@@ -234,10 +231,7 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
      _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-  - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card. E.g. `Meta-Llama-3.3-70B-Instruct`.
-  - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
 2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A.
 
@@ -307,14 +301,11 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
     _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-  - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card.
-  - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
 4. Set the configuration and tuning parameters
 
-- **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing [batching-enabled models](https://docs.sambanova.ai/sambastudio/latest/dynamic-batching.html), this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
+- **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing dynamic batching, this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
 - **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
 - **Max Output Tokens**: Maximum number of tokens to generate. *Default*: 256
 - **Save LLM Responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
@@ -352,10 +343,7 @@ This option allows you to measure performance during a multi-turn conversation w
 
 1. Enter a model name and choose the right API type
 
-  - If the model specified is a bundle, specify the desired expert in the Model Name text box with the prefix `Bundle`. 
-    - For example, the Samba-1 Turbo Llama-3-8B expert in studio is titled `Meta-Llama-3-8B-Instruct` so the model name would be `Bundle/Meta-Llama-3-8B-Instruct`.
-  - If the model comes from a SambaStudio endpoint using its OpenAI compatible URL or a standalone model, enter the full model name shown on the model card.
-  - If the model is a SambaNova Cloud one, then use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
 
 2. If the model to benchmark is multimodal, then you can upload an image using the option in the sidebar. (Limit size: 200MB) **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing prompt may help to solve the issue.
 
