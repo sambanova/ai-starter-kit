@@ -433,6 +433,66 @@ def read_perf_eval_json_files_wrapper(path: str, type: str) -> pd.DataFrame:
     return _read_fn(path, type=type)
 
 
+# ---------------------------------------------------------
+# Load per-request dataframe with batching + switching time
+# ---------------------------------------------------------
+
+def load_requests_with_switching(
+    output_files_dir: str,
+    read_perf_eval_json_files_fn,
+    file_parser: Optional[FileNameParser] = None,
+    batch_analyzer: Optional[BatchAnalyzer] = None,
+) -> pd.DataFrame:
+    """
+    Returns a per-request dataframe enriched with:
+      - batching info
+      - uuid
+      - switching_time (same value repeated per request in a run)
+    """
+
+    file_parser = file_parser or FileNameParser()
+    batch_analyzer = batch_analyzer or BatchAnalyzer()
+
+    df_individual = read_perf_eval_json_files_fn(
+        output_files_dir, type="individual_responses"
+    )
+
+    dfs = []
+
+    for filename in os.listdir(output_files_dir):
+        if "individual_responses" not in filename:
+            continue
+
+        try:
+            df_file = df_individual[df_individual["filename"] == filename].copy()
+            _, _, _, _, _ = file_parser.extract_file_info(filename)
+
+            _, _, df_with_batching = batch_analyzer.get_grouping_and_batching_info(
+                df_file
+            )
+
+            df_with_batching["uuid"] = filename
+            dfs.append(df_with_batching)
+
+        except Exception:
+            continue
+
+    if not dfs:
+        return pd.DataFrame()
+
+    df_all = pd.concat(dfs, ignore_index=True)
+    df_all["uuid"] = df_all["filename"].apply(file_parser.find_uuid)
+
+    # Compute switching time per UUID
+    df_switching = SwitchingTimeCalculator.calculate_switching_time(df_all)
+
+    # Broadcast switching time to every request
+    df_all = df_all.merge(
+        df_switching, left_on="uuid", right_index=True, how="left"
+    )
+
+    return df_all
+
 def main():
     current_dir = os.path.dirname(os.path.realpath(__file__))
     project_root = os.path.abspath(os.path.join(current_dir, '../../'))
