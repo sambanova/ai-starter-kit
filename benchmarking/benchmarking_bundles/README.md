@@ -1,120 +1,234 @@
-# Benchmarking scripts
+# Benchmarking bundles
+
+This directory contains scripts to run **end-to-end benchmarking for model bundles**, supporting both **synthetic (concurrency-based)** and **real workload (QPS-based)** inference tests, with optional **row-level concurrency**. Results include automatic **batching** and **switching time** estimations.
+
+---
 
 ## Required steps
 
-The required steps for CoE benchmarking are the following:
-
-- Run the benchmarking script. Cf. [Benchmark Model Bundle](./Benchmark_Model_Bundle.ipynb).
+The required steps for Bundle benchmarking are the following:
 
 
-## Strategy to select the models in a bundle
+### 1. Configuration file
 
-## Benchmarking script
+Modify the following file:
 
-Modify the following files:
+- `_PATH TO AISK REPO HERE/benchmarking/benchmarking_scripts/config.yaml_`
 
-- _PATH TO AISK REPO HERE/benchmarking/benchmarking_scripts/config.yaml_
+Example:
 
-    With the desired input and output paths.
+```yaml
+model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/model_configs_example.csv'
+llm_api: 'sambastudio'  # or sncloud
+output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/logs/output_files'
+consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/consolidated_results'
+timeout: 3600
+time_delay: 0
 
-    ```yaml
-    model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/model_configs_example.csv'
-    llm_api: 'sambastudio'  # or sncloud for the cloud
-    output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/logs/output_files'
-    consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/consolidated_results'
-    timeout: 3600
-    time_delay: 0
-    ```
+# Row-level concurrency
+concurrency_enabled: true
+max_workers: 4
 
-- _PATH TO AISK REPO HERE/benchmarking/benchmarking_scripts/model_configs_example.csv_
+# Prompt behavior
+use_multiple_prompts: false
+```
 
-    With the desired model configurations to test.
+#### Key notes:
+- concurrency_enabled: If true, each row in the CSV is benchmarked concurrently using a thread pool.
+- max_workers: Maximum number of parallel benchmark jobs.
+- time_delay: Optional sleep between runs (per row).
 
-    ```csv
-    model_name,input_tokens,output_tokens,num_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size
-    ```
+### 2. Model configuration file
 
-## Configuration parameters
+Modify:
 
-The configuration table in `model_configs_example.csv` details each individual model of the composition that we would like to test, together with other parameters.
+`_PATH TO AISK REPO HERE/benchmarking/benchmarking_scripts/model_configs_example.csv_`
 
--  `model_name`. The name of the model in the bundle.
--  `input_tokens`. The number of input tokens: The number of input tokens in the generated prompt.
--  `output_tokens`. The number of output tokens: The number of output tokens the LLM can generate.
--  `num_requests`. The number of total requests: Number of requests sent.
-    Note: the program can timeout before all requests are sent.
-    Configure the Timeout parameter in your `benchmarking_scripts/config.yaml` accordingly.
-    The Timeout is the Number of seconds before the program times out
-    Statistics (min, max, and mediam) will be calculated over this number of requests.
-- `concurrent_requests`. The number of concurrent requests.
-    For testing batching-enabled models, this value should be greater than the largest `batch_size` one needs to test.
-    The typical batch sizes that are supported are 1, 4, 8, and 16.
-- `qps`. Queries per second: the number of queries that will be sent to the endpoint per second.
-    Values QPS<10 are recommended since user can hit rate limits. Defaults to 1.0.
-- `qps_distribution`. Queries per second distribution: the type of wait time distribution in between requests.
-    User can choose the values `constant`, `uniform`, and `exponential`. Defaults to constant.
-- `multimodal_img_size`. If the model selected is multimodal, then select the pre-set image size to include in the benchmarking requests.
-    There are three categories: `Small` (500x500px), `Medium` (1000x1000px), and `Large` (2000x2000px).
-    Otherwise, if model is not multimodal, then leave the value to N/A.
+Header:
 
-Note that the sum of `input_tokens` and `output_tokens` should not exceed the sequence length of the model that we want to test.
-E.g. if we want to test how a model performs with a sequence lenght of 4096 tokens, we can set `input_tokens` to 4000 and `output_tokens` to 64, so that their sum does not exceed 4096.
+`model_name,input_tokens,output_tokens,num_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size`
 
-## Results
+Each row defines one benchmark job.
 
-### Individual results
-Individual results will be stored in the `output_files_dir` defined in your `benchmarking_scripts/config.yaml`.
+#### Configuration parameters
 
-For every model configuration defined in each row of your `model_configs_example.csv` table, two results will be stored.
+The configuration table in `model_configs_example.csv` details each individual model of the composition that we would like to test.
 
-1. Individual responses files end will `individual_responses.json`.
-    They contain performance metrics for every request.
-    E.g. if `num_requests` is set to 10, you will have 10 entries.
+- `model_name`  
+  Name of the model in the bundle.
 
-2. Summary files end will `summary.json`.
-    They contain statistics calculated from the individual responses file, such as the min, the max, several quantiles, and the standard deviation.
+- `input_tokens`  
+  Number of input tokens in the generated prompt.
 
-### Consolidated results
+- `output_tokens`  
+  Maximum number of output tokens generated by the model.
 
-Consolidated results will be stored in the `consolidated_results_dir` defined in your `benchmarking_scripts/config.yaml`.
+- `num_requests`  
+  Total number of requests sent.
 
-Every row of the `model_configs_example.csv` will have its corresponding row in the consolidated results table, i.e. `consolidated_results_<date>.xlsx`.
+  ⚠️ The run may timeout before all requests are sent.  
+  Configure the `timeout` parameter in `benchmarking_scripts/config.yaml` accordingly.
 
-Terminology.
-- Server metrics: These are performance metrics from the Server API.
-    A prefix `server` will be added to the metric name.
-- Client metrics: These are performance metrics computed on the client side / local machine.
-    A prefix `client` will be added to the metric name.
-- The suffixes `min`, `max`, and `p_50` represent the minimum, maximum, and the median, respectively.
-- The suffix `s` indicates that the value is in seconds.
-- The prefix `mean` refers to the mean value.
+- `concurrent_requests`  
+  Enables **synthetic workload benchmarking**.
 
-The main columns of consolidated results are the following:
-- `ttft`. Time to First Token (TTFT).
-    One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics.
-- `server_end_to_end_latency`. End-to-end latency.
-    One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is also mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics.
-- `server_output_token_per_s`. Output throughput, i.e. the number of output tokens per second per request.
-    One should see good agreement between the client and server-side metrics.
-    For endpoints that support dynamic batching, one should see a decreasing trend in metrics as the batch size increases.
-- `acceptance_rate`. Acceptance rate for speculative decoding pairs.
+  - Used when testing batching-enabled models
+  - Typical values: `1`, `4`, `8`, `16`
+  - If this value is set, `qps` is ignored
+
+- `qps`  
+  Enables **real workload benchmarking** (queries per second).
+
+  - Recommended values `< 10`
+  - Ignored if `concurrent_requests` is set
+
+- `qps_distribution`  
+  Wait-time distribution between requests.
+
+  Supported values:
+  - `constant` (default)
+  - `uniform`
+  - `exponential`
+
+- `multimodal_img_size`  
+  Used only for multimodal models to include an image in the benchmark requests.
+
+  Supported values:
+  - `small` → 500×500 px
+  - `medium` → 1000×1000 px
+  - `large` → 2000×2000 px
+
+  For non-multimodal models, set this field to `N/A` or leave it empty.
+
+> **Important:**  
+> The sum of `input_tokens` and `output_tokens` must not exceed the maximum sequence length supported by the model.
+>  
+> Example: for a model with a 4096-token context window, you may set  
+> `input_tokens = 4000` and `output_tokens = 64`.
+
+### 3. Execution modes
+
+#### 3.1 Sequential execution
+
+If `concurrency_enabled: false` in `config.yaml`, models are benchmarked **row by row** in the order defined in `model_configs_example.csv`.
+
+This mode is useful for:
+- Debugging
+- Isolating switching-time effects
+- Running on limited resources
+
+#### 3.2 Concurrent execution
+
+If `concurrency_enabled: true`, each row in `model_configs_example.csv` is benchmarked **in parallel** using a `ThreadPoolExecutor`.
+
+Relevant configuration fields:
+- `concurrency_enabled`: Enables row-level parallelism
+- `max_workers`: Maximum number of benchmark jobs running concurrently
+
+This mode is useful when:
+- Models are independent
+- Faster turnaround is needed for large bundles
+
+### 4. Results
+
+#### 4.1 Individual results
+
+Individual results are stored under:
+
+For every model configuration (row in `model_configs_example.csv`), two result files are generated:
+
+1. **Individual responses** (`*individual_responses.json`)  
+   - One entry per request
+   - Contains per-request metrics such as:
+     - Time to First Token (TTFT)
+     - End-to-end latency
+     - Output throughput
+     - Switching-related indicators
+
+2. **Summary files** (`*summary.json`)  
+   - Aggregated statistics computed from individual responses:
+     - Minimum
+     - Maximum
+     - Mean
+     - Median (p50)
+     - Standard deviation
+
+#### 4.2 Consolidated results
+
+Consolidated results are written to:
+
+Each row in the Excel file corresponds to **one row in `model_configs_example.csv`**.
+
+##### Terminology
+
+- **Server metrics**  
+  Performance metrics returned by the inference server API.  
+  Metric names are prefixed with `server_`.
+
+- **Client metrics**  
+  Performance metrics computed on the client side.  
+  Metric names are prefixed with `client_`.
+
+- **Suffixes**
+  - `min`, `max`, `p50`, `mean`
+  - `s` indicates that the value is in seconds
+
+##### Main consolidated metrics
+
+- **TTFT (Time to First Token)**  
+  Client-side TTFT typically shows higher variance due to request queueing, especially when concurrency is enabled.
+
+- **End-to-end latency**  
+  Client-side latency includes queue wait time, while server-side latency does not.
+
+- **Output tokens per second**  
+  Output throughput per request.  
+  For batching-enabled endpoints, throughput per request may decrease as batch size increases.
+
+- **Acceptance rate**  
+  Acceptance rate for speculative decoding pairs.
+
+##### Batching analysis
+
+The benchmarking pipeline automatically infers **effective batching behavior** by analyzing request timing patterns.
+
+- Requests with identical `server_ttft` are grouped together
+- Batch size is inferred as the next power of two of the group size
+
+Reported batching fields
+
+- `request_batching_frequencies`  
+  Frequency of observed batch sizes within a run.
+
+- `representative_batch_size`  
+  Median-dominant batch size that accounts for more than 50% of requests.
+
+##### Switching time
+
+Switching time represents the overhead incurred when loading a new model or configuration into HBM memory during inference.
+
+A switch can be triggered by changes in:
+- Model name
+- Sequence length
+- Batch size
+- Multimodal configuration
+
+##### How switching time is estimated:
+
+For each benchmark run (identified by a UUID):
+
+1. Identify the largest observed batch size
+2. Compute the maximum and minimum server-side TTFT within that batch
+3. Switching time is calculated as:
 
 
-### Switching time
-The switching time indicates the time required to switch from one model to another in a CoE bundle in the context of inference.
-A switch is triggered not only by a different model name, but also a different sequence length and a different batch size.
-The latest technology of RDUs, SN40L, also offers High-speed HBM memory bandwidth to significantly speed up inference workloads.
-Each time that a new model configuration is called for inference, it needs to be loaded into the HBM memory.
-The switching time can be zero if the HBM memory is not saturated (e.g. when smaller model configurations, with fewer number of parameters, or smaller sequence lengths, or smaller batch sizes are involved in the switch).
-On the other hand, if the HBM memory is saturated, the memory loading operation leads to a non zero switching time.
+##### Where to find it
 
-You can extract the switching time of a request from the `switching_time` key in its corresponding first entry in the `individual_responses.json` file.
+- Column: `switching_time`
+- Derived from the first requests in `individual_responses.json`
 
-In order to estimate the switching time of a model in a CoE bundle of `N` models, it is important to rotate the order in which the models will be called in your `model_configs_example.csv` configuration file.
-For example, if your bundle has 3 models configurations that could trigger a switch, you could run the benchmarking scripts several times, in order to get a better idea on how the order of the rows can influence the switching time.
+##### Switching time important notes
 
-The switching time is estimated as follows.
-Based on the first request TTFT in `individual_responses.json`, if this value is significantly larger (more than 3 standard deviations) than the average TTFT of the remaining requests, then the switching time will be the difference between first TTFT and the average of the remaining TTFTs.
-
-## Notebooks
-TODO: Add the links to all the relevant notebooks.
+- In `model_configs_example.csv`, Include a warm up set of models so HBM could be set with the models that will be tested. Right after the warm up models, proceed to include the models that would be tested. 
+- Include multiple sequence lengths and batch sizes according to the node environment configuration.
+- Run multiple benchmark iterations per sequence lenght and batch size to obtain stable switching time estimates
