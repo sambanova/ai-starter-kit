@@ -40,12 +40,6 @@ For functionalities related to third-party integrations, find a list in our [Int
 </tr>
 
 <tr>
-<td width="20%"><a href="e2e_fine_tuning/README.md">End to End Fine-tuning</a></td>
-<td width="40%"> Recipe to upload and train a Language Model (LLM) using your own data in SambaStudio platform. </td>
-<td width="20%"> Data Ingestion & Preparation </td>
-</tr>
-
-<tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
 <td width="20%"> Intelligent Information Retrieval </td>  
@@ -71,7 +65,7 @@ For functionalities related to third-party integrations, find a list in our [Int
 
 <tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
-<td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
+<td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaNova Solutions. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
 <td width="20%"> Advanced AI Capabilities </td>    
 </tr>
 
