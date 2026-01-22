@@ -186,9 +186,6 @@ utils/synthetic_data_gen/output/
 search_assistant/data/
 yoda/data/
 
-#snapi and snsdk
-SambaStudio_API_Client-*
-snsdk-*
 
 #Local Test Files
 
@@ -255,12 +252,6 @@ wandb/
 utils/eval/.deepeval-cache.json
 utils/eval/results
 utils/eval/weave
-
-# dedicated env fine-tuning and byoc
-utils/dedicated_env/tmp_source_file.json
-utils/fine_tuning/sambastudio_fine_tuning_dataset
-utils/dedicated_env/models
-e2e_fine_tuning/data
 
 #Deployment 
 kits_to_deploy.json

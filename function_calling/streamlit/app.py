@@ -51,7 +51,6 @@ def load_app_description() -> Any:
 
 config = load_config()
 prod_mode = config.get('prod_mode', False)
-llm_type = 'SambaStudio' if config.get('llm', {}).get('api') == 'sambastudio' else 'SambaNova Cloud'
 st_tools = config.get('st_tools', {})
 st_preset_queries = load_preset_queries()
 st_description = load_app_description()
