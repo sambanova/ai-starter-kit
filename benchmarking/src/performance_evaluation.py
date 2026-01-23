@@ -44,7 +44,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 # disable annoying streamlit logging
 logging.getLogger('streamlit.runtime.scriptrunner_utils.script_run_context').disabled = True
-transformers.logging.set_verbosity_error()
+transformers.logging.set_verbosity_error()  # type: ignore[no-untyped-call]
 load_dotenv('../.env', override=True)
 
 SYSTEM_PROMPT_PATH = os.path.join(file_location, '../prompts/system-prompt_template.yaml')
