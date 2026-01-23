@@ -1,6 +1,8 @@
 import os
 import sys
 
+from dotenv import load_dotenv
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 utils_dir = os.path.abspath(os.path.join(current_dir, '..'))
 repo_dir = os.path.abspath(os.path.join(utils_dir, '..'))
@@ -14,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 import weave
 import yaml
+from pydantic import SecretStr
 from weave import Dataset
 
 from utils.eval.dataset import WeaveDatasetManager
@@ -21,6 +24,8 @@ from utils.eval.models import CorrectnessLLMJudge, WeaveChatModel, WeaveRAGModel
 from utils.eval.rag import RAGChain
 
 CONFIG_PATH = os.path.join(current_dir, 'config.yaml')
+
+load_dotenv(os.path.join(repo_dir, '.env'), override=True)
 
 
 class WeaveEvaluator(ABC):
@@ -45,8 +50,10 @@ class BaseWeaveEvaluator(WeaveEvaluator):
         dataset_manager (object): Dataset manager object used for creating datasets.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, sambanova_api_key: Optional[str] = None, sambanova_api_base: Optional[str] = None) -> None:
         self.config_info = self._get_config_info(CONFIG_PATH)
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.judge = self._init_judge()
         self.dataset_manager = self._init_dataset_manager()
 
@@ -102,7 +109,13 @@ class BaseWeaveEvaluator(WeaveEvaluator):
         """
 
         for param in params:
-            test_model = WeaveChatModel(**param)
+            test_model = (
+                WeaveChatModel(
+                    **param, sambanova_api_key=self.sambanova_api_key, sambanova_api_base=self.sambanova_api_base
+                )
+                if self.sambanova_api_key is not None and self.sambanova_api_base is not None
+                else WeaveChatModel(**param)
+            )
             evaluation = weave.Evaluation(
                 name=' '.join(str(value) for value in param.values()), dataset=data, scorers=[self.judge]
             )
@@ -138,7 +151,13 @@ class BaseWeaveEvaluator(WeaveEvaluator):
             params (Dict[str, Any]): A dictionary containing parameters for the model to evaluate.
             data (Dataset): The dataset to be used for evaluation.
         """
-        test_model = WeaveChatModel(**params)
+        test_model = (
+            WeaveChatModel(
+                **params, sambanova_api_key=self.sambanova_api_key, sambanova_api_base=self.sambanova_api_base
+            )
+            if self.sambanova_api_key is not None and self.sambanova_api_base is not None
+            else WeaveChatModel(**params)
+        )
         evaluation = weave.Evaluation(
             name=' '.join(str(value) for value in params.values()), dataset=data, scorers=[self.judge]
         )
@@ -214,8 +233,10 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
     Base class for evaluating RAG models using the Weave framework.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, sambanova_api_key: Optional[str] = None, sambanova_api_base: Optional[str] = None) -> None:
         super().__init__()
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.rag_info = self.config_info['rag']
         self.rag_chain = self._init_chain()
 
@@ -290,10 +311,21 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
         vectordb_info = rag_info['vectordb']
         model_kwargs = rag_info.get('model_kwargs')
 
-        return WeaveRAGModel(
-            name=rag_info.get('name'),
-            llm_params=llm_info,
-            embeddings_params=embeddings_info,
-            rag_params=vectordb_info,
-            model_kwargs=model_kwargs,
-        )
+        if self.sambanova_api_key is not None and self.sambanova_api_base is not None:
+            return WeaveRAGModel(
+                name=rag_info.get('name'),
+                llm_params=llm_info,
+                embeddings_params=embeddings_info,
+                rag_params=vectordb_info,
+                model_kwargs=model_kwargs,
+                sambanova_api_key=self.sambanova_api_key,
+                sambanova_api_base=self.sambanova_api_base,
+            )
+        else:
+            return WeaveRAGModel(
+                name=rag_info.get('name'),
+                llm_params=llm_info,
+                embeddings_params=embeddings_info,
+                rag_params=vectordb_info,
+                model_kwargs=model_kwargs,
+            )

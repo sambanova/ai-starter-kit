@@ -126,7 +126,6 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def main() -> None:
-
     set_font()
 
     render_title_icon('Real Workload Performance Evaluation', os.path.join(repo_dir, 'images', 'benchmark_icon.png'))
@@ -232,14 +231,12 @@ def main() -> None:
         )
 
         st.session_state.running = st.sidebar.button(
-            'Run!', disabled=st.session_state.running, key='run_button', type='primary', width="stretch"
+            'Run!', disabled=st.session_state.running, key='run_button', type='primary', width='stretch'
         )
 
         sidebar_stop = st.sidebar.button(
-            'Stop', 
-            disabled=not st.session_state.running, 
-            type='secondary', 
-            width="stretch")
+            'Stop', disabled=not st.session_state.running, type='secondary', width='stretch'
+        )
 
     if sidebar_stop:
         st.session_state.running = False
@@ -326,7 +323,7 @@ def main() -> None:
 if __name__ == '__main__':
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        page_icon=os.path.join(repo_dir, 'images', 'icon.svg'),
     )
 
     _initialize_session_variables()

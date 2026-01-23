@@ -1,8 +1,8 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="../images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -12,9 +12,10 @@ Function Calling kit
 This function calling kit is an example of tools calling implementation and a generic function calling module that can be used inside your application workflows.
 <!-- TOC -->
 
-- [Function Calling kit](#function-calling-kit)
+- [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
+    - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
     - [Set up the models, environment variables and config file](#set-up-the-models-environment-variables-and-config-file)
         - [Set up the generative model](#set-up-the-generative-model)
     - [Install dependencies](#install-dependencies)
@@ -73,7 +74,8 @@ Install the python dependencies in your project environment:
 cd ai-starter-kit/function_calling
 python3 -m venv function_calling_env
 source function_calling_env/bin/activate
-pip install -r requirements.txt
+pip instal uv
+uv pip install -r requirements.txt
 ```
 
 # Use the Function Calling kit
@@ -108,7 +110,7 @@ We provide a simple module for using the Function Calling LLM, for this you will
 
     > See more in [langchain tools](https://python.langchain.com/v0.1/docs/modules/tools/)
 
-2. Instantiate your Function calling LLM, passing the model to use (Sambastudio), and the required tools as argument, then you can invoke the function calling pipeline using the `function_call_llm` method passing the user query
+2. Instantiate your Function calling LLM, passing the model to use, and the required tools as argument, then you can invoke the function calling pipeline using the `function_call_llm` method passing the user query
 
     ``` python
         from function_calling.src.function_calling  import FunctionCallingLlm

@@ -3,7 +3,7 @@ import os
 import shutil
 import time
 from io import BytesIO
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import tiktoken
 import yaml
@@ -20,9 +20,10 @@ tokenizer = tiktoken.get_encoding('cl100k_base')
 
 
 class DocumentAnalyzer:
-    def __init__(self, sambanova_api_key: str) -> None:
+    def __init__(self, sambanova_api_key: str, sambanova_api_base: Optional[str] = None) -> None:
         self.get_config_info()
         self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.set_llm()
 
     def get_config_info(self) -> None:
@@ -40,7 +41,7 @@ class DocumentAnalyzer:
             self.templates = json.load(ifile)
 
     def set_llm(self) -> None:
-        self.llm = ChatSambaNova(api_key=self.sambanova_api_key, **self.llm_info)
+        self.llm = ChatSambaNova(api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.llm_info)
 
     def delete_temp_dir(self, temp_dir: str) -> None:
         """Delete the temporary directory and its contents."""

@@ -8,10 +8,10 @@ import nltk
 import torch
 import yaml
 from dotenv import load_dotenv
-from langchain.chains.base import Chain
-from langchain.docstore.document import Document
-from langchain.memory import ConversationSummaryMemory
-from langchain.prompts import ChatPromptTemplate
+from langchain_classic.chains.base import Chain
+from langchain_classic.docstore.document import Document
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.prompts import ChatPromptTemplate
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -124,7 +124,7 @@ class RetrievalQAChain(Chain):
 
     def rerank_docs(self, query: str, docs: List[Document], final_k: int) -> List[Document]:
         # Lazy hardcoding for now
-        tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')
+        tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')  # type: ignore[no-untyped-call]
         reranker = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-large')
         pairs = []
         for d in docs:
@@ -229,7 +229,7 @@ class RetrievalQAChain(Chain):
 
 
 class DocumentRetrieval:
-    def __init__(self, sambanova_api_key: str) -> None:
+    def __init__(self, sambanova_api_key: str, sambanova_api_base: Optional[str] = None) -> None:
         self.vectordb = VectorDb()
         config_info = self.get_config_info()
         self.llm_info: Dict[str, Any] = config_info[0]
@@ -240,6 +240,7 @@ class DocumentRetrieval:
         self.pdf_only_mode: bool = config_info[5]
         self.retriever = None
         self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.set_llm()
 
     def get_config_info(self) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any], Dict[str, str], bool, bool]:
@@ -270,6 +271,7 @@ class DocumentRetrieval:
         llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
         llm = ChatSambaNova(
             api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **llm_info,
             model=model,
         )
@@ -297,7 +299,9 @@ class DocumentRetrieval:
         return langchain_docs
 
     def load_embedding_model(self) -> Embeddings:
-        embeddings = SambaNovaEmbeddings(api_key=self.sambanova_api_key, **self.embedding_model_info)
+        embeddings = SambaNovaEmbeddings(
+            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+        )
         return embeddings
 
     def create_vector_store(

@@ -1,7 +1,7 @@
 <a href="https://sambanova.ai/">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+  <source media="(prefers-color-scheme: dark)" srcset="../images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="../images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -10,7 +10,6 @@ Search Assistant
 
 <!-- TOC -->
 
-- [Search Assistant](#search-assistant)
 - [Overview](#overview)
 - [Before you begin](#before-you-begin)
     - [Clone this repository](#clone-this-repository)
@@ -26,7 +25,6 @@ Search Assistant
     - [Customize website scraping](#customize-website-scraping)
     - [Customize document transformation](#customize-document-transformation)
     - [Customize data splitting](#customize-data-splitting)
-    - [Customize data embedding](#customize-data-embedding)
     - [Customize embedding storage](#customize-embedding-storage)
     - [Customize retrieval](#customize-retrieval)
     - [Customize LLM usage](#customize-llm-usage)
@@ -86,7 +84,8 @@ If you want to use virtualenv or conda environment
     cd ai-starter-kit/search_assistant
     python3 -m venv search_assistant_env
     source search_assistant_env/bin/activate
-    pip install -r requirements.txt
+    pip install uv
+    uv pip install -r requirements.txt
     ```
 
 2. Set the serp tool to use. This kit provides 3 options of serp tool to use: [SerpAPI](https://serpapi.com/), [Serper](https://serper.dev/), and [openSERP](https://github.com/karust/openserp).
@@ -112,13 +111,11 @@ If you want to use virtualenv or conda environment
 
 If you want to use Docker:
 
-1. Update the `SAMBASTUDIO_KEY`, `SNAPI`, `SNSDK` args in [docker-compose.yaml file](docker-compose.yaml)
+Run the command:
 
-2. Run the command:
-
-    ```bash
-    docker-compose up --build
-    ```
+```bash
+docker-compose up --build
+```
 
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page shown in the screenshot above.
 
@@ -250,13 +247,6 @@ This modification can be done in the following location:
 >    "score_treshold": 0.3
 >```
 
-## Customize data embedding
-
-Several open source embedding models are available on HuggingFace. [This leaderboard](https://huggingface.co/spaces/mteb/leaderboard) ranks these models based on the Massive Text Embedding Benchmark (MTEB). A number of these models, such as [e5-large-v2](https://huggingface.co/intfloat/e5-large-v2) and [e5-mistral-7b-instruct](https://huggingface.co/intfloat/e5-mistral-7b-instruct), are available on SambaStudio and can be further fine-tuned on specific datasets to improve performance.
-
-To change the embedding model, do the following:
-* If using CPU embedding (i.e., `type` in `embedding_model` is set to `"cpu"` in the [config.yaml](config.yaml) file), e5-large-v2 from HuggingFaceInstruct is used by default. If you want to use another model, you will need to manually modify the `EMBEDDING_MODEL` variable and the `load_embedding_model()` function in the [api_gateway.py](../utils/model_wrappers/api_gateway.py). 
-* If using SambaStudio embedding (i.e., `type` in `embedding_model` is set to `"sambastudio"` in the [config.yaml](config.yaml) file), you will need to change the SambaStudio endpoint and/or the configs `batch_size`, `coe` and `select_expert` in the config file. 
 
 ## Customize embedding storage
 
