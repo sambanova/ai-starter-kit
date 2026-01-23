@@ -13,36 +13,36 @@ The required steps for Bundle benchmarking are the following:
 
 Modify the following file:
 
-- `_PATH TO AISK REPO HERE/benchmarking/benchmarking_scripts/config.yaml_`
+- `<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/config.yaml`
 
 Example:
 
 ```yaml
 model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/model_configs_example.csv'
-llm_api: 'sambastudio'  # or sncloud
+llm_api: 'sncloud'  # only option currently
 output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/logs/output_files'
 consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/consolidated_results'
 timeout: 3600
 time_delay: 0
-
 # Row-level concurrency
-concurrency_enabled: true
+concurrency_enabled: False
 max_workers: 4
-
 # Prompt behavior
-use_multiple_prompts: false
+use_multiple_prompts: False
 ```
 
 #### Key notes:
-- concurrency_enabled: If true, each row in the CSV is benchmarked concurrently using a thread pool.
+- timeout: it's the maximum time in seconds that each model config row will take to process.
+- concurrency_enabled: If true, each model config row in the CSV is benchmarked concurrently using a thread pool.
 - max_workers: Maximum number of parallel benchmark jobs.
 - time_delay: Optional sleep between runs (per row).
+- use_multiple_prompts: If true, multiple prompts in located in `<PATH TO AISK REPO>/benchmarking/prompts/user-prompt_template-text_instruct.yaml` will be used randomly.
 
 ### 2. Model configuration file
 
 Modify:
 
-`_PATH TO AISK REPO HERE/benchmarking/benchmarking_scripts/model_configs_example.csv_`
+`<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/model_configs_example.csv`
 
 Header:
 
@@ -89,7 +89,8 @@ The configuration table in `model_configs_example.csv` details each individual m
   - `constant` (default)
   - `uniform`
   - `exponential`
-
+  
+  Ignored if concurrent_requests is set
 - `multimodal_img_size`  
   Used only for multimodal models to include an image in the benchmark requests.
 
@@ -98,13 +99,13 @@ The configuration table in `model_configs_example.csv` details each individual m
   - `medium` → 1000×1000 px
   - `large` → 2000×2000 px
 
-  For non-multimodal models, set this field to `N/A` or leave it empty.
+  For non-multimodal models, leave it empty.
 
 > **Important:**  
 > The sum of `input_tokens` and `output_tokens` must not exceed the maximum sequence length supported by the model.
 >  
 > Example: for a model with a 4096-token context window, you may set  
-> `input_tokens = 4000` and `output_tokens = 64`.
+> `input_tokens = 4000` and `output_tokens = 64`. However, consider  that models might have internal prompting tokens, so include them when calculating the full context tokens.
 
 ### 3. Execution modes
 
@@ -113,9 +114,9 @@ The configuration table in `model_configs_example.csv` details each individual m
 If `concurrency_enabled: false` in `config.yaml`, models are benchmarked **row by row** in the order defined in `model_configs_example.csv`.
 
 This mode is useful for:
-- Debugging
-- Isolating switching-time effects
 - Running on limited resources
+- Exposing switching-time effects
+- Debugging
 
 #### 3.2 Concurrent execution
 
@@ -126,14 +127,14 @@ Relevant configuration fields:
 - `max_workers`: Maximum number of benchmark jobs running concurrently
 
 This mode is useful when:
-- Models are independent
-- Faster turnaround is needed for large bundles
+- A more real approach needs to be tested
+- Faster turnaround or switching is needed for large bundles
 
 ### 4. Results
 
-#### 4.1 Individual results
+#### 4.1 Results per model config
 
-Individual results are stored under:
+Individual model config results are stored under: `output_files_dir` in `config.yaml`.
 
 For every model configuration (row in `model_configs_example.csv`), two result files are generated:
 
@@ -143,7 +144,6 @@ For every model configuration (row in `model_configs_example.csv`), two result f
      - Time to First Token (TTFT)
      - End-to-end latency
      - Output throughput
-     - Switching-related indicators
 
 2. **Summary files** (`*summary.json`)  
    - Aggregated statistics computed from individual responses:
@@ -153,9 +153,11 @@ For every model configuration (row in `model_configs_example.csv`), two result f
      - Median (p50)
      - Standard deviation
 
+If you'd like to know more details about these output files, please check the kit's CLI version in the main [README](../README.md).
+
 #### 4.2 Consolidated results
 
-Consolidated results are written to:
+Consolidated results are written to: `consolidated_results_dir` in `config.yaml`.
 
 Each row in the Excel file corresponds to **one row in `model_configs_example.csv`**.
 
@@ -166,7 +168,7 @@ Each row in the Excel file corresponds to **one row in `model_configs_example.cs
   Metric names are prefixed with `server_`.
 
 - **Client metrics**  
-  Performance metrics computed on the client side.  
+  Performance metrics computed on the client side or machine sending the API requests.  
   Metric names are prefixed with `client_`.
 
 - **Suffixes**
@@ -176,21 +178,20 @@ Each row in the Excel file corresponds to **one row in `model_configs_example.cs
 ##### Main consolidated metrics
 
 - **TTFT (Time to First Token)**  
-  Client-side TTFT typically shows higher variance due to request queueing, especially when concurrency is enabled.
+  TTFT typically shows higher variance due to request queueing, especially when concurrency is enabled. Client-side TTFT could be influenced by the networking time.
 
 - **End-to-end latency**  
-  Client-side latency includes queue wait time, while server-side latency does not.
+  Includes queueing time and TTFT. Client-side latency could be influenced by the networking time.
 
 - **Output tokens per second**  
-  Output throughput per request.  
-  For batching-enabled endpoints, throughput per request may decrease as batch size increases.
+  Output throughput per request. For batching-enabled endpoints, throughput per request may decrease as batch size increases, but the overall throughput will increase.
 
 - **Acceptance rate**  
   Acceptance rate for speculative decoding pairs.
 
 ##### Batching analysis
 
-The benchmarking pipeline automatically infers **effective batching behavior** by analyzing request timing patterns.
+The benchmarking pipeline automatically estimates **batching behavior** by analyzing request timing patterns.
 
 - Requests with identical `server_ttft` are grouped together
 - Batch size is inferred as the next power of two of the group size
@@ -211,13 +212,12 @@ A switch can be triggered by changes in:
 - Model name
 - Sequence length
 - Batch size
-- Multimodal configuration
 
 ##### How switching time is estimated:
 
 For each benchmark run (identified by a UUID):
 
-1. Identify the largest observed batch size
+1. Identify the largest estimated batch size
 2. Compute the maximum and minimum server-side TTFT within that batch
 3. Switching time is calculated as:
 
@@ -229,6 +229,6 @@ For each benchmark run (identified by a UUID):
 
 ##### Switching time important notes
 
-- In `model_configs_example.csv`, Include a warm up set of models so HBM could be set with the models that will be tested. Right after the warm up models, proceed to include the models that would be tested. 
+- It's recommended that the user include a warm up set of models, either in the same `model_configs_example.csv` or in a separate csv, so HBM could be set with the model configurations that will be tested. Right after the warm up models are procesed, proceed run the configs that would include the switching time. 
 - Include multiple sequence lengths and batch sizes according to the node environment configuration.
-- Run multiple benchmark iterations per sequence lenght and batch size to obtain stable switching time estimates
+- Run multiple requests per model config row to obtain stable switching time estimates
