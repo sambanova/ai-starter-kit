@@ -7,13 +7,13 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode custom \
---model-name "Meta-Llama-3.1-8B-Instruct" \
---results-dir "./data/us_varun/bundlev2/custom_prompts" \
+--model-name "Meta-Llama-3.3-70B-Instruct" \
+--results-dir "./data/results/llmperf" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "../benchmarking/prompts/bundle_tests/us_varun/us_varun_bundle-3d1_8b.jsonl" \
---save-llm-responses True \
---sampling-params '{"max_tokens_to_generate": 200}' \
+--input-file-path "<AISK_REPOSITORY_PATH>/benchmarking/prompts/custom_prompt_example.jsonl" \
+--save-llm-responses False \
+--sampling-params '{"max_tokens_to_generate": 256}' \
 --use-debugging-mode False \
 --llm-api sncloud
 
