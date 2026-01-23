@@ -1,8 +1,5 @@
 #!/bin/bash
 # run_custom_dataset.sh
-# Meta-Llama-3.1-8B-Instruct
-# Llama-4-Maverick-17B-128E-Instruct
-# gpt-oss-120b
 
 ulimit -n 4096
 python src/evaluator.py \
