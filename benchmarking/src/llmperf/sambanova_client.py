@@ -331,7 +331,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
                 response.raise_for_status()
-            client = sseclient.SSEClient(response)  # type: ignore[arg-type]
+            client = sseclient.SSEClient(response)
             generated_text = ''
 
             for event in client.events():

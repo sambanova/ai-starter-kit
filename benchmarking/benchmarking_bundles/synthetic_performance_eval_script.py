@@ -3,11 +3,10 @@ import os
 import re
 import sys
 import time
-import json
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Type
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 import yaml
@@ -46,10 +45,11 @@ class ModelConfigRow:
 # =========================================================
 
 class ConfigLoader:
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str) -> None:
         self.config_path = config_path
 
     def load(self) -> Dict[str, Any]:
+        cfg: Dict[str, Any] = {}
         with open(self.config_path) as fh:
             cfg = yaml.load(fh, Loader=yaml.FullLoader)
         cfg['output_files_dir'] = os.path.expanduser(cfg.get('output_files_dir', '..'))
@@ -172,7 +172,13 @@ class SwitchingTimeCalculator:
 # =========================================================
 
 class ResultsConsolidator:
-    def __init__(self, read_perf_eval_json_files_fn, file_parser, batch_analyzer, rep_finder):
+    def __init__(
+            self, 
+            read_perf_eval_json_files_fn: Any, 
+            file_parser: FileNameParser, 
+            batch_analyzer: BatchAnalyzer, 
+            rep_finder: RepresentativeFinder
+        ) -> None:
         self.read_perf_eval_json_files = read_perf_eval_json_files_fn
         self.file_parser = file_parser
         self.batch_analyzer = batch_analyzer
@@ -312,7 +318,15 @@ class ResultsConsolidator:
 # =========================================================
 
 class BenchmarkRunner:
-    def __init__(self, config, evaluator_factories, read_perf_eval_json_files_fn, file_parser, batch_analyzer, rep_finder):
+    def __init__(
+            self, 
+            config: Dict[str, Any],
+            evaluator_factories: Dict[str, Any],
+            read_perf_eval_json_files_fn: Any, 
+            file_parser: FileNameParser, 
+            batch_analyzer: BatchAnalyzer, 
+            rep_finder: RepresentativeFinder
+        ) -> None:
         self.config = config
         self.evaluator_factories = evaluator_factories
         self.read_perf_eval_json_files = read_perf_eval_json_files_fn
@@ -320,7 +334,7 @@ class BenchmarkRunner:
         self.batch_analyzer = batch_analyzer
         self.rep_finder = rep_finder
 
-    def _run_single_row(self, row, output_files_dir: str):
+    def _run_single_row(self, row: pd.Series, output_files_dir: str) -> None:
         from benchmarking.src.performance_evaluation import (
             RealWorkLoadPerformanceEvaluator,
             SyntheticPerformanceEvaluator,
@@ -379,11 +393,16 @@ class BenchmarkRunner:
         time.sleep(self.config.get('time_delay', 0))
 
     def run(self, run_name: Optional[str] = None) -> None:
-        from benchmarking.src.performance_evaluation import RealWorkLoadPerformanceEvaluator, SyntheticPerformanceEvaluator
         from concurrent.futures import ThreadPoolExecutor, as_completed
         
         model_configs_df = pd.read_csv(self.config['model_configs_path'])
-        model_configs_df = model_configs_df.astype({'input_tokens': 'Int64', 'output_tokens': 'Int64', 'num_requests': 'Int64'})
+        model_configs_df = model_configs_df.astype(
+            {
+                'input_tokens': 'Int64', 
+                'output_tokens': 'Int64', 
+                'num_requests': 'Int64'
+            }
+        )
 
         run_time = datetime.now().strftime('%Y%m%d-%H%M%S.%f')
         if not run_name:
@@ -439,7 +458,7 @@ def read_perf_eval_json_files_wrapper(path: str, type: str) -> pd.DataFrame:
 
 def load_requests_with_switching(
     output_files_dir: str,
-    read_perf_eval_json_files_fn,
+    read_perf_eval_json_files_fn: Any,
     file_parser: Optional[FileNameParser] = None,
     batch_analyzer: Optional[BatchAnalyzer] = None,
 ) -> pd.DataFrame:
@@ -493,7 +512,7 @@ def load_requests_with_switching(
 
     return df_all
 
-def main():
+def main() -> None:
     current_dir = os.path.dirname(os.path.realpath(__file__))
     project_root = os.path.abspath(os.path.join(current_dir, '../../'))
     sys.path.insert(0, project_root)
