@@ -67,7 +67,7 @@ lmdb==1.4.1
 lxml==5.1.0
 marshmallow==3.20.2
 matplotlib-inline==0.1.6
-matplotlib==3.8.2
+matplotlib==3.10.8
 multidict==6.0.5
 mypy-extensions==1.0.0
 mypy==1.11.2

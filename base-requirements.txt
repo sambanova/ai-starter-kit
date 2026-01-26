@@ -63,8 +63,8 @@ gradio_client==1.8.0
 sseclient-py==1.8.0
 
 # Visualization
-plotly==6.3.1
-matplotlib==3.10.7
+plotly==6.5.2
+matplotlib==3.10.8
 seaborn==0.13.2
 librosa==0.11.0
 
