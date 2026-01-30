@@ -204,6 +204,8 @@ Reported batching fields
 - `representative_batch_size`  
   Median-dominant batch size that accounts for more than 50% of requests.
 
+__Note__: this is just an estimation based on close server TTFTs and may not be accurate to the actual batch size value. So, using a dedicated environment is recommended.
+
 ##### Switching time
 
 Switching time represents the overhead incurred when loading a new model or configuration into HBM memory during inference.
