@@ -18,10 +18,10 @@ Modify the following file:
 Example:
 
 ```yaml
-model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/model_configs_example.csv'
+model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/model_configs_example.csv'
 llm_api: 'sncloud'  # only option currently
-output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/logs/output_files'
-consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/benchmarking_tracking_tests/consolidated_results'
+output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/output_files'
+consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/consolidated_results'
 timeout: 3600
 time_delay: 0
 # Row-level concurrency
@@ -42,7 +42,7 @@ use_multiple_prompts: False
 
 Modify:
 
-`<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/model_configs_example.csv`
+`<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/model_configs_example.csv`
 
 Header:
 
@@ -67,7 +67,7 @@ The configuration table in `model_configs_example.csv` details each individual m
   Total number of requests sent.
 
   ⚠️ The run may timeout before all requests are sent.  
-  Configure the `timeout` parameter in `benchmarking_scripts/config.yaml` accordingly.
+  Configure the `timeout` parameter in `benchmarking_bundles/config.yaml` accordingly.
 
 - `concurrent_requests`  
   Enables **synthetic workload benchmarking**.
@@ -217,10 +217,12 @@ A switch can be triggered by changes in:
 
 For each benchmark run (identified by a UUID):
 
-1. Identify the largest estimated batch size
-2. Compute the maximum and minimum server-side TTFT within that batch
-3. Switching time is calculated as:
+1. Identify the largest estimated batch size.
+2. Compute the maximum and minimum server-side TTFT within that batch.
+3. Switching time is calculated as the **variation in server-side Time To First Token (TTFT) in seconds**:
+`switching_time = max(server_ttft_s) - min(server_ttft_s)`
 
+__Note__: Only requests at the **highest batching level** are considered.
 
 ##### Where to find it
 
