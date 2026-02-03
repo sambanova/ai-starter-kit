@@ -115,7 +115,7 @@ tornado==6.3.3
 traitlets==5.11.2
 traits==6.3.2
 tzdata==2023.3
-unstructured==0.12.0
+unstructured==0.18.18
 unstructured_client==0.16.0
 unstructured_inference==0.7.21
 unstructured_pytesseract==0.3.12
