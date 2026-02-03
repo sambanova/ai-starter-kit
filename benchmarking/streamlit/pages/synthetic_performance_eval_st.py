@@ -10,6 +10,7 @@ import streamlit as st
 import yaml
 
 from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
+from benchmarking.src.vllm_benchmark import VLLMBenchmarkExecutor
 from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     MULTIMODAL_IMAGE_SIZE_OPTIONS,
@@ -58,6 +59,10 @@ def _initialize_session_variables() -> None:
     if 'llm_api' not in st.session_state:
         st.session_state.llm_api = None
 
+    # Benchmark mode selection
+    if 'benchmark_mode' not in st.session_state:
+        st.session_state.benchmark_mode = 'kit'
+
     # Additional initializations
     if 'optional_download' not in st.session_state:
         st.session_state.optional_download = False
@@ -71,10 +76,16 @@ def _initialize_session_variables() -> None:
         st.session_state.zip_buffer = None
     if 'performance_evaluator' not in st.session_state:
         st.session_state.performance_evaluator = None
+    if 'vllm_evaluator' not in st.session_state:
+        st.session_state.vllm_evaluator = None
     if 'df_req_info' not in st.session_state:
         st.session_state.df_req_info = None
+    if 'df_req_info_vllm' not in st.session_state:
+        st.session_state.df_req_info_vllm = None
     if 'batching_exposed' not in st.session_state:
         st.session_state.batching_exposed = None
+    if 'batching_exposed_vllm' not in st.session_state:
+        st.session_state.batching_exposed_vllm = None
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
     if 'progress_bar' not in st.session_state:
@@ -170,6 +181,137 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
     return valid_df
 
 
+def _run_vllm_benchmark(progress_bar: Any = None) -> pd.DataFrame:
+    """Runs the vLLM benchmark process.
+
+    Returns:
+        pd.DataFrame: Dataframe with metrics for each request.
+    """
+
+    results_path = './data/results/vllm'
+
+    # Get API variables for vLLM
+    api_variables = set_api_variables()
+
+    # Call vLLM benchmarking process
+    st.session_state.vllm_evaluator = VLLMBenchmarkExecutor(
+        model_name=st.session_state.llm,
+        results_dir=results_path,
+        timeout=st.session_state.timeout,
+        user_metadata={'model_idx': 0},
+    )
+
+    st.session_state.vllm_evaluator.run_benchmark(
+        num_input_tokens=st.session_state.input_tokens,
+        num_output_tokens=st.session_state.output_tokens,
+        num_requests=st.session_state.number_requests,
+        num_concurrent_requests=st.session_state.number_concurrent_requests,
+        api_base=api_variables.get('SAMBANOVA_API_BASE'),
+        api_key=api_variables.get('SAMBANOVA_API_KEY'),
+        progress_bar=progress_bar,
+    )
+
+    # Read generated json and output formatted results
+    df_user = st.session_state.vllm_evaluator.get_results_dataframe()
+    df_user['concurrent_requests'] = st.session_state.number_concurrent_requests
+    valid_df = df_user[df_user['error_code'].isnull()]
+
+    # vLLM doesn't expose batching info
+    st.session_state.batching_exposed_vllm = False
+
+    return valid_df
+
+
+def _display_benchmark_results(
+    df_req_info: pd.DataFrame,
+    batching_exposed: bool,
+    expected_output_tokens: int,
+    label: str,
+    is_vllm: bool = False
+) -> None:
+    """Display benchmark results plots for a single benchmark.
+
+    Args:
+        df_req_info: DataFrame with request information
+        batching_exposed: Whether batching is exposed
+        expected_output_tokens: Expected number of output tokens
+        label: Label for the benchmark (e.g., 'Kit' or 'vLLM')
+        is_vllm: Whether this is a vLLM benchmark (shows only client metrics)
+    """
+    st.markdown('**Performance metrics plots**')
+
+    # Check output tokens
+    generated_output_tokens = df_req_info.server_number_output_tokens.unique()[0]
+    if not pd.isnull(generated_output_tokens):
+        st.markdown(
+            f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
+            tokens ({generated_output_tokens}) is {abs(expected_output_tokens - generated_output_tokens)}
+                token(s)"""
+        )
+
+    by_batch_size_suffix = ' by batch size' if batching_exposed else ''
+
+    # For vLLM, only show client metrics since server metrics aren't logged
+    if is_vllm:
+        metrics_ttft = ['client_ttft_s']
+        labels_ttft = ['Client']
+        metrics_latency = ['client_end_to_end_latency_s']
+        labels_latency = ['Client']
+        metrics_throughput = ['client_output_token_per_s_per_request']
+        labels_throughput = ['Client']
+    else:
+        metrics_ttft = ['server_ttft_s', 'client_ttft_s']
+        labels_ttft = ['Server', 'Client']
+        metrics_latency = ['server_end_to_end_latency_s', 'client_end_to_end_latency_s']
+        labels_latency = ['Server', 'Client']
+        metrics_throughput = ['server_output_token_per_s_per_request', 'client_output_token_per_s_per_request']
+        labels_throughput = ['Server', 'Client']
+
+    st.plotly_chart(
+        plot_client_vs_server_barplots(
+            df_req_info,
+            'batch_size_used',
+            metrics_ttft,
+            labels_ttft,
+            f'{label}: Distribution of Time to First Token (TTFT)' + by_batch_size_suffix,
+            'TTFT (s), per request',
+            'Batch size',
+            batching_exposed,
+        ),
+        use_container_width=True
+    )
+    st.plotly_chart(
+        plot_client_vs_server_barplots(
+            df_req_info,
+            'batch_size_used',
+            metrics_latency,
+            labels_latency,
+            f'{label}: Distribution of end-to-end latency' + by_batch_size_suffix,
+            'Latency (s), per request',
+            'Batch size',
+            batching_exposed,
+        ),
+        use_container_width=True
+    )
+    st.plotly_chart(
+        plot_client_vs_server_barplots(
+            df_req_info,
+            'batch_size_used',
+            metrics_throughput,
+            labels_throughput,
+            f'{label}: Distribution of output throughput' + by_batch_size_suffix,
+            'Tokens per second, per request',
+            'Batch size',
+            batching_exposed,
+        ),
+        use_container_width=True
+    )
+    # Compute total throughput per batch
+    if batching_exposed:
+        st.plotly_chart(plot_dataframe_summary(df_req_info), use_container_width=True)
+    st.plotly_chart(plot_requests_gantt_chart(df_req_info), use_container_width=True)
+
+
 def main() -> None:
     set_font()
 
@@ -198,6 +340,25 @@ def main() -> None:
         render_logo()
         st.title('Configuration')
         st.markdown('**Modify the following parameters before running the process**')
+
+        # Benchmarking mode selector
+        st.session_state.benchmark_mode = st.radio(
+            'Benchmarking Mode',
+            options=['kit', 'vllm', 'both'],
+            format_func=lambda x: {
+                'kit': 'Kit Only',
+                'vllm': 'vLLM Only',
+                'both': 'Both (Side-by-Side Comparison)'
+            }[x],
+            help='Select which benchmark to run: Kit (current implementation), vLLM (vLLM benchmark serve), or Both for comparison',
+            disabled=st.session_state.running or st.session_state.optional_download,
+        )
+
+        # Show info about vLLM benchmarking
+        if st.session_state.benchmark_mode in ['vllm', 'both']:
+            st.info('ℹ️ vLLM benchmarks the SambaNova API remotely. No local GPU required. Install with: pip install vllm>=0.6.0')
+
+        st.divider()
 
         llm_model = st.text_input(
             'Model Name',
@@ -307,20 +468,52 @@ def main() -> None:
     if sidebar_stop:
         st.session_state.optional_download = False
         st.session_state.zip_buffer = None
-        st.session_state.performance_evaluator.stop_benchmark()
+        if st.session_state.performance_evaluator:
+            st.session_state.performance_evaluator.stop_benchmark()
+        if st.session_state.vllm_evaluator:
+            st.session_state.vllm_evaluator.stop_benchmark()
 
         st.rerun()
 
     if st.session_state.running:
         st.session_state.mp_events.input_submitted('synthetic_performance_evaluation ')
-        st.toast('Performance evaluation processing now. It should take few minutes.')
+        benchmark_mode_label = {
+            'kit': 'Kit',
+            'vllm': 'vLLM',
+            'both': 'Kit and vLLM'
+        }[st.session_state.benchmark_mode]
+        st.toast(f'{benchmark_mode_label} performance evaluation processing now. It should take few minutes.')
         with st.spinner('Processing'):
             st.session_state.progress_bar = st.progress(0)
             do_rerun = False
             try:
-                st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
+                json_data = {}
 
-                json_data = read_performance_evaluation_output_files()
+                # Run benchmarks based on selected mode
+                if st.session_state.benchmark_mode in ['kit', 'both']:
+                    st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
+                    json_data.update(read_performance_evaluation_output_files())
+
+                if st.session_state.benchmark_mode in ['vllm', 'both']:
+                    # Reset progress bar for vLLM if running both
+                    if st.session_state.benchmark_mode == 'both':
+                        st.session_state.progress_bar.progress(0)
+                        st.toast('Now running vLLM benchmark...')
+
+                    st.session_state.df_req_info_vllm = _run_vllm_benchmark(update_progress_bar)
+
+                    # Add vLLM results to json_data
+                    if st.session_state.vllm_evaluator:
+                        vllm_individual_name = st.session_state.vllm_evaluator.individual_responses_file_path.split('/')[-1]
+                        with open(st.session_state.vllm_evaluator.individual_responses_file_path, 'r') as f:
+                            vllm_individual_content = json.loads(f.read())
+
+                        vllm_summary_name = st.session_state.vllm_evaluator.summary_file_path.split('/')[-1]
+                        with open(st.session_state.vllm_evaluator.summary_file_path, 'r') as f:
+                            vllm_summary_content = json.loads(f.read())
+
+                        json_data[vllm_individual_name] = vllm_individual_content
+                        json_data[vllm_summary_name] = vllm_summary_content
 
                 st.session_state.zip_buffer = create_zip(json_data)
                 st.session_state.running = False
@@ -332,67 +525,57 @@ def main() -> None:
                 st.error(f'Error:\n{e}.')
                 # Cleaning df results in case of error
                 st.session_state.df_req_info = None
+                st.session_state.df_req_info_vllm = None
             if do_rerun:
                 st.rerun()
 
-    if st.session_state.df_req_info is not None:
-        st.subheader('Performance metrics plots')
-        expected_output_tokens = st.session_state.output_tokens
-        generated_output_tokens = st.session_state.df_req_info.server_number_output_tokens.unique()[0]
-        if not pd.isnull(generated_output_tokens):
-            st.markdown(
-                f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
-                tokens ({generated_output_tokens}) is {abs(expected_output_tokens - generated_output_tokens)}
-                    token(s)"""
+    # Display results based on benchmark mode
+    if st.session_state.benchmark_mode == 'both' and st.session_state.df_req_info is not None and st.session_state.df_req_info_vllm is not None:
+        # Side-by-side comparison
+        st.header('Side-by-Side Comparison: Kit vs vLLM')
+
+        # Create two columns for comparison
+        col_kit, col_vllm = st.columns(2)
+
+        with col_kit:
+            st.subheader('Kit Benchmark Results')
+            _display_benchmark_results(
+                st.session_state.df_req_info,
+                st.session_state.batching_exposed,
+                st.session_state.output_tokens,
+                'Kit',
+                is_vllm=False
             )
 
-        by_batch_size_suffix = ' by batch size' if st.session_state.batching_exposed else ''
-        st.plotly_chart(
-            plot_client_vs_server_barplots(
-                st.session_state.df_req_info,
-                'batch_size_used',
-                ['server_ttft_s', 'client_ttft_s'],
-                ['Server', 'Client'],
-                'Distribution of Time to First Token (TTFT)' + by_batch_size_suffix,
-                'TTFT (s), per request',
-                'Batch size',
-                st.session_state.batching_exposed,
+        with col_vllm:
+            st.subheader('vLLM Benchmark Results')
+            _display_benchmark_results(
+                st.session_state.df_req_info_vllm,
+                st.session_state.batching_exposed_vllm,
+                st.session_state.output_tokens,
+                'vLLM',
+                is_vllm=True
             )
-        )
-        st.plotly_chart(
-            plot_client_vs_server_barplots(
-                st.session_state.df_req_info,
-                'batch_size_used',
-                ['server_end_to_end_latency_s', 'client_end_to_end_latency_s'],
-                ['Server', 'Client'],
-                'Distribution of end-to-end latency' + by_batch_size_suffix,
-                'Latency (s), per request',
-                'Batch size',
-                st.session_state.batching_exposed,
-            )
-        )
-        st.plotly_chart(
-            plot_client_vs_server_barplots(
-                st.session_state.df_req_info,
-                'batch_size_used',
-                [
-                    'server_output_token_per_s_per_request',
-                    'client_output_token_per_s_per_request',
-                ],
-                ['Server', 'Client'],
-                'Distribution of output throughput' + by_batch_size_suffix,
-                'Tokens per second, per request',
-                'Batch size',
-                st.session_state.batching_exposed,
-            )
-        )
-        # Compute total throughput per batch
-        if st.session_state.batching_exposed:
-            st.plotly_chart(plot_dataframe_summary(st.session_state.df_req_info))
-        st.plotly_chart(plot_requests_gantt_chart(st.session_state.df_req_info))
 
-        # Once results are given, reset running state and ending threads just in case.
-        sidebar_stop = True
+    elif st.session_state.benchmark_mode == 'kit' and st.session_state.df_req_info is not None:
+        st.subheader('Kit Benchmark Results')
+        _display_benchmark_results(
+            st.session_state.df_req_info,
+            st.session_state.batching_exposed,
+            st.session_state.output_tokens,
+            'Kit',
+            is_vllm=False
+        )
+
+    elif st.session_state.benchmark_mode == 'vllm' and st.session_state.df_req_info_vllm is not None:
+        st.subheader('vLLM Benchmark Results')
+        _display_benchmark_results(
+            st.session_state.df_req_info_vllm,
+            st.session_state.batching_exposed_vllm,
+            st.session_state.output_tokens,
+            'vLLM',
+            is_vllm=True
+        )
 
 
 if __name__ == '__main__':

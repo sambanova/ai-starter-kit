@@ -7,6 +7,7 @@ matplotlib==3.10.7
 mypy==1.18.2
 nbformat==5.10.4
 num2words==0.5.13
+numpy>=1.24.0,<2.0.0
 pandas==1.5.3
 plotly==6.3.1
 poetry==1.8.3
@@ -26,3 +27,6 @@ transformers==4.57.1
 joblib==1.4.2
 openpyxl==3.1.5
 streamlit==1.51.0
+# vLLM (Optional - Linux only, requires NVIDIA GPU with CUDA)
+# Uncomment the line below if you're on Linux and want vLLM benchmarking support
+# vllm>=0.6.0

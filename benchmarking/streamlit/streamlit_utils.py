@@ -298,8 +298,10 @@ def plot_client_vs_server_barplots(
     for i in xgroups:
         maskl = (df_melted['Metric'] == value_vars[0]) & (df_melted[x_col] == i)
         valsl[i] = np.percentile(df_melted['Value'][maskl], [5, 50, 95])
-        maskr = (df_melted['Metric'] == value_vars[1]) & (df_melted[x_col] == i)
-        valsr[i] = np.percentile(df_melted['Value'][maskr], [5, 50, 95])
+        # Only compute right values if we have two metrics
+        if len(value_vars) > 1:
+            maskr = (df_melted['Metric'] == value_vars[1]) & (df_melted[x_col] == i)
+            valsr[i] = np.percentile(df_melted['Value'][maskr], [5, 50, 95])
 
     fig = go.Figure()
     fig.add_trace(
@@ -332,36 +334,38 @@ def plot_client_vs_server_barplots(
             hovertemplate='<extra></extra>5–95 pctile range: %{base:.2f}–%{customdata:.2f}',
         )
     )
-    fig.add_trace(
-        go.Bar(
-            x=xgroups,
-            y=[0 for _ in xgroups],
-            base=[round(valsr[i][1], 2) for i in xgroups],
-            customdata=[legend_labels[1] for _ in xgroups],
-            marker={'color': '#ee7625', 'line': {'color': '#ee7625', 'width': 2}},
-            offsetgroup=1,
-            legendgroup=legend_labels[1],
-            name=legend_labels[1],
-            showlegend=False,
-            hovertemplate='<extra></extra><b>%{customdata}</b> median: %{base:.2f}',
-            text=[round(valsr[i][1], 2) for i in xgroups],
-            textposition='outside',
+    # Only add right metric bars if we have two metrics
+    if len(value_vars) > 1:
+        fig.add_trace(
+            go.Bar(
+                x=xgroups,
+                y=[0 for _ in xgroups],
+                base=[round(valsr[i][1], 2) for i in xgroups],
+                customdata=[legend_labels[1] for _ in xgroups],
+                marker={'color': '#ee7625', 'line': {'color': '#ee7625', 'width': 2}},
+                offsetgroup=1,
+                legendgroup=legend_labels[1],
+                name=legend_labels[1],
+                showlegend=False,
+                hovertemplate='<extra></extra><b>%{customdata}</b> median: %{base:.2f}',
+                text=[round(valsr[i][1], 2) for i in xgroups],
+                textposition='outside',
+            )
         )
-    )
-    fig.add_trace(
-        go.Bar(
-            x=xgroups,
-            y=[valsr[i][2] - valsr[i][0] for i in xgroups],
-            base=[valsr[i][0] for i in xgroups],
-            customdata=[valsr[i][2] for i in xgroups],
-            marker={'color': '#ee7625'},
-            opacity=0.5,
-            offsetgroup=1,
-            legendgroup=legend_labels[1],
-            name=legend_labels[1],
-            hovertemplate='<extra></extra>5–95 pctile range: %{base:.2f}–%{customdata:.2f}',
+        fig.add_trace(
+            go.Bar(
+                x=xgroups,
+                y=[valsr[i][2] - valsr[i][0] for i in xgroups],
+                base=[valsr[i][0] for i in xgroups],
+                customdata=[valsr[i][2] for i in xgroups],
+                marker={'color': '#ee7625'},
+                opacity=0.5,
+                offsetgroup=1,
+                legendgroup=legend_labels[1],
+                name=legend_labels[1],
+                hovertemplate='<extra></extra>5–95 pctile range: %{base:.2f}–%{customdata:.2f}',
+            )
         )
-    )
 
     fig.update_layout(
         title_text=title_text,
