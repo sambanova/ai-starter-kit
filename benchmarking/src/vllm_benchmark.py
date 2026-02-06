@@ -250,39 +250,81 @@ class VLLMBenchmarkExecutor:
             num_output_tokens: Number of output tokens used
             num_concurrent_requests: Number of concurrent requests
         """
-        # Create individual responses file (simulated per-request data)
-        # vLLM provides aggregate stats, so we'll create synthetic per-request data
-        # based on the distributions
+        # Create individual responses file using per-request data from vLLM
+        # vLLM provides per-request metrics in lists like ttfts, output_lens, etc.
 
         num_completed = vllm_results.get('completed', 0)
 
-        # Extract metrics (vLLM uses milliseconds, convert to seconds)
+        # Extract per-request metrics from vLLM results
+        ttfts = vllm_results.get('ttfts', [])  # TTFT per request in seconds
+        output_lens = vllm_results.get('output_lens', [])  # Output tokens per request
+        input_lens = vllm_results.get('input_lens', [])  # Input tokens per request
+        itls = vllm_results.get('itls', [])  # Inter-token latencies per request
+
+        # Extract aggregate metrics as fallbacks (vLLM uses milliseconds, convert to seconds)
         mean_ttft_s = vllm_results.get('mean_ttft_ms', 0) / 1000
-        mean_e2e_s = vllm_results.get('mean_e2el_ms', 0) / 1000
-        mean_tpot_s = vllm_results.get('mean_tpot_ms', 0) / 1000
+
+        # Calculate E2E latencies and ITL sums from actual per-request data
+        calculated_e2e_latencies = []
+        calculated_itl_sums = []
+        for i in range(num_completed):
+            request_ttft_s = ttfts[i] if i < len(ttfts) else mean_ttft_s
+            # Calculate e2e latency: TTFT + sum of inter-token latencies
+            if i < len(itls) and itls[i]:
+                itl_sum = sum(itls[i])
+                request_e2e_s = request_ttft_s + itl_sum
+                calculated_itl_sums.append(itl_sum)
+            else:
+                # Fallback: estimate from duration
+                request_e2e_s = vllm_results.get('duration', 1) / num_completed if num_completed > 0 else 1
+                calculated_itl_sums.append(0)
+            calculated_e2e_latencies.append(request_e2e_s)
+
+        # Calculate E2E statistics from actual data
+        if calculated_e2e_latencies:
+            mean_e2e_s = sum(calculated_e2e_latencies) / len(calculated_e2e_latencies)
+            median_e2e_s = sorted(calculated_e2e_latencies)[len(calculated_e2e_latencies) // 2]
+            # Calculate standard deviation
+            variance = sum((x - mean_e2e_s) ** 2 for x in calculated_e2e_latencies) / len(calculated_e2e_latencies)
+            std_e2e_s = variance ** 0.5
+        else:
+            mean_e2e_s = 0
+            median_e2e_s = 0
+            std_e2e_s = 0
+
+        # Calculate mean ITL sum for throughput calculation
+        mean_itl_sum_s = sum(calculated_itl_sums) / len(calculated_itl_sums) if calculated_itl_sums else 0
 
         # Create individual request records
         individual_responses = []
         for i in range(num_completed):
-            # Use mean values for simplicity (in production, you might want to use distributions)
-            output_tokens_per_s = num_output_tokens / mean_e2e_s if mean_e2e_s > 0 else 0
+            # Use actual per-request values if available
+            request_ttft_s = ttfts[i] if i < len(ttfts) else mean_ttft_s
+            request_output_tokens = output_lens[i] if i < len(output_lens) else num_output_tokens
+            request_input_tokens = input_lens[i] if i < len(input_lens) else num_input_tokens
+            request_e2e_s = calculated_e2e_latencies[i]
+
+            # Calculate throughput for this request using ITL sum (token generation time)
+            # This excludes TTFT to measure pure token generation throughput
+            request_itl_sum = sum(itls[i]) if i < len(itls) and itls[i] else 0
+            output_tokens_per_s = request_output_tokens / request_itl_sum if request_itl_sum > 0 else 0
 
             record = {
-                'client_ttft_s': mean_ttft_s,
-                'client_end_to_end_latency_s': mean_e2e_s,
+                'client_ttft_s': request_ttft_s,
+                'client_end_to_end_latency_s': request_e2e_s,
                 'client_output_token_per_s_per_request': output_tokens_per_s,
-                'number_input_tokens': num_input_tokens,
-                'number_output_tokens': num_output_tokens,
-                'server_ttft_s': mean_ttft_s,  # vLLM doesn't distinguish client/server
-                'server_end_to_end_latency_s': mean_e2e_s,
-                'server_output_token_per_s_per_request': output_tokens_per_s,
-                'server_number_output_tokens': num_output_tokens,
-                'server_number_input_tokens': num_input_tokens,
+                'number_input_tokens': request_input_tokens,
+                'number_output_tokens': request_output_tokens,
+                'server_ttft_s': None,  # vLLM doesn't distinguish client/server
+                'server_end_to_end_latency_s': None,
+                'server_output_token_per_s_per_request': None,
+                'server_number_output_tokens': None,
+                'server_number_input_tokens': None,
                 'batch_size_used': None,  # vLLM doesn't expose batch size in results
                 'error_code': None,
                 'error_msg': None,
                 'start_time': f"2024-01-01T00:00:{i:02d}",  # Synthetic timestamps
-                'end_time': f"2024-01-01T00:00:{i + int(mean_e2e_s):02d}",
+                'end_time': f"2024-01-01T00:00:{i + int(request_e2e_s):02d}",
             }
             individual_responses.append(record)
 
@@ -301,10 +343,10 @@ class VLLMBenchmarkExecutor:
             'results_client_ttft_s_median': vllm_results.get('median_ttft_ms', 0) / 1000,
             'results_client_ttft_s_stddev': vllm_results.get('std_ttft_ms', 0) / 1000,
             'results_client_end_to_end_latency_s_mean': mean_e2e_s,
-            'results_client_end_to_end_latency_s_median': vllm_results.get('median_e2el_ms', 0) / 1000,
-            'results_client_end_to_end_latency_s_stddev': vllm_results.get('std_e2el_ms', 0) / 1000,
+            'results_client_end_to_end_latency_s_median': median_e2e_s,
+            'results_client_end_to_end_latency_s_stddev': std_e2e_s,
             'results_client_output_token_per_s_per_request_mean': (
-                num_output_tokens / mean_e2e_s if mean_e2e_s > 0 else 0
+                num_output_tokens / mean_itl_sum_s if mean_itl_sum_s > 0 else 0
             ),
             'results_error_rate': vllm_results.get('failed', 0) / vllm_results.get('total_input', 1),
             'results_num_completed_requests': num_completed,
@@ -357,13 +399,32 @@ def parse_vllm_results_to_dataframe(result_file_path: str) -> pd.DataFrame:
         with open(result_file_path, 'r') as f:
             results = json.load(f)
 
+        # Calculate E2E latency from per-request data
+        ttfts = results.get('ttfts', [])
+        itls = results.get('itls', [])
+        mean_ttft_s = results.get('mean_ttft_ms', 0) / 1000
+
+        # Calculate E2E latencies from actual per-request data
+        calculated_e2e_latencies = []
+        num_completed = results.get('completed', 0)
+        for i in range(num_completed):
+            request_ttft_s = ttfts[i] if i < len(ttfts) else mean_ttft_s
+            if i < len(itls) and itls[i]:
+                request_e2e_s = request_ttft_s + sum(itls[i])
+            else:
+                # Fallback: estimate from duration
+                request_e2e_s = results.get('duration', 1) / num_completed if num_completed > 0 else 1
+            calculated_e2e_latencies.append(request_e2e_s)
+
+        mean_e2e_s = sum(calculated_e2e_latencies) / len(calculated_e2e_latencies) if calculated_e2e_latencies else 0
+
         # Create a basic DataFrame from aggregate stats
         # This is less ideal than having per-request data
         data = {
-            'client_ttft_s': [results.get('mean_ttft_ms', 0) / 1000],
-            'client_end_to_end_latency_s': [results.get('mean_e2el_ms', 0) / 1000],
-            'server_ttft_s': [results.get('mean_ttft_ms', 0) / 1000],
-            'server_end_to_end_latency_s': [results.get('mean_e2el_ms', 0) / 1000],
+            'client_ttft_s': [mean_ttft_s],
+            'client_end_to_end_latency_s': [mean_e2e_s],
+            'server_ttft_s': [None],  # vLLM doesn't distinguish client/server
+            'server_end_to_end_latency_s': [None],
         }
         df = pd.DataFrame(data)
         return df

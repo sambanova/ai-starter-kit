@@ -392,12 +392,21 @@ def plot_requests_gantt_chart(df_user: pd.DataFrame) -> Figure:
         fig (go.Figure): The plotly figure container
     """
     requests = df_user.index + 1
+
+    # Normalize timestamps to start at 0 for relative comparison
+    # Convert start_time to datetime and find the minimum
+    start_times = pd.to_datetime(df_user['start_time'])
+    min_start_time = start_times.min()
+
+    # Calculate relative start times in seconds from the first request
+    relative_start_times_s = (start_times - min_start_time).dt.total_seconds()
+
     fig = go.Figure()
     fig.add_trace(
         go.Bar(
             y=requests,
-            x=1000 * df_user['client_ttft_s'],
-            base=[str(x) for x in df_user['start_time']],
+            x=df_user['client_ttft_s'],
+            base=relative_start_times_s,
             name='TTFT',
             orientation='h',
             marker_color='#ee7625',
@@ -406,8 +415,8 @@ def plot_requests_gantt_chart(df_user: pd.DataFrame) -> Figure:
     fig.add_trace(
         go.Bar(
             y=requests,
-            x=1000 * df_user['client_end_to_end_latency_s'],
-            base=[str(x) for x in df_user['start_time']],
+            x=df_user['client_end_to_end_latency_s'],
+            base=relative_start_times_s,
             name='End-to-end latency',
             orientation='h',
             marker_color='#325c8c',
@@ -416,13 +425,12 @@ def plot_requests_gantt_chart(df_user: pd.DataFrame) -> Figure:
     for i in range(0, len(df_user.index), 2):
         fig.add_hrect(y0=i + 0.5, y1=i + 1.5, line_width=0, fillcolor='grey', opacity=0.1)
     fig.update_xaxes(
-        type='date',
-        tickformat='%H:%M:%S',
-        hoverformat='%H:%M:%S.%2f',
+        tickformat='.2f',
+        hoverformat='.3f',
     )
     fig.update_layout(
         title_text='LLM requests across time',
-        xaxis_title='Time stamp',
+        xaxis_title='Relative time (seconds from start)',
         yaxis_title='Request index',
         template='plotly_dark',
     )
