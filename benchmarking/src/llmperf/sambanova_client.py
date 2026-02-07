@@ -95,10 +95,10 @@ class BaseAPIEndpoint(abc.ABC):
             float: calculated ttft
         """
 
-        number_chunks_recieved = len(chunks_received)
+        number_chunks_received = len(chunks_received)
 
-        # if one or no chunks were recieved
-        if number_chunks_recieved <= 1:
+        # if one or no chunks were received
+        if number_chunks_received <= 1:
             ttft = total_request_time
         else:
             if len(chunks_received) <= 1:
@@ -118,7 +118,7 @@ class BaseAPIEndpoint(abc.ABC):
         ttft: int | float,
         total_request_time: int | float,
         server_metrics: Dict[str, Any],
-        number_chunks_recieved: int,
+        number_chunks_received: int,
     ) -> Dict[str, Any]:
         """Populates `metrics` dictionary with performance metrics calculated from client side
 
@@ -128,7 +128,7 @@ class BaseAPIEndpoint(abc.ABC):
             ttft (int): time to first token
             total_request_time (int): end-to-end latency
             server_metrics (dict):  server metrics dictionary
-            number_chunks_recieved (int): number of chunks recieved
+            number_chunks_received (int): number of chunks received
 
         Returns:
             dict: updated metrics dictionary
@@ -158,7 +158,7 @@ class BaseAPIEndpoint(abc.ABC):
 
         metrics[common_metrics.E2E_LAT] = total_request_time
 
-        if number_chunks_recieved == 1:
+        if number_chunks_received == 1:
             metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
                 metrics[common_metrics.NUM_OUTPUT_TOKENS] / total_request_time
             )
@@ -371,7 +371,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         # Populate server and client metrics
         prompt_len = self.request_config.prompt_tuple[1]
-        number_chunks_recieved = len(events_received)
+        number_chunks_received = len(events_received)
 
         num_output_tokens = self._get_token_length(generated_text)
         server_metrics = self._populate_server_metrics(response_dict, metrics)
@@ -381,7 +381,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             ttft,
             total_request_time,
             server_metrics,
-            number_chunks_recieved,
+            number_chunks_received,
         )
 
         return metrics, generated_text
