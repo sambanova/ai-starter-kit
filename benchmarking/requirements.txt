@@ -29,4 +29,4 @@ openpyxl==3.1.5
 streamlit==1.51.0
 # vLLM (Optional - Linux only, requires NVIDIA GPU with CUDA)
 # Uncomment the line below if you're on Linux and want vLLM benchmarking support
-# vllm>=0.6.0
+vllm>=0.6.0
