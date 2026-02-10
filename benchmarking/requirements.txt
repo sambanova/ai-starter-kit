@@ -3,12 +3,12 @@ Requests>=2.32.5
 ipykernel==7.1.0
 langchain-community==0.4.1
 litellm==1.80.0
-matplotlib==3.10.7
+matplotlib==3.10.8
 mypy==1.18.2
 nbformat==5.10.4
 num2words==0.5.13
 pandas==1.5.3
-plotly==6.3.1
+plotly==6.5.2
 poetry==1.8.3
 pre-commit==4.3.0
 pydantic==2.12.3

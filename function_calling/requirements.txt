@@ -6,7 +6,7 @@ langchain-milvus==0.2.2
 langchain-sambanova==1.0.0
 langchain==1.0.2
 langchain-experimental==0.4.0
-matplotlib==3.10.7
+matplotlib==3.10.8
 mypy==1.18.2
 pre-commit==4.3.0
 pydantic==2.12.3
