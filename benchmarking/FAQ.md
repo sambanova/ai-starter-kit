@@ -24,10 +24,9 @@ The kit is an adaptation of the [LLMPerf framework](https://github.com/ray-proje
 
 
 #### Glossary: What are the key metrics and their definitions?
-- Time to First Token (TTFT): This is the time in seconds from when the server receives the request to when it produces the first token of the output.
-- Latency: The time in seconds taken for the request to complete, including input processing, token generation, and returning the complete output.
-- Output token per seconds: Number of *output* tokens *generated* per second after first token for a single request.
-You can refer to [this link](https://sambanova.atlassian.net/wiki/spaces/AIS/pages/2123563038) for more detailed information about these and other metrics provided by the kit.
+- **Time to First Token (TTFT):** This is the time in seconds from when the server receives the request to when it produces the first token of the output.
+- **Latency:** The time in seconds taken for the request to complete, including input processing, token generation, and returning the complete output.
+- **Output token per seconds:** Number of *output* tokens *generated* per second after first token for a single request.
 
 
 #### What's the difference between throughput-oriented vs latency-oriented benchmarking?
