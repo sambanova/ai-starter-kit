@@ -4,8 +4,8 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "SSFDC-XLAM2-3.1-8B-FC-R" \
---results-dir "./data/results/llmperf" \
+--model-names "Llama-xLAM-2-8b-fc-r-encrypted" \
+--results-dir "./data/results/datakrypto" \
 --num-concurrent-requests 1 \
 --timeout 600 \
 --num-input-tokens 100 \
