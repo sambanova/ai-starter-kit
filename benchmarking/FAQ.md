@@ -107,7 +107,7 @@ More details about these files can be found [here](https://github.com/sambanova/
 #### I've cloned the repository but it's not working—what could be happening?
 Several issues could be happening, consider the following
 - Validate that you’re using the latest `main` version of the kit
-- Validate that you’ve installed the required packages and libraries and that the corresponding environment is the only one active. If you already had created an environment previously, then reinstalling the packages is recommended after pulling the latest changes from the repository.
+- Validate that you’ve installed the [required packages](./requirements.txt) and libraries and that the corresponding environment is the only one active. If you already had created an environment previously, then reinstalling the packages is recommended after pulling the latest changes from the repository.
 - Be sure to run anything from the kit’s root.
 - Check that you’ve defined the right Sambanova URL and API key in the `.env` file, which has to be located in the repository’s root.
 - Check that the model is available and healthy in the API server. Also, check that the model name has been spelled correctly.
@@ -139,7 +139,7 @@ If the difference is substantial (e.g. larger than 50 tokens) then the issue mig
 
 
 #### How do I benchmark streaming vs batch inference modes?
-The kit currently only supports *streaming* responses.
+The kit currently only supports benchmarking using *streaming* responses. It does not measure the performance of *batch* (non-streaming) inference.
 
 
 #### What datasets/prompt distributions are recommended for different use cases (chat, RAG, code generation, etc.)?
@@ -151,4 +151,4 @@ If you see big differences between expected vs server input or output tokens, th
 
 
 #### Can I run the kit against non-SambaNova endpoints for comparison?
-Yes, you can run any other LLM provider over the kit if they’re OpenAI compatible.
+Yes, you can run any other LLM provider over the kit if they’re OpenAI compatible. [Here's](../README.md#use-sambanova-cloud-option-1) the step-by-step on how to set your SambaNova base url and API key.
