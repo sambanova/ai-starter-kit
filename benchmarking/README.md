@@ -46,6 +46,8 @@ This sample is ready-to-use. We provide:
 
 To perform this setup, you must be a SambaNova customer with a SambaNova Cloud API key (more details in the following sections). You also have to set up your environment before you can run or customize the starter kit. 
 
+Additionaly, there's a Frecuently Asked Questions documentation [here](./FAQ.md) that has several useful common questions and answers about the kit.
+
 _These steps assume a Mac/Linux/Unix shell environment. If using Windows, you will need to adjust some commands for navigating folders, activating virtual environments, etc._
 
 ## Clone this repository
@@ -88,6 +90,8 @@ When using the benchmarking starter kit, you have two options for running the pr
 ## GUI Option
 
 The GUI for this starter kit uses Streamlit, a Python framework for building web applications. This method is useful for analyzing outputs in a graphical manner since the results are shown via plots in the UI.
+
+If you face any issues or have questions, please visit the Frecuently Asked Questions documentation [here](./FAQ.md).
 
 ### Deploy the starter kit GUI
 
@@ -371,7 +375,11 @@ Users are able to ask anything and get a generated answer to their questions, as
 
 ## CLI Option
 
-This method can be ran from a terminal session. Users have this option if they want to experiment using values that are beyond the limits specified in the Streamlit app parameters. You have 3 options for running the program from terminal:
+This method can be ran from a terminal session. Users have this option if they want to experiment using values that are beyond the limits specified in the Streamlit app parameters. 
+
+If you face any issues or have questions, please visit the Frecuently Asked Questions documentation [here](./FAQ.md).
+
+You have 3 options for running the program from terminal:
 
 <details id="synthetic-dataset">
 <summary><strong>Synthetic Dataset</summary></strong>
@@ -547,16 +555,4 @@ All the packages/tools are listed in the `requirements.txt` file in the project 
 
 # TroubleShooting
 
-1. ModuleNotFoundError: No module named 'st_pages'
-
-If you come across this error, please restart your vscode or venv in order for the module to be found.
-
-<!-- JS scripts -->
-<script>
-function openDetails(id) {
-  const details = document.getElementById(id);
-  if (details && !details.open) {
-    details.open = true;  
-  }
-}
-</script>
+1. There's a Frecuently Asked Questions documentation [here](./FAQ.md) that has several useful common questions and answers about the kit, including troubleshooting questions.
