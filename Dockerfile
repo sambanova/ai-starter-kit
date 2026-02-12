@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.11.5-bookworm as builder
+FROM python:3.11.5-slim-bookworm as builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
