@@ -14,6 +14,11 @@ BATCH_SIZE_USED = 'batch_size_used'
 QUEUE_TIME = 'queue_time'
 ACCEPTANCE_RATE = 'acceptance_rate'
 
+# DataKrypto server metrics
+TOTAL_ENCRYPTION_TIME_MS = 'total_encryption_time_ms'
+TOTAL_DECRYPTION_TIME_MS = 'total_decryption_time_ms'
+SERVER_NETWORK_LATENCY_MS = 'server_network_latency_ms'
+
 # Client-side metrics
 TTFT = 'client_ttft_s'
 E2E_LAT = 'client_end_to_end_latency_s'

@@ -9,7 +9,7 @@ NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE
 FAMILY_MODEL_TYPE_IDENTIFIER = {
     'mistral': ['mistral'],
     'llama2': ['llama2'],
-    'llama3': ['llama3'],
+    'llama3': ['llama3','xlam'],
     'llama4': ['llama4'],
     'deepseek': ['deepseek'],
     'qwen': ['qwen', 'qwq'],
@@ -110,6 +110,7 @@ def get_tokenizer(model_name: str) -> Any:
         elif ('3.3' in model_name) or ('3p3' in model_name):
             tokenizer = AutoTokenizer.from_pretrained('unsloth/Llama-3.3-70B-Instruct') # type: ignore[no-untyped-call]
         else:
+            print(f'Using default Llama-3 tokenizer for model {model_name}')
             tokenizer = AutoTokenizer.from_pretrained('unsloth/llama-3-8b-Instruct') # type: ignore[no-untyped-call]
     elif family_model_type == 'llama4':
         if 'maverick' in model_name.lower():

@@ -225,6 +225,25 @@ class BaseAPIEndpoint(abc.ABC):
 
         return metrics
 
+    def _populate_datakrypto_metrics(
+        self, response_dict_datakrypto: Dict[str, Any], metrics: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Parse datakrypto output data to metrics dictionary structure
+
+        Args:
+            response_dict_datakrypto (dict): dict data with datakrypto performance metrics
+            metrics (dict): metrics dictionary
+
+        Returns:
+            dict: updated metrics dictionary
+        """
+
+        metrics[common_metrics.TOTAL_ENCRYPTION_TIME_MS] = response_dict_datakrypto.get('total_encryption_time_ms')
+        metrics[common_metrics.TOTAL_DECRYPTION_TIME_MS] = response_dict_datakrypto.get('total_decryption_time_ms')
+        metrics[common_metrics.SERVER_NETWORK_LATENCY_MS] = response_dict_datakrypto.get('server_network_latency_ms')
+
+        return metrics
+
 
 class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -315,7 +334,8 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         """
 
         # Get API request components
-        url = self._get_url()
+        # url = self._get_url()
+        url = 'http://localhost:8000/stream'
         headers = self._get_headers()
         json_data = self._get_json_data()
 
@@ -323,10 +343,15 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         generated_text = ''
         events_received = []
         events_timings = []
+        response_dict_datakrypto: Dict[str, Any] = {}
 
         # Start measuring time
         metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = event_start_time = time.monotonic()
+        
+        # print(f'url :{url}')
+        # print(f'headers :{headers}')
+        # print(f'json_data :{json.dumps(json_data)}')
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             if response.status_code != 200:
@@ -360,6 +385,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                         # process streaming chunk when performance usage is provided
                         else:
                             response_dict = data['usage']
+                            response_dict_datakrypto = data.get('fhenom_usage', {})
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
 
@@ -375,6 +401,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         num_output_tokens = self._get_token_length(generated_text)
         server_metrics = self._populate_server_metrics(response_dict, metrics)
+        server_metrics = self._populate_datakrypto_metrics(response_dict_datakrypto, server_metrics)
         metrics = self._populate_client_metrics(
             prompt_len,
             num_output_tokens,
