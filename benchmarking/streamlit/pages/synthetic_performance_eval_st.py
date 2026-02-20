@@ -283,7 +283,7 @@ def _display_benchmark_results(
             batching_exposed,
             colors=['#ee7625'] if is_vllm else None,
         ),
-        use_container_width=True
+        width='stretch'
     )
     if not is_vllm:
         st.plotly_chart(
@@ -297,7 +297,7 @@ def _display_benchmark_results(
                 'Batch size',
                 batching_exposed,
             ),
-            use_container_width=True
+            width='stretch'
         )
         st.plotly_chart(
             plot_client_vs_server_barplots(
@@ -310,7 +310,7 @@ def _display_benchmark_results(
                 'Batch size',
                 batching_exposed,
             ),
-            use_container_width=True
+            width='stretch'
         )
     df_itl = df_req_info[['batch_size_used', 'client_mean_inter_token_latency_s']].copy()
     df_itl['client_mean_inter_token_latency_ms'] = df_itl['client_mean_inter_token_latency_s'] * 1000
@@ -327,13 +327,13 @@ def _display_benchmark_results(
             batching_exposed,
             colors=[itl_color],
         ),
-        use_container_width=True
+        width='stretch'
     )
     # Compute total throughput per batch
     if batching_exposed:
-        st.plotly_chart(plot_dataframe_summary(df_req_info), use_container_width=True)
+        st.plotly_chart(plot_dataframe_summary(df_req_info), width='stretch')
     if not is_vllm:
-        st.plotly_chart(plot_requests_gantt_chart(df_req_info), use_container_width=True)
+        st.plotly_chart(plot_requests_gantt_chart(df_req_info), width='stretch')
 
 
 def main() -> None:
@@ -586,7 +586,7 @@ def main() -> None:
                     'Batch size',
                     st.session_state.batching_exposed,
                 ),
-                use_container_width=True,
+                width='stretch',
             )
         with col_vllm:
             st.plotly_chart(
@@ -601,7 +601,7 @@ def main() -> None:
                     st.session_state.batching_exposed_vllm,
                     colors=['#ee7625'],
                 ),
-                use_container_width=True,
+                width='stretch',
             )
 
         # ITL side by side (converted to ms)
@@ -624,7 +624,7 @@ def main() -> None:
                     st.session_state.batching_exposed,
                     colors=['#ee7625'],
                 ),
-                use_container_width=True,
+                width='stretch',
             )
         with col_vllm:
             st.plotly_chart(
@@ -639,7 +639,7 @@ def main() -> None:
                     st.session_state.batching_exposed_vllm,
                     colors=['#ee7625'],
                 ),
-                use_container_width=True,
+                width='stretch',
             )
 
     elif st.session_state.benchmark_mode == 'kit' and st.session_state.df_req_info is not None:

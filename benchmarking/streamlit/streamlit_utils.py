@@ -585,10 +585,10 @@ def display_summary_metrics_comparison(kit_metrics: Dict[str, Any], vllm_metrics
         ],
         'Kit': [
             f"{kit_metrics['duration']:.2f}",
-            kit_metrics['completed_requests'],
-            kit_metrics['failed_requests'],
-            kit_metrics['total_input_tokens'],
-            kit_metrics['total_output_tokens'],
+            str(kit_metrics['completed_requests']),
+            str(kit_metrics['failed_requests']),
+            str(kit_metrics['total_input_tokens']),
+            str(kit_metrics['total_output_tokens']),
             f"{kit_metrics['request_throughput']:.4f}",
             f"{kit_metrics['output_throughput']:.2f}",
             f"{kit_metrics['total_token_throughput']:.2f}",
@@ -599,10 +599,10 @@ def display_summary_metrics_comparison(kit_metrics: Dict[str, Any], vllm_metrics
         ],
         'vLLM': [
             f"{vllm_metrics['duration']:.2f}",
-            vllm_metrics['completed_requests'],
-            vllm_metrics['failed_requests'],
-            vllm_metrics['total_input_tokens'],
-            vllm_metrics['total_output_tokens'],
+            str(vllm_metrics['completed_requests']),
+            str(vllm_metrics['failed_requests']),
+            str(vllm_metrics['total_input_tokens']),
+            str(vllm_metrics['total_output_tokens']),
             f"{vllm_metrics['request_throughput']:.4f}",
             f"{vllm_metrics['output_throughput']:.2f}",
             f"{vllm_metrics['total_token_throughput']:.2f}",
@@ -618,7 +618,7 @@ def display_summary_metrics_comparison(kit_metrics: Dict[str, Any], vllm_metrics
     # Display the comparison table
     st.dataframe(
         df_comparison,
-        use_container_width=True,
+        width='stretch',
         hide_index=True,
     )
 
