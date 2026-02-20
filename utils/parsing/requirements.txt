@@ -1,4 +1,4 @@
-unstructured==0.18.15
+unstructured==0.18.18
 unstructured-client==0.25.9
 unstructured-inference==1.0.5
 langchain==1.0.2

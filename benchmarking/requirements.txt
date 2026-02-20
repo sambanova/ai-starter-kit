@@ -16,7 +16,7 @@ pydantic_core==2.41.4
 python-dotenv==1.2.1
 ruff==0.14.2
 seaborn==0.13.2
-sentencepiece==0.2.0
+sentencepiece==0.2.1
 sseclient-py==1.8.0
 stqdm==0.0.5
 tensorflow==2.16.1
