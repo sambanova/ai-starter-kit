@@ -334,8 +334,8 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         """
 
         # Get API request components
-        # url = self._get_url()
-        url = 'http://localhost:8000/stream'
+        url = self._get_url()
+        # url = 'http://localhost:8000/stream' --for mockup test
         headers = self._get_headers()
         json_data = self._get_json_data()
 
