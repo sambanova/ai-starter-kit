@@ -262,6 +262,7 @@ def plot_client_vs_server_barplots(
     ylabel: str,
     xlabel: str,
     batching_exposed: bool,
+    colors: Optional[List[str]] = None,
 ) -> Figure:
     """
     Plots bar plots for client vs server metrics from a DataFrame.
@@ -279,6 +280,7 @@ def plot_client_vs_server_barplots(
     Returns:
         fig (go.Figure): The plotly figure container
     """
+    colors = colors or ['#325c8c', '#ee7625']
     value_vars = y_cols
     title_text = title
     yaxis_title = ylabel
@@ -310,7 +312,7 @@ def plot_client_vs_server_barplots(
             y=[0 for _ in xgroups],
             base=[round(valsl[i][1], 2) for i in xgroups],
             customdata=[legend_labels[0] for _ in xgroups],
-            marker={'color': '#325c8c', 'line': {'color': '#325c8c', 'width': 2}},
+            marker={'color': colors[0], 'line': {'color': colors[0], 'width': 2}},
             offsetgroup=0,
             legendgroup=legend_labels[0],
             name=legend_labels[0],
@@ -326,7 +328,7 @@ def plot_client_vs_server_barplots(
             y=[valsl[i][2] - valsl[i][0] for i in xgroups],
             base=[valsl[i][0] for i in xgroups],
             customdata=[valsl[i][2] for i in xgroups],
-            marker={'color': '#325c8c'},
+            marker={'color': colors[0]},
             opacity=0.5,
             offsetgroup=0,
             legendgroup=legend_labels[0],
@@ -342,7 +344,7 @@ def plot_client_vs_server_barplots(
                 y=[0 for _ in xgroups],
                 base=[round(valsr[i][1], 2) for i in xgroups],
                 customdata=[legend_labels[1] for _ in xgroups],
-                marker={'color': '#ee7625', 'line': {'color': '#ee7625', 'width': 2}},
+                marker={'color': colors[1], 'line': {'color': colors[1], 'width': 2}},
                 offsetgroup=1,
                 legendgroup=legend_labels[1],
                 name=legend_labels[1],
@@ -358,7 +360,7 @@ def plot_client_vs_server_barplots(
                 y=[valsr[i][2] - valsr[i][0] for i in xgroups],
                 base=[valsr[i][0] for i in xgroups],
                 customdata=[valsr[i][2] for i in xgroups],
-                marker={'color': '#ee7625'},
+                marker={'color': colors[1]},
                 opacity=0.5,
                 offsetgroup=1,
                 legendgroup=legend_labels[1],
@@ -435,3 +437,406 @@ def plot_requests_gantt_chart(df_user: pd.DataFrame) -> Figure:
         template='plotly_dark',
     )
     return fig
+
+
+def get_vllm_summary_metrics(vllm_result_file_path: str) -> Dict[str, Any]:
+    """
+    Extract summary metrics from vLLM raw result file.
+
+    Args:
+        vllm_result_file_path (str): Path to the vLLM raw result JSON file.
+
+    Returns:
+        Dict[str, Any]: Dictionary containing summary metrics.
+    """
+    import json
+
+    with open(vllm_result_file_path, 'r') as f:
+        vllm_results = json.load(f)
+
+    duration = vllm_results.get('duration', 0)
+    completed = vllm_results.get('completed', 0)
+    total_input_tokens = vllm_results.get('total_input_tokens', 0)
+    total_output_tokens = vllm_results.get('total_output_tokens', 0)
+
+    # Calculate throughput metrics
+    request_throughput = completed / duration if duration > 0 else 0
+    output_throughput = total_output_tokens / duration if duration > 0 else 0
+    total_token_throughput = (total_input_tokens + total_output_tokens) / duration if duration > 0 else 0
+
+    # Additional metrics
+    mean_ttft_ms = vllm_results.get('mean_ttft_ms', 0)
+    median_ttft_ms = vllm_results.get('median_ttft_ms', 0)
+    mean_tpot_ms = vllm_results.get('mean_tpot_ms', 0)
+    median_tpot_ms = vllm_results.get('median_tpot_ms', 0)
+    mean_itl_ms = vllm_results.get('mean_itl_ms', 0)
+    median_itl_ms = vllm_results.get('median_itl_ms', 0)
+
+    return {
+        'duration': duration,
+        'completed_requests': completed,
+        'failed_requests': vllm_results.get('failed', 0),
+        'total_input_tokens': total_input_tokens,
+        'total_output_tokens': total_output_tokens,
+        'request_throughput': request_throughput,
+        'output_throughput': output_throughput,
+        'total_token_throughput': total_token_throughput,
+        'mean_ttft_ms': mean_ttft_ms,
+        'median_ttft_ms': median_ttft_ms,
+        'mean_tpot_ms': mean_tpot_ms,
+        'median_tpot_ms': median_tpot_ms,
+        'mean_itl_ms': mean_itl_ms,
+        'median_itl_ms': median_itl_ms,
+    }
+
+
+def calculate_kit_summary_metrics(df_individual: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Calculate summary metrics from kit individual responses DataFrame.
+
+    Args:
+        df_individual (pd.DataFrame): DataFrame with individual request responses.
+
+    Returns:
+        Dict[str, Any]: Dictionary containing summary metrics.
+    """
+    # Filter out failed requests
+    valid_df = df_individual[df_individual['error_code'].isnull()]
+
+    # Calculate duration from timestamps
+    start_times = pd.to_datetime(valid_df['start_time'])
+    end_times = pd.to_datetime(valid_df['end_time'])
+    duration = (end_times.max() - start_times.min()).total_seconds()
+
+    # Count completed and failed requests
+    completed = len(valid_df)
+    failed = len(df_individual) - completed
+
+    # Calculate token totals
+    total_input_tokens = valid_df['number_input_tokens'].sum()
+    total_output_tokens = valid_df['number_output_tokens'].sum()
+
+    # Calculate throughput metrics
+    request_throughput = completed / duration if duration > 0 else 0
+    output_throughput = total_output_tokens / duration if duration > 0 else 0
+    total_token_throughput = (total_input_tokens + total_output_tokens) / duration if duration > 0 else 0
+
+    # Additional metrics (convert to milliseconds for consistency with vLLM)
+    mean_ttft_ms = valid_df['client_ttft_s'].mean() * 1000
+    median_ttft_ms = valid_df['client_ttft_s'].median() * 1000
+    mean_e2e_latency_ms = valid_df['client_end_to_end_latency_s'].mean() * 1000
+    median_e2e_latency_ms = valid_df['client_end_to_end_latency_s'].median() * 1000
+    mean_output_throughput_per_request = valid_df['client_output_token_per_s_per_request'].mean()
+    median_output_throughput_per_request = valid_df['client_output_token_per_s_per_request'].median()
+
+    # Add ITL metrics with fallback for backward compatibility
+    if 'client_mean_inter_token_latency_s' in valid_df.columns:
+        mean_itl_ms = valid_df['client_mean_inter_token_latency_s'].mean() * 1000
+        median_itl_ms = valid_df['client_mean_inter_token_latency_s'].median() * 1000
+    else:
+        mean_itl_ms = None
+        median_itl_ms = None
+
+    return {
+        'duration': duration,
+        'completed_requests': completed,
+        'failed_requests': failed,
+        'total_input_tokens': int(total_input_tokens),
+        'total_output_tokens': int(total_output_tokens),
+        'request_throughput': request_throughput,
+        'output_throughput': output_throughput,
+        'total_token_throughput': total_token_throughput,
+        'mean_ttft_ms': mean_ttft_ms,
+        'median_ttft_ms': median_ttft_ms,
+        'mean_e2e_latency_ms': mean_e2e_latency_ms,
+        'median_e2e_latency_ms': median_e2e_latency_ms,
+        'mean_output_throughput_per_request': mean_output_throughput_per_request,
+        'median_output_throughput_per_request': median_output_throughput_per_request,
+        'mean_itl_ms': mean_itl_ms,
+        'median_itl_ms': median_itl_ms,
+    }
+
+
+def display_summary_metrics_comparison(kit_metrics: Dict[str, Any], vllm_metrics: Dict[str, Any]) -> None:
+    """
+    Display summary metrics comparison between Kit and vLLM in Streamlit.
+
+    Args:
+        kit_metrics (Dict[str, Any]): Summary metrics from Kit benchmark.
+        vllm_metrics (Dict[str, Any]): Summary metrics from vLLM benchmark.
+    """
+    st.markdown('### Summary Metrics Comparison')
+
+    # Create comparison DataFrame
+    comparison_data = {
+        'Metric': [
+            'Duration (s)',
+            'Completed Requests',
+            'Failed Requests',
+            'Total Input Tokens',
+            'Total Output Tokens',
+            'Request Throughput (req/s)',
+            'Output Throughput (tokens/s)',
+            'Total Token Throughput (tokens/s)',
+            'Mean TTFT (ms)',
+            'Median TTFT (ms)',
+            'Mean ITL (ms)',
+            'Median ITL (ms)',
+        ],
+        'Kit': [
+            f"{kit_metrics['duration']:.2f}",
+            kit_metrics['completed_requests'],
+            kit_metrics['failed_requests'],
+            kit_metrics['total_input_tokens'],
+            kit_metrics['total_output_tokens'],
+            f"{kit_metrics['request_throughput']:.4f}",
+            f"{kit_metrics['output_throughput']:.2f}",
+            f"{kit_metrics['total_token_throughput']:.2f}",
+            f"{kit_metrics['mean_ttft_ms']:.2f}",
+            f"{kit_metrics['median_ttft_ms']:.2f}",
+            f"{kit_metrics['mean_itl_ms']:.2f}" if kit_metrics['mean_itl_ms'] is not None else 'N/A',
+            f"{kit_metrics['median_itl_ms']:.2f}" if kit_metrics['median_itl_ms'] is not None else 'N/A',
+        ],
+        'vLLM': [
+            f"{vllm_metrics['duration']:.2f}",
+            vllm_metrics['completed_requests'],
+            vllm_metrics['failed_requests'],
+            vllm_metrics['total_input_tokens'],
+            vllm_metrics['total_output_tokens'],
+            f"{vllm_metrics['request_throughput']:.4f}",
+            f"{vllm_metrics['output_throughput']:.2f}",
+            f"{vllm_metrics['total_token_throughput']:.2f}",
+            f"{vllm_metrics['mean_ttft_ms']:.2f}",
+            f"{vllm_metrics['median_ttft_ms']:.2f}",
+            f"{vllm_metrics['mean_itl_ms']:.2f}",
+            f"{vllm_metrics['median_itl_ms']:.2f}",
+        ],
+    }
+
+    df_comparison = pd.DataFrame(comparison_data)
+
+    # Display the comparison table
+    st.dataframe(
+        df_comparison,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
+def calculate_sum_itl_per_request(df: pd.DataFrame, itl_column: str) -> pd.Series:
+    """
+    Calculate sum of all ITLs for each request.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the metrics
+        itl_column (str): Column name containing inter-token latencies list
+
+    Returns:
+        pd.Series: Sum of ITLs in seconds per request
+    """
+    def calc_sum_itl(row):
+        itls = row[itl_column]
+        if itls is None or not isinstance(itls, list) or len(itls) == 0:
+            return None
+        return sum(itls)
+
+    return df.apply(calc_sum_itl, axis=1)
+
+
+def calculate_tpot_per_request(df: pd.DataFrame, itl_column: str, output_tokens_column: str) -> pd.Series:
+    """
+    Calculate Time Per Output Token (TPOT) for each request using ITLs and output tokens.
+
+    TPOT is calculated as: sum(ITLs[1:]) / (output_tokens - 1)
+    This excludes the first ITL which typically includes TTFT overhead.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the metrics
+        itl_column (str): Column name containing inter-token latencies list
+        output_tokens_column (str): Column name containing output token counts
+
+    Returns:
+        pd.Series: TPOT values in seconds per token
+    """
+    def calc_tpot(row):
+        itls = row[itl_column]
+        output_tokens = row[output_tokens_column]
+
+        # Handle cases where ITL data might be missing or invalid
+        if itls is None or not isinstance(itls, list) or len(itls) == 0:
+            return None
+        if output_tokens is None or output_tokens <= 1:
+            return None
+
+        # Calculate TPOT: sum of ITLs (after first) divided by number of tokens (after first)
+        if len(itls) > 1:
+            # Exclude first ITL chunk which includes TTFT, divide by actual tokens generated
+            tpot = sum(itls[1:]) / (output_tokens - 1)
+        else:
+            # Single chunk case - divide by output tokens
+            tpot = itls[0] / output_tokens if output_tokens > 0 else None
+
+        return tpot
+
+    return df.apply(calc_tpot, axis=1)
+
+
+def plot_per_request_comparison(
+    kit_df: pd.DataFrame,
+    vllm_df: pd.DataFrame,
+    kit_metric_column: str,
+    vllm_metric_column: str,
+    metric_name: str,
+    y_axis_label: str,
+    title: str,
+) -> Figure:
+    """
+    Create a per-request comparison plot between Kit and vLLM for a given metric.
+
+    Args:
+        kit_df (pd.DataFrame): Kit benchmark results DataFrame
+        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
+        kit_metric_column (str): Column name in Kit DataFrame
+        vllm_metric_column (str): Column name in vLLM DataFrame
+        metric_name (str): Display name for the metric
+        y_axis_label (str): Y-axis label
+        title (str): Plot title
+
+    Returns:
+        Figure: Plotly figure object
+    """
+    # Filter valid data (non-null, non-error)
+    kit_valid = kit_df[kit_df['error_code'].isna()].copy()
+    vllm_valid = vllm_df[vllm_df['error_code'].isna()].copy()
+
+    # Get metric values
+    kit_values = kit_valid[kit_metric_column].dropna()
+    vllm_values = vllm_valid[vllm_metric_column].dropna()
+
+    # Create request indices
+    kit_requests = list(range(1, len(kit_values) + 1))
+    vllm_requests = list(range(1, len(vllm_values) + 1))
+
+    # Create figure
+    fig = go.Figure()
+
+    # Add Kit trace
+    fig.add_trace(
+        go.Scatter(
+            x=kit_requests,
+            y=kit_values,
+            mode='lines+markers',
+            name='Kit',
+            line=dict(color='#1f77b4', width=2),
+            marker=dict(size=6),
+        )
+    )
+
+    # Add vLLM trace
+    fig.add_trace(
+        go.Scatter(
+            x=vllm_requests,
+            y=vllm_values,
+            mode='lines+markers',
+            name='vLLM',
+            line=dict(color='#ff7f0e', width=2),
+            marker=dict(size=6),
+        )
+    )
+
+    # Update layout
+    fig.update_layout(
+        title=title,
+        xaxis_title='Request Number',
+        yaxis_title=y_axis_label,
+        hovermode='x unified',
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+        template='plotly_white',
+    )
+
+    return fig
+
+
+def plot_ttft_per_request_comparison(kit_df: pd.DataFrame, vllm_df: pd.DataFrame) -> Figure:
+    """
+    Create a per-request TTFT comparison plot between Kit and vLLM.
+
+    Args:
+        kit_df (pd.DataFrame): Kit benchmark results DataFrame
+        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
+
+    Returns:
+        Figure: Plotly figure object
+    """
+    return plot_per_request_comparison(
+        kit_df=kit_df,
+        vllm_df=vllm_df,
+        kit_metric_column='client_ttft_s',
+        vllm_metric_column='client_ttft_s',  # vLLM now uses same column name
+        metric_name='TTFT',
+        y_axis_label='Time to First Token (seconds)',
+        title='TTFT Comparison: Kit vs vLLM (Per Request)',
+    )
+
+
+def plot_itl_per_request_comparison(kit_df: pd.DataFrame, vllm_df: pd.DataFrame) -> Figure:
+    """
+    Create a per-request sum ITL comparison plot between Kit and vLLM.
+
+    Args:
+        kit_df (pd.DataFrame): Kit benchmark results DataFrame
+        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
+
+    Returns:
+        Figure: Plotly figure object
+    """
+    # Calculate sum of ITLs for both Kit and vLLM
+    kit_df_copy = kit_df.copy()
+    vllm_df_copy = vllm_df.copy()
+
+    kit_df_copy['sum_itl_s'] = calculate_sum_itl_per_request(kit_df_copy, 'client_inter_token_latencies_s')
+    vllm_df_copy['sum_itl_s'] = calculate_sum_itl_per_request(vllm_df_copy, 'client_inter_token_latencies_s')
+
+    return plot_per_request_comparison(
+        kit_df=kit_df_copy,
+        vllm_df=vllm_df_copy,
+        kit_metric_column='sum_itl_s',
+        vllm_metric_column='sum_itl_s',
+        metric_name='Sum ITL',
+        y_axis_label='Sum of Inter-Token Latencies (seconds)',
+        title='Sum ITL Comparison: Kit vs vLLM (Per Request)',
+    )
+
+
+def plot_tpot_per_request_comparison(kit_df: pd.DataFrame, vllm_df: pd.DataFrame) -> Figure:
+    """
+    Create a per-request TPOT comparison plot between Kit and vLLM.
+    TPOT is calculated from ITLs and output tokens for each request.
+
+    Args:
+        kit_df (pd.DataFrame): Kit benchmark results DataFrame
+        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
+
+    Returns:
+        Figure: Plotly figure object
+    """
+    # Calculate TPOT for both Kit and vLLM
+    kit_df_copy = kit_df.copy()
+    vllm_df_copy = vllm_df.copy()
+
+    kit_df_copy['tpot_s'] = calculate_tpot_per_request(
+        kit_df_copy, 'client_inter_token_latencies_s', 'number_output_tokens'
+    )
+    vllm_df_copy['tpot_s'] = calculate_tpot_per_request(
+        vllm_df_copy, 'client_inter_token_latencies_s', 'number_output_tokens'  # vLLM now uses same column names
+    )
+
+    return plot_per_request_comparison(
+        kit_df=kit_df_copy,
+        vllm_df=vllm_df_copy,
+        kit_metric_column='tpot_s',
+        vllm_metric_column='tpot_s',
+        metric_name='TPOT',
+        y_axis_label='Time Per Output Token (seconds)',
+        title='TPOT Comparison: Kit vs vLLM (Per Request)',
+    )

@@ -14,6 +14,9 @@ from benchmarking.src.vllm_benchmark import VLLMBenchmarkExecutor
 from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     MULTIMODAL_IMAGE_SIZE_OPTIONS,
+    calculate_kit_summary_metrics,
+    display_summary_metrics_comparison,
+    get_vllm_summary_metrics,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
@@ -240,9 +243,14 @@ def _display_benchmark_results(
     """
     st.markdown('**Performance metrics plots**')
 
+    if df_req_info.empty:
+        st.warning('No successful requests to display. All requests failed.')
+        return
+
     # Check output tokens
-    generated_output_tokens = df_req_info.server_number_output_tokens.unique()[0]
-    if not pd.isnull(generated_output_tokens):
+    unique_vals = df_req_info.server_number_output_tokens.dropna().unique()
+    if len(unique_vals) > 0 and not pd.isnull(unique_vals[0]):
+        generated_output_tokens = unique_vals[0]
         st.markdown(
             f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
             tokens ({generated_output_tokens}) is {abs(expected_output_tokens - generated_output_tokens)}
@@ -255,10 +263,6 @@ def _display_benchmark_results(
     if is_vllm:
         metrics_ttft = ['client_ttft_s']
         labels_ttft = ['Client']
-        metrics_latency = ['client_end_to_end_latency_s']
-        labels_latency = ['Client']
-        metrics_throughput = ['client_output_token_per_s_per_request']
-        labels_throughput = ['Client']
     else:
         metrics_ttft = ['server_ttft_s', 'client_ttft_s']
         labels_ttft = ['Server', 'Client']
@@ -277,39 +281,59 @@ def _display_benchmark_results(
             'TTFT (s), per request',
             'Batch size',
             batching_exposed,
+            colors=['#ee7625'] if is_vllm else None,
         ),
         use_container_width=True
     )
+    if not is_vllm:
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                df_req_info,
+                'batch_size_used',
+                metrics_latency,
+                labels_latency,
+                f'{label}: Distribution of end-to-end latency' + by_batch_size_suffix,
+                'Latency (s), per request',
+                'Batch size',
+                batching_exposed,
+            ),
+            use_container_width=True
+        )
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                df_req_info,
+                'batch_size_used',
+                metrics_throughput,
+                labels_throughput,
+                f'{label}: Distribution of output throughput' + by_batch_size_suffix,
+                'Tokens per second, per request',
+                'Batch size',
+                batching_exposed,
+            ),
+            use_container_width=True
+        )
+    df_itl = df_req_info[['batch_size_used', 'client_mean_inter_token_latency_s']].copy()
+    df_itl['client_mean_inter_token_latency_ms'] = df_itl['client_mean_inter_token_latency_s'] * 1000
+    itl_color = '#ee7625'
     st.plotly_chart(
         plot_client_vs_server_barplots(
-            df_req_info,
+            df_itl,
             'batch_size_used',
-            metrics_latency,
-            labels_latency,
-            f'{label}: Distribution of end-to-end latency' + by_batch_size_suffix,
-            'Latency (s), per request',
+            ['client_mean_inter_token_latency_ms'],
+            ['Client'],
+            f'{label}: Distribution of Mean Inter-Token Latency (ITL)' + by_batch_size_suffix,
+            'Mean ITL (ms), per request',
             'Batch size',
             batching_exposed,
-        ),
-        use_container_width=True
-    )
-    st.plotly_chart(
-        plot_client_vs_server_barplots(
-            df_req_info,
-            'batch_size_used',
-            metrics_throughput,
-            labels_throughput,
-            f'{label}: Distribution of output throughput' + by_batch_size_suffix,
-            'Tokens per second, per request',
-            'Batch size',
-            batching_exposed,
+            colors=[itl_color],
         ),
         use_container_width=True
     )
     # Compute total throughput per batch
     if batching_exposed:
         st.plotly_chart(plot_dataframe_summary(df_req_info), use_container_width=True)
-    st.plotly_chart(plot_requests_gantt_chart(df_req_info), use_container_width=True)
+    if not is_vllm:
+        st.plotly_chart(plot_requests_gantt_chart(df_req_info), use_container_width=True)
 
 
 def main() -> None:
@@ -378,15 +402,20 @@ def main() -> None:
                 disabled=True,
             )
 
+        vllm_mode = st.session_state.benchmark_mode in ['vllm', 'both']
         st.session_state.multimodal_image_size = st.selectbox(
             'Multimodal image size',
             options=list(MULTIMODAL_IMAGE_SIZE_OPTIONS.keys()),
             format_func=lambda x: MULTIMODAL_IMAGE_SIZE_OPTIONS[x],
             index=0,
-            disabled=st.session_state.running or st.session_state.optional_download,
-            help='Select the pre-set image size for multimodal models. \
-                Small: 500x500, Medium: 1024x1024, Large: 2000x2000. Select N/A for non-multimodal models.',
+            disabled=st.session_state.running or st.session_state.optional_download or vllm_mode,
+            help='Select the pre-set image size for multimodal models. '
+                'Small: 500x500, Medium: 1024x1024, Large: 2000x2000. Select N/A for non-multimodal models. '
+                'Not supported in vLLM mode.',
         )
+        if vllm_mode:
+            st.session_state.multimodal_image_size = 'na'
+            st.caption('ℹ️ Multimodal image size is not supported in vLLM mode.')
 
         st.session_state.input_tokens = st.number_input(
             'Number of input tokens',
@@ -534,27 +563,83 @@ def main() -> None:
         # Side-by-side comparison
         st.header('Side-by-Side Comparison: Kit vs vLLM')
 
-        # Create two columns for comparison
-        col_kit, col_vllm = st.columns(2)
+        # Summary metrics comparison table
+        kit_metrics = calculate_kit_summary_metrics(
+            pd.read_json(st.session_state.performance_evaluator.individual_responses_file_path)
+        )
+        vllm_metrics = get_vllm_summary_metrics(st.session_state.vllm_evaluator.result_file_path)
+        display_summary_metrics_comparison(kit_metrics, vllm_metrics)
 
+        st.markdown('### Metrics Distribution Comparison')
+
+        # TTFT side by side
+        col_kit, col_vllm = st.columns(2)
         with col_kit:
-            st.subheader('Kit Benchmark Results')
-            _display_benchmark_results(
-                st.session_state.df_req_info,
-                st.session_state.batching_exposed,
-                st.session_state.output_tokens,
-                'Kit',
-                is_vllm=False
+            st.plotly_chart(
+                plot_client_vs_server_barplots(
+                    st.session_state.df_req_info,
+                    'batch_size_used',
+                    ['server_ttft_s', 'client_ttft_s'],
+                    ['Server', 'Client'],
+                    'Kit: Distribution of TTFT',
+                    'TTFT (s), per request',
+                    'Batch size',
+                    st.session_state.batching_exposed,
+                ),
+                use_container_width=True,
+            )
+        with col_vllm:
+            st.plotly_chart(
+                plot_client_vs_server_barplots(
+                    st.session_state.df_req_info_vllm,
+                    'batch_size_used',
+                    ['client_ttft_s'],
+                    ['Client'],
+                    'vLLM: Distribution of TTFT',
+                    'TTFT (s), per request',
+                    'Batch size',
+                    st.session_state.batching_exposed_vllm,
+                    colors=['#ee7625'],
+                ),
+                use_container_width=True,
             )
 
+        # ITL side by side (converted to ms)
+        df_itl_kit = st.session_state.df_req_info[['batch_size_used', 'client_mean_inter_token_latency_s']].copy()
+        df_itl_kit['client_mean_inter_token_latency_ms'] = df_itl_kit['client_mean_inter_token_latency_s'] * 1000
+        df_itl_vllm = st.session_state.df_req_info_vllm[['batch_size_used', 'client_mean_inter_token_latency_s']].copy()
+        df_itl_vllm['client_mean_inter_token_latency_ms'] = df_itl_vllm['client_mean_inter_token_latency_s'] * 1000
+
+        col_kit, col_vllm = st.columns(2)
+        with col_kit:
+            st.plotly_chart(
+                plot_client_vs_server_barplots(
+                    df_itl_kit,
+                    'batch_size_used',
+                    ['client_mean_inter_token_latency_ms'],
+                    ['Client'],
+                    'Kit: Distribution of Mean ITL',
+                    'Mean ITL (ms), per request',
+                    'Batch size',
+                    st.session_state.batching_exposed,
+                    colors=['#ee7625'],
+                ),
+                use_container_width=True,
+            )
         with col_vllm:
-            st.subheader('vLLM Benchmark Results')
-            _display_benchmark_results(
-                st.session_state.df_req_info_vllm,
-                st.session_state.batching_exposed_vllm,
-                st.session_state.output_tokens,
-                'vLLM',
-                is_vllm=True
+            st.plotly_chart(
+                plot_client_vs_server_barplots(
+                    df_itl_vllm,
+                    'batch_size_used',
+                    ['client_mean_inter_token_latency_ms'],
+                    ['Client'],
+                    'vLLM: Distribution of Mean ITL',
+                    'Mean ITL (ms), per request',
+                    'Batch size',
+                    st.session_state.batching_exposed_vllm,
+                    colors=['#ee7625'],
+                ),
+                use_container_width=True,
             )
 
     elif st.session_state.benchmark_mode == 'kit' and st.session_state.df_req_info is not None:

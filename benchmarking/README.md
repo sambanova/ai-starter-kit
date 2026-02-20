@@ -237,6 +237,22 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
     - ```LLM requests across time```: This gantt plot shows the duration of the TTFT and end-to-end latency per request in a timeline. One should expect latencies considerably greater than TTFTs, and multiple bars starting at the same time as number of concurrent requests specified. In addition, if the endpoint allows dynamic batching, one could see grouped bars according to the batch sizes supported.
 
+    **vLLM Only mode**
+
+    When running in **vLLM Only** mode, the app benchmarks the SambaNova API using `vllm bench serve` and displays client-side metrics only (server-side metrics are not captured by vLLM). You will see:
+
+    - ```Distribution of TTFT```: Client TTFT distribution across requests.
+    - ```Distribution of Mean ITL```: Client mean inter-token latency distribution across requests.
+
+    _Note: If some requests fail (e.g. due to rate limits or timeouts), the charts will display only the successful requests and a warning will indicate how many failed._
+
+    **Both (Side-by-Side Comparison) mode**
+
+    When running in **Both** mode, the app runs Kit and vLLM benchmarks sequentially and presents the results together for easy comparison. You will see:
+
+    - **Summary Metrics Comparison** table: A side-by-side table showing duration, completed/failed requests, token counts, request throughput, output throughput, mean/median TTFT, and mean/median ITL for both Kit and vLLM.
+    - **Side-by-side distribution charts**: TTFT and Mean ITL distributions for Kit (left) and vLLM (right), plotted at the same scale for easy visual comparison.
+
 6. Customize synthetic prompts.
 
     Synthetic prompts for performance evaluation can be found [here](./prompts/). You are free to add, modify, or remove prompts as needed. If adding new prompts, please follow the data structure used in the existing ones as a reference.
