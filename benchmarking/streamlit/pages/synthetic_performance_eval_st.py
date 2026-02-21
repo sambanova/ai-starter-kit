@@ -560,6 +560,12 @@ def main() -> None:
 
                     # Add vLLM results to json_data
                     if st.session_state.vllm_evaluator:
+                        # Raw vLLM output (original vllm bench serve JSON)
+                        vllm_raw_name = st.session_state.vllm_evaluator.result_file_path.split('/')[-1]
+                        with open(st.session_state.vllm_evaluator.result_file_path, 'r') as f:
+                            vllm_raw_content = json.loads(f.read())
+                        json_data[vllm_raw_name] = vllm_raw_content
+
                         vllm_individual_name = st.session_state.vllm_evaluator.individual_responses_file_path.split('/')[-1]
                         with open(st.session_state.vllm_evaluator.individual_responses_file_path, 'r') as f:
                             vllm_individual_content = json.loads(f.read())

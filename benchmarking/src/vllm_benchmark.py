@@ -183,14 +183,14 @@ class VLLMBenchmarkExecutor:
                     if self._progress_total > 0:
                         progress_bar(self._progress_completed, self._progress_total)
                     else:
-                        progress_bar(1, 100)  # Waiting for first tqdm output
+                        progress_bar(0, num_requests)  # Waiting for first tqdm output
 
                 time.sleep(0.5)
 
             stderr_thread.join(timeout=2)
 
             if progress_bar:
-                progress_bar(100, 100)
+                progress_bar(num_requests, num_requests)
 
             # Check for errors
             if retcode != 0:
