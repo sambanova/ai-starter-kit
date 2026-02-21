@@ -6,8 +6,11 @@ This module provides functionality to run vLLM benchmarks and parse their result
 
 import json
 import os
+import re
 import subprocess
+import sys
 import threading
+import time
 from datetime import datetime
 from typing import Any, Callable, Dict, Optional
 
@@ -43,6 +46,8 @@ class VLLMBenchmarkExecutor:
         self.result_file_path = None
         self.individual_responses_file_path = None
         self.summary_file_path = None
+        self._progress_completed = 0
+        self._progress_total = 0
 
         # Create results directory if it doesn't exist
         os.makedirs(results_dir, exist_ok=True)
@@ -143,35 +148,46 @@ class VLLMBenchmarkExecutor:
             print(" ".join(cmd))
             print("="*80 + "\n")
 
-            # Run vLLM benchmark with API key in environment
-            # Use stdout=None and stderr=None to stream output to terminal
+            # Reset progress tracking for this run
+            self._progress_completed = 0
+            self._progress_total = 0
+
+            # Pipe stderr to parse tqdm progress; stdout streams directly to terminal
             process = subprocess.Popen(
                 cmd,
-                stdout=None,  # Stream to terminal
-                stderr=None,  # Stream to terminal
+                stdout=None,
+                stderr=subprocess.PIPE,
                 text=True,
                 env=env
             )
 
-            # Monitor process
+            # Background thread: parse tqdm progress from stderr and forward to terminal
+            stderr_thread = threading.Thread(
+                target=self._monitor_stderr,
+                args=(process.stderr,),
+                daemon=True,
+            )
+            stderr_thread.start()
+
+            # Monitor process and update progress bar
             while True:
                 if self.stop_event.is_set():
                     process.terminate()
                     raise Exception("Benchmark stopped by user")
 
-                # Check if process has finished
                 retcode = process.poll()
                 if retcode is not None:
                     break
 
-                # Update progress if callback provided
                 if progress_bar:
-                    # Estimate progress (this is approximate since vLLM doesn't provide progress)
-                    progress_bar(50, 100)
+                    if self._progress_total > 0:
+                        progress_bar(self._progress_completed, self._progress_total)
+                    else:
+                        progress_bar(1, 100)  # Waiting for first tqdm output
 
-                # Small sleep to avoid busy waiting
-                import time
                 time.sleep(0.5)
+
+            stderr_thread.join(timeout=2)
 
             if progress_bar:
                 progress_bar(100, 100)
@@ -210,6 +226,25 @@ class VLLMBenchmarkExecutor:
             )
         except Exception as e:
             raise Exception(f"Error running vLLM benchmark: {str(e)}")
+
+    def _monitor_stderr(self, stderr_pipe) -> None:
+        """Read vLLM stderr, parse tqdm progress (X/Y), and forward output to terminal."""
+        buffer = ''
+        while True:
+            chunk = stderr_pipe.read(256)
+            if not chunk:
+                break
+            sys.stderr.write(chunk)
+            sys.stderr.flush()
+            buffer += chunk
+            # Split on carriage return or newline to isolate tqdm lines
+            parts = re.split(r'[\r\n]', buffer)
+            buffer = parts[-1]  # keep incomplete last segment
+            for part in parts[:-1]:
+                match = re.search(r'(\d+)/(\d+)', part)
+                if match:
+                    self._progress_completed = int(match.group(1))
+                    self._progress_total = int(match.group(2))
 
     def _find_and_parse_results(self, result_dir: str) -> tuple[Dict[str, Any], str]:
         """
@@ -334,8 +369,6 @@ class VLLMBenchmarkExecutor:
                     'batch_size_used': None,
                     'error_code': error_str,
                     'error_msg': error_str,
-                    'start_time': None,
-                    'end_time': None,
                 }
             else:
                 request_ttft_s = ttfts[i] if i < len(ttfts) else mean_ttft_s
@@ -373,8 +406,6 @@ class VLLMBenchmarkExecutor:
                     'batch_size_used': None,
                     'error_code': None,
                     'error_msg': None,
-                    'start_time': f"2024-01-01T00:00:{i:02d}",
-                    'end_time': f"2024-01-01T00:00:{i + int(request_e2e_s):02d}",
                 }
             individual_responses.append(record)
 

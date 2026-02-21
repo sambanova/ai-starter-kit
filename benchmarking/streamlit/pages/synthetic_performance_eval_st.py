@@ -42,6 +42,18 @@ with open(CONFIG_PATH) as file:
 
 
 def _initialize_session_variables() -> None:
+    # Clear results when navigating from a different page
+    if st.session_state.get('current_page') != 'synthetic':
+        st.session_state.df_req_info = None
+        st.session_state.df_req_info_vllm = None
+        st.session_state.batching_exposed = None
+        st.session_state.batching_exposed_vllm = None
+        st.session_state.performance_evaluator = None
+        st.session_state.vllm_evaluator = None
+        st.session_state.optional_download = False
+        st.session_state.zip_buffer = None
+        st.session_state.current_page = 'synthetic'
+
     # Initialize llm
     if 'llm' not in st.session_state:
         st.session_state.llm = None
@@ -65,6 +77,8 @@ def _initialize_session_variables() -> None:
     # Benchmark mode selection
     if 'benchmark_mode' not in st.session_state:
         st.session_state.benchmark_mode = 'kit'
+    if 'previous_benchmark_mode' not in st.session_state:
+        st.session_state.previous_benchmark_mode = st.session_state.benchmark_mode
 
     # Additional initializations
     if 'optional_download' not in st.session_state:
@@ -378,9 +392,16 @@ def main() -> None:
             disabled=st.session_state.running or st.session_state.optional_download,
         )
 
-        # Show info about vLLM benchmarking
-        if st.session_state.benchmark_mode in ['vllm', 'both']:
-            st.info('ℹ️ vLLM benchmarks the SambaNova API remotely. No local GPU required. Install with: pip install vllm>=0.6.0')
+        if st.session_state.benchmark_mode != st.session_state.previous_benchmark_mode:
+            st.session_state.df_req_info = None
+            st.session_state.df_req_info_vllm = None
+            st.session_state.batching_exposed = None
+            st.session_state.batching_exposed_vllm = None
+            st.session_state.performance_evaluator = None
+            st.session_state.vllm_evaluator = None
+            st.session_state.optional_download = False
+            st.session_state.zip_buffer = None
+            st.session_state.previous_benchmark_mode = st.session_state.benchmark_mode
 
         st.divider()
 
@@ -453,14 +474,20 @@ def main() -> None:
             disabled=st.session_state.running or st.session_state.optional_download,
         )
 
+        timeout_blocked = st.session_state.benchmark_mode in ['vllm', 'both']
         st.session_state.timeout = st.number_input(
             'Timeout',
             min_value=60,
             max_value=1800,
             value=600,
             step=1,
-            disabled=st.session_state.running or st.session_state.optional_download,
+            disabled=st.session_state.running or st.session_state.optional_download or timeout_blocked,
+            help='Number of seconds before program times out. Not supported in vLLM mode.',
         )
+        if st.session_state.benchmark_mode == 'vllm':
+            st.caption('ℹ️ Timeout is not supported in vLLM mode.')
+        elif st.session_state.benchmark_mode == 'both':
+            st.caption('ℹ️ Timeout is disabled — not supported by all frameworks in this mode.')
 
         st.session_state.running = st.sidebar.button(
             'Run!',
