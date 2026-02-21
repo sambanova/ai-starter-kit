@@ -79,74 +79,7 @@ Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1)
     uv pip install -r requirements.txt
     ```
 
-## vLLM Setup (Optional)
-
-vLLM benchmarking provides an alternative benchmarking tool for comparison. **vLLM benchmarks the SambaNova API remotely**, so it doesn't require local GPU or special hardware.
-
-### System Requirements
-
-**All Platforms Supported:**
-- Works on **Linux**, **macOS**, and **Windows**
-- **No GPU required** - benchmarks remote API
-- **Python**: 3.8 to 3.11
-- **Installation**: Simple pip install
-
-### Installation (All Platforms)
-
-vLLM can be installed with a simple pip command on any platform:
-
-**Option A - Uncomment in requirements.txt:**
-```bash
-# Edit requirements.txt and uncomment the vllm line (line 32)
-# Then reinstall dependencies
-uv pip install -r requirements.txt
-```
-
-**Option B - Install directly:**
-```bash
-pip install vllm>=0.6.0
-```
-
-**Verify installation:**
-```bash
-vllm --version
-```
-
-That's it! Since vLLM benchmarks the SambaNova API remotely, you don't need:
-- ❌ Local GPU
-- ❌ CUDA installation
-- ❌ Local model files
-- ❌ Special hardware
-
-The benchmarking tool sends requests to the SambaNova API and measures performance metrics.
-
-### How It Works
-
-When you select vLLM benchmarking mode, the app:
-1. Uses your SambaNova API credentials (same as Kit mode)
-2. Runs `vllm bench serve` to benchmark the remote API
-3. Generates synthetic prompts with your specified input/output token counts
-4. Measures performance metrics (TTFT, throughput, latency)
-5. Displays results in the same format as Kit benchmarking
-
-### Troubleshooting
-
-**Common Issues:**
-
-1. **"vllm command not found"**
-   - Ensure vLLM is installed: `pip list | grep vllm`
-   - Install with: `pip install vllm>=0.6.0`
-   - Check PATH: `which vllm`
-
-2. **API authentication errors**
-   - Verify your SambaNova API key is set in the Streamlit UI
-   - The same credentials used for Kit benchmarking are used for vLLM
-
-3. **Benchmark timeout**
-   - Increase the timeout value in the UI
-   - Reduce the number of requests or concurrent requests
-
-For more information, visit the [vLLM documentation](https://docs.vllm.ai/).
+_Note: vLLM is also installed for speed benchmarking. The framework will use your existing SambaNova API credentials. No additional setup is needed beyond the standard environment variables._
 
 # Use the starter kit
 
