@@ -634,7 +634,7 @@ def calculate_sum_itl_per_request(df: pd.DataFrame, itl_column: str) -> pd.Serie
     Returns:
         pd.Series: Sum of ITLs in seconds per request
     """
-    def calc_sum_itl(row):
+    def calc_sum_itl(row: pd.Series) -> Any:
         itls = row[itl_column]
         if itls is None or not isinstance(itls, list) or len(itls) == 0:
             return None
@@ -658,7 +658,7 @@ def calculate_tpot_per_request(df: pd.DataFrame, itl_column: str, output_tokens_
     Returns:
         pd.Series: TPOT values in seconds per token
     """
-    def calc_tpot(row):
+    def calc_tpot(row: pd.Series) -> Any:
         itls = row[itl_column]
         output_tokens = row[output_tokens_column]
 

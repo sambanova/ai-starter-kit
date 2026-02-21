@@ -26,12 +26,9 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
 import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
+from benchmarking.benchmarking_utils import get_tokenizer
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import (
-    LLMPerfResults,
-    flatten,
-    get_tokenizer,
-)
+from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
 from benchmarking.utils import CONFIG_PATH

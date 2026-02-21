@@ -388,7 +388,8 @@ def main() -> None:
                 'vllm': 'vLLM Only',
                 'both': 'Both (Side-by-Side Comparison)'
             }[x],
-            help='Select which benchmark to run: Kit (current implementation), vLLM (vLLM benchmark serve), or Both for comparison',
+            help='Select which benchmark to run: Kit (current implementation),\
+                vLLM (vLLM benchmark serve), or Both for comparison',
             disabled=st.session_state.running or st.session_state.optional_download,
         )
 
@@ -566,7 +567,8 @@ def main() -> None:
                             vllm_raw_content = json.loads(f.read())
                         json_data[vllm_raw_name] = vllm_raw_content
 
-                        vllm_individual_name = st.session_state.vllm_evaluator.individual_responses_file_path.split('/')[-1]
+                        vllm_individual_name = st.session_state.vllm_evaluator.\
+                                                individual_responses_file_path.split('/')[-1]
                         with open(st.session_state.vllm_evaluator.individual_responses_file_path, 'r') as f:
                             vllm_individual_content = json.loads(f.read())
 
@@ -592,7 +594,9 @@ def main() -> None:
                 st.rerun()
 
     # Display results based on benchmark mode
-    if st.session_state.benchmark_mode == 'both' and st.session_state.df_req_info is not None and st.session_state.df_req_info_vllm is not None:
+    if st.session_state.benchmark_mode == 'both' and \
+        st.session_state.df_req_info is not None \
+            and st.session_state.df_req_info_vllm is not None:
         # Side-by-side comparison
         st.header('Side-by-Side Comparison: Kit vs vLLM')
 

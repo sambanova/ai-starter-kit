@@ -12,7 +12,7 @@ import sys
 import threading
 import time
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -28,7 +28,7 @@ class VLLMBenchmarkExecutor:
         results_dir: str,
         timeout: int = 600,
         user_metadata: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         Initialize the vLLM benchmark executor.
 
@@ -43,7 +43,7 @@ class VLLMBenchmarkExecutor:
         self.timeout = timeout
         self.user_metadata = user_metadata or {}
         self.stop_event = threading.Event()
-        self.result_file_path = None
+        self.result_file_path: Any = None
         self.individual_responses_file_path = None
         self.summary_file_path = None
         self._progress_completed = 0
@@ -62,7 +62,7 @@ class VLLMBenchmarkExecutor:
         api_base: Optional[str] = None,
         api_key: Optional[str] = None,
         endpoint: str = "chat/completions",
-        progress_bar: Optional[Callable] = None,
+        progress_bar: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """
         Run vLLM benchmark serve command against remote API.
@@ -209,7 +209,8 @@ class VLLMBenchmarkExecutor:
             num_failed = results.get('failed', 0)
             num_total = results.get('num_prompts', 0)
             if num_failed > 0:
-                print(f"\nWarning: {num_failed}/{num_total} requests failed. Charts will show the {num_total - num_failed} successful requests.\n")
+                print(f"\nWarning: {num_failed}/{num_total} requests failed. \
+                    Charts will show the {num_total - num_failed} successful requests.\n")
 
             # Create compatible output files
             self._create_compatible_output(results, num_input_tokens, num_output_tokens, num_concurrent_requests)
@@ -227,7 +228,7 @@ class VLLMBenchmarkExecutor:
         except Exception as e:
             raise Exception(f"Error running vLLM benchmark: {str(e)}")
 
-    def _monitor_stderr(self, stderr_pipe) -> None:
+    def _monitor_stderr(self, stderr_pipe: Any) -> None:
         """Read vLLM stderr, parse tqdm progress (X/Y), and forward output to terminal."""
         buffer = ''
         while True:
@@ -353,7 +354,7 @@ class VLLMBenchmarkExecutor:
 
             if error_str:
                 # Failed request: set error fields, leave metrics as None
-                record = {
+                record: Dict[str, Any] = {
                     'client_ttft_s': None,
                     'client_end_to_end_latency_s': None,
                     'client_output_token_per_s_per_request': None,
@@ -490,7 +491,7 @@ def parse_vllm_results_to_dataframe(result_file_path: str) -> pd.DataFrame:
         num_completed = results.get('completed', 0)
         num_prompts = results.get('num_prompts', len(ttfts))
 
-        rows = []
+        rows: List[Dict[str,Any]] = []
         for i in range(num_prompts):
             # Detect failures
             error_str = None

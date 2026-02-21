@@ -3,8 +3,6 @@ import time
 from collections.abc import Iterable
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
-from benchmarking.benchmarking_utils import FAMILY_MODEL_TYPE_IDENTIFIER, find_family_model_type, get_tokenizer
-
 NUM_RNG_ATTEMPTS = 10  # Unlikely to be used in practice: prevents eternal WHILE-loops
 LVLM_IMAGE_PATHS = {
     'small': './imgs/vision_perf_eval-small.jpg',
