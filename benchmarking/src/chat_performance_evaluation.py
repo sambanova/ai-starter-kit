@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from dotenv import load_dotenv
 
-import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
+import benchmarking.benchmarking_utils as benchmarking_utils
 from benchmarking.src.llmperf.models import RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
 from benchmarking.streamlit.streamlit_utils import set_api_variables
@@ -28,7 +28,7 @@ class ChatPerformanceEvaluator:
         Returns:
             tuple: contains the api response, generated text and input parameters
         """
-        family_model_type = llmperf_utils.find_family_model_type(self.model)
+        family_model_type = benchmarking_utils.find_family_model_type(self.model)
 
         if family_model_type == 'llama3':
             prompt_template = f"""<|start_header_id|>user<|end_header_id|>{prompt}<|eot_id|>
@@ -39,7 +39,7 @@ class ChatPerformanceEvaluator:
         # Build prompt dict for Request Config
         prompt_dict = {'name': 'chat_prompt', 'template': prompt_template}
 
-        tokenizer = llmperf_utils.get_tokenizer(self.model)
+        tokenizer = benchmarking_utils.get_tokenizer(self.model)
 
         api_variables = set_api_variables()
 

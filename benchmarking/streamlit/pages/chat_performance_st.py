@@ -72,6 +72,13 @@ def _parse_llm_response(llm: ChatPerformanceEvaluator, prompt: str) -> Dict[str,
 
 
 def _initialize_sesion_variables() -> None:
+    # Clear results when navigating from a different page
+    if st.session_state.get('current_page') != 'chat':
+        st.session_state.chat_history = []
+        st.session_state.perf_metrics_history = []
+        st.session_state.chat_disabled = True
+        st.session_state.current_page = 'chat'
+
     # Initialize chat history
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []

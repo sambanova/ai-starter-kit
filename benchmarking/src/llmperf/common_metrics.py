@@ -24,6 +24,11 @@ NUM_INPUT_TOKENS = 'number_input_tokens'
 NUM_OUTPUT_TOKENS = 'number_output_tokens'
 NUM_TOTAL_TOKENS = 'number_total_tokens'
 
+# Inter-token latency metrics
+INTER_TOKEN_LATENCY = 'client_inter_token_latencies_s'  # List of ITLs per request
+MEAN_INTER_TOKEN_LATENCY = 'client_mean_inter_token_latency_s'  # Mean ITL per request
+MEAN_OUTPUT_THROUGHPUT = 'mean_output_throughput_token_per_s'  # Mean aggregate throughput
+
 # Server-side metrics
 TTFT_SERVER = 'server_ttft_s'
 E2E_LAT_SERVER = 'server_end_to_end_latency_s'

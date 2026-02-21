@@ -18,8 +18,8 @@ import warnings
 from dotenv import load_dotenv
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
+from benchmarking.benchmarking_utils import get_tokenizer
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import get_tokenizer
 from benchmarking.src.llmperf.models import RequestConfig
 from benchmarking.utils import SAMBANOVA_API_BASE
 
@@ -119,6 +119,7 @@ class BaseAPIEndpoint(abc.ABC):
         total_request_time: int | float,
         server_metrics: Dict[str, Any],
         number_chunks_received: int,
+        events_timings: List[float],
     ) -> Dict[str, Any]:
         """Populates `metrics` dictionary with performance metrics calculated from client side
 
@@ -129,6 +130,7 @@ class BaseAPIEndpoint(abc.ABC):
             total_request_time (int): end-to-end latency
             server_metrics (dict):  server metrics dictionary
             number_chunks_received (int): number of chunks received
+            events_timings (list): list of inter-token latencies in seconds
 
         Returns:
             dict: updated metrics dictionary
@@ -170,6 +172,19 @@ class BaseAPIEndpoint(abc.ABC):
             )
 
         metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT] = (prompt_len + num_output_tokens) / total_request_time
+
+        # Store inter-token latencies
+        metrics[common_metrics.INTER_TOKEN_LATENCY] = events_timings if len(events_timings) > 0 else None
+
+        # Calculate mean ITL for this request (exclude first chunk which includes TTFT)
+        if len(events_timings) > 1:
+            # Mean of ITLs after first token
+            metrics[common_metrics.MEAN_INTER_TOKEN_LATENCY] = sum(events_timings[1:]) / len(events_timings[1:])
+        elif len(events_timings) == 1:
+            # Single chunk case
+            metrics[common_metrics.MEAN_INTER_TOKEN_LATENCY] = events_timings[0]
+        else:
+            metrics[common_metrics.MEAN_INTER_TOKEN_LATENCY] = None
 
         return metrics
 
@@ -382,6 +397,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             total_request_time,
             server_metrics,
             number_chunks_received,
+            events_timings,
         )
 
         return metrics, generated_text

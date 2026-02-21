@@ -35,6 +35,13 @@ with open(CONFIG_PATH) as file:
 
 
 def _initialize_sesion_variables() -> None:
+    # Clear results when navigating from a different page
+    if st.session_state.get('current_page') != 'custom':
+        st.session_state.df_req_info = None
+        st.session_state.batching_exposed = None
+        st.session_state.performance_evaluator = None
+        st.session_state.current_page = 'custom'
+
     # Initialize llm
     if 'llm' not in st.session_state:
         st.session_state.llm = None
