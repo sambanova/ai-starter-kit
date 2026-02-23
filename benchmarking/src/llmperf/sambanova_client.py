@@ -354,7 +354,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         
         # print(f'url :{url}')
         # print(f'headers :{headers}')
-        print(f'json_data :{json.dumps(json_data)}')
+        # print(f'json_data :{json.dumps(json_data)}')
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
             # print(f'response: {response.content}')
