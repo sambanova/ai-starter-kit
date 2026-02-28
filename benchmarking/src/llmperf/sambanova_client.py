@@ -225,6 +225,25 @@ class BaseAPIEndpoint(abc.ABC):
 
         return metrics
 
+    def _populate_datakrypto_metrics(
+        self, response_dict_datakrypto: Dict[str, Any], metrics: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Parse datakrypto output data to metrics dictionary structure
+
+        Args:
+            response_dict_datakrypto (dict): dict data with datakrypto performance metrics
+            metrics (dict): metrics dictionary
+
+        Returns:
+            dict: updated metrics dictionary
+        """
+
+        metrics[common_metrics.TOTAL_ENCRYPTION_TIME_MS] = response_dict_datakrypto.get('total_encryption_time_ms')
+        metrics[common_metrics.TOTAL_DECRYPTION_TIME_MS] = response_dict_datakrypto.get('total_decryption_time_ms')
+        metrics[common_metrics.SERVER_NETWORK_LATENCY_MS] = response_dict_datakrypto.get('server_network_latency_ms')
+
+        return metrics
+
 
 class SambaNovaCloudAPI(BaseAPIEndpoint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -316,6 +335,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         # Get API request components
         url = self._get_url()
+        # url = 'http://localhost:8000/stream' --for mockup test
         headers = self._get_headers()
         json_data = self._get_json_data()
 
@@ -323,12 +343,21 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         generated_text = ''
         events_received = []
         events_timings = []
+        # Accumulators for datakrypto metrics (None until first chunk with fhenom_usage)
+        acc_encryption_time_ms: float | None = None
+        acc_decryption_time_ms: float | None = None
+        acc_server_network_latency_ms: float | None = None
 
         # Start measuring time
         metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         start_time = event_start_time = time.monotonic()
+        
+        # print(f'url :{url}')
+        # print(f'headers :{headers}')
+        # print(f'json_data :{json.dumps(json_data)}')
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
+            # print(f'response: {response.content}')
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response) # type: ignore[arg-type]
@@ -339,6 +368,20 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                     # check streaming events before last stream returns DONE
                     if event.data != '[DONE]':
                         data = json.loads(event.data)
+
+                        # Accumulate datakrypto metrics from every chunk that carries fhenom_usage
+                        fhenom_usage = data.get('fhenom_usage')
+                        if fhenom_usage:
+                            enc = fhenom_usage.get('total_encryption_time_ms')
+                            dec = fhenom_usage.get('total_decryption_time_ms')
+                            net = fhenom_usage.get('server_network_latency_ms')
+                            if enc is not None:
+                                acc_encryption_time_ms = (acc_encryption_time_ms or 0) + enc
+                            if dec is not None:
+                                acc_decryption_time_ms = (acc_decryption_time_ms or 0) + dec
+                            if net is not None:
+                                acc_server_network_latency_ms = (acc_server_network_latency_ms or 0) + net
+
                         # if events don't contain "usage" key, which only shows up in stream returning
                         # performance metrics
                         if data.get('usage') is None:
@@ -375,6 +418,12 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         num_output_tokens = self._get_token_length(generated_text)
         server_metrics = self._populate_server_metrics(response_dict, metrics)
+        response_dict_datakrypto = {
+            'total_encryption_time_ms': acc_encryption_time_ms,
+            'total_decryption_time_ms': acc_decryption_time_ms,
+            'server_network_latency_ms': acc_server_network_latency_ms,
+        }
+        server_metrics = self._populate_datakrypto_metrics(response_dict_datakrypto, server_metrics)
         metrics = self._populate_client_metrics(
             prompt_len,
             num_output_tokens,

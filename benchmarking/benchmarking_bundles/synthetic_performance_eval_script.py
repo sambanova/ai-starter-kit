@@ -304,6 +304,18 @@ class ResultsConsolidator:
             'switching_time',
             'request_batching_frequencies',
             'representative_batch_size',
+            'total_encryption_time_ms_min',
+            'total_encryption_time_ms_mean',
+            'total_encryption_time_ms_quantiles_p50',
+            'total_encryption_time_ms_max',
+            'total_decryption_time_ms_min',
+            'total_decryption_time_ms_mean',
+            'total_decryption_time_ms_quantiles_p50',
+            'total_decryption_time_ms_max',
+            'server_network_latency_ms_min',
+            'server_network_latency_ms_mean',
+            'server_network_latency_ms_quantiles_p50',
+            'server_network_latency_ms_max'
         ]
 
         # Remove missing columns safely

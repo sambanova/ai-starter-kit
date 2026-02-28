@@ -1,0 +1,13 @@
+model_name,input_tokens,output_tokens,num_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size
+Llama-xLAM-2-8b-fc-r-encrypted,2000,100,1,1,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,100,2,2,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,100,4,4,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,100,8,8,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,100,16,16,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,100,32,32,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,1024,1,1,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,1024,2,2,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,1024,4,4,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,1024,8,8,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,1024,16,16,,,
+Llama-xLAM-2-8b-fc-r-encrypted,2000,1024,32,32,,,

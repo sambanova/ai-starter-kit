@@ -288,6 +288,9 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_INPUT_TOKENS_SERVER,
             common_metrics.NUM_OUTPUT_TOKENS_SERVER,
             common_metrics.ACCEPTANCE_RATE,
+            common_metrics.TOTAL_ENCRYPTION_TIME_MS,
+            common_metrics.TOTAL_DECRYPTION_TIME_MS,
+            common_metrics.SERVER_NETWORK_LATENCY_MS,
         ]:
             if self.show_results_in_terminal:
                 logger.info(f'Building Server Metrics Summary for metric: {metric}')
