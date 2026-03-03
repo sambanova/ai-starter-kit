@@ -7,7 +7,7 @@ langchain-milvus==0.2.2
 langchain-sambanova==1.0.0
 langchain==1.0.2
 mypy==1.18.2
-nltk==3.9.2
+nltk==3.9.3
 pre-commit==4.3.0
 pydantic==2.12.3
 pydantic_core==2.41.4
