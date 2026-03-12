@@ -1,16 +1,16 @@
 Babel==2.14.0
 Cython==3.0.8
-Flask==3.0.0
+Flask==3.1.3
 InstructorEmbedding==1.0.1
 Jinja2==3.1.3
 MarkupSafe==2.1.3
-Pillow==9.5.0
+Pillow==12.1.1
 PyMuPDF==1.25.2
 PyMuPDFb==1.24.10
 PyYAML==6.0.1
 Pygments==2.17.2
 SQLAlchemy==2.0.25
-Werkzeug==3.0.1
+Werkzeug==3.1.6
 aiohttp==3.9.3
 aiosignal==1.3.1
 annotated-types==0.6.0
@@ -91,7 +91,7 @@ platformdirs==4.1.0
 pre-commit==4.0.1
 premailer==3.10.0
 prompt-toolkit==3.0.43
-protobuf==4.25.2
+protobuf==5.29.6
 psutil==5.9.7
 ptyprocess==0.7.0
 pure-eval==0.2.2
@@ -121,7 +121,7 @@ stack-data==0.6.3
 tenacity==8.2.3
 termcolor==2.4.0
 tifffile==2023.12.9
-tornado==6.4
+tornado==6.5.5
 tqdm==4.66.1
 traitlets==5.14.1
 tzdata==2023.4
