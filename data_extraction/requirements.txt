@@ -1,5 +1,5 @@
 InstructorEmbedding==1.0.1
-Pillow==10.0.1
+Pillow==12.1.1
 PyMuPDF==1.25.2
 PyMuPDFb==1.24.10
 PyYAML==6.0.1
@@ -70,7 +70,7 @@ nibabel==5.1.0
 nipype==1.8.6
 numexpr==2.8.7
 numpy==1.26.4
-orjson==3.10.6
+orjson==3.11.6
 packaging==23.2
 pandas==2.1.1
 parso==0.8.3
@@ -90,7 +90,7 @@ pydantic_core==2.41.4
 pydot==1.4.2
 pypandoc==1.12
 pyparsing==3.1.1
-pypdf==3.16.2
+pypdf==6.8.0
 python-dateutil==2.8.2
 python-docx==1.1.0
 python-dotenv==1.2.1
@@ -111,7 +111,7 @@ stack-data==0.6.3
 starlette==0.31.1
 tenacity==8.2.3
 threadpoolctl==3.2.0
-tornado==6.3.3
+tornado==6.5.5
 traitlets==5.11.2
 traits==6.3.2
 tzdata==2023.3
