@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
 from dotenv import load_dotenv
-from langchain.docstore.document import Document
+from langchain_classic.docstore.document import Document
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 

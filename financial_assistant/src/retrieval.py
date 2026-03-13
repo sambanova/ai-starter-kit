@@ -3,8 +3,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import chromadb
 import yaml
-from langchain.schema import Document
 from langchain_chroma import Chroma
+from langchain_classic.schema import Document
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_sambanova import SambaNovaEmbeddings
@@ -54,14 +54,14 @@ def get_qa_response(
         Answer to the user request.
 
     Raises:
-        TypeError: If `user_request` is not a string or `documents` is not a list of `langchain.schema.Document`.
+        TypeError: If `user_request` is not a string or `documents` is not a list of `langchain_classic.schema.Document`
     """
     if not isinstance(user_request, str):
         raise TypeError('user_request must be a string.')
     if not isinstance(documents, list):
         raise TypeError(f'documents must be a list of strings. Got {type(documents)}.')
     if not all(isinstance(doc, Document) for doc in documents):
-        raise TypeError(f'All documents must be of type `langchain.schema.Document`.')
+        raise TypeError(f'All documents must be of type `langchain_classic.schema.Document`.')
 
     # Get the vectostore registry
     vectorstore = get_vectorstore(documents=documents, sambanova_api_key=sambanova_api_key)

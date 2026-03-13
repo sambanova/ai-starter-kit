@@ -27,6 +27,19 @@ from utils.visual.env_utils import are_credentials_set, env_input_fields, initia
 
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml')
+# Available models in dropdown menu
+LLM_MODELS = [
+    'gpt-oss-120b',
+    'Llama-4-Maverick-17B-128E-Instruct',
+    'Meta-Llama-3.3-70B-Instruct',
+    'DeepSeek-R1-Distill-Llama-70B',
+    'DeepSeek-R1',
+    'DeepSeek-V3-0324',
+    'DeepSeek-V3.1',
+    'DeepSeek-V3.1-Terminus',
+    'Meta-Llama-3.1-8B-Instruct',
+    'Qwen-32B',
+]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
 
@@ -118,7 +131,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
     if len(st.session_state.chat_history) == 0:
         with st.chat_message(
             'ai',
-            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+            avatar=os.path.join(repo_dir, 'images', 'icon.svg'),
         ):
             st.write(st_description.get('app_overview'))
 
@@ -133,7 +146,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
 
         with st.chat_message(
             'ai',
-            avatar=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+            avatar=os.path.join(repo_dir, 'images', 'icon.svg'),
         ):
             st.markdown(
                 f'{ans}',
@@ -162,7 +175,7 @@ def handle_user_input(user_question: Optional[str]) -> None:
 def main() -> None:
     st.set_page_config(
         page_title='AI Starter Kit',
-        page_icon=os.path.join(repo_dir, 'images', 'SambaNova-icon.svg'),
+        page_icon=os.path.join(repo_dir, 'images', 'icon.svg'),
     )
 
     # set buttons style
@@ -217,6 +230,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    additional_env_vars.update({'SAMBANOVA_API_BASE': 'https://api.sambanova.ai/v1'})
     initialize_env_variables(prod_mode, additional_env_vars)
 
     if 'conversation' not in st.session_state:
@@ -260,7 +274,7 @@ def main() -> None:
 
     with st.sidebar:
         # Inject HTML to display the logo in the sidebar at 70% width
-        logo_path = os.path.join(repo_dir, 'images', 'SambaNova-dark-logo-1.png')
+        logo_path = os.path.join(repo_dir, 'images', 'dark-logo.png')
         with open(logo_path, 'rb') as img_file:
             encoded = base64.b64encode(img_file.read()).decode()
         st.sidebar.markdown(
@@ -289,7 +303,7 @@ def main() -> None:
         else:
             st.success('Credentials are set')
             if st.button('Clear Credentials'):
-                save_credentials('', {var: '' for var in (additional_env_vars or [])}, prod_mode)
+                save_credentials('', '', prod_mode)  # type: ignore
                 st.rerun()
 
         if are_credentials_set(additional_env_vars):
@@ -322,8 +336,11 @@ def main() -> None:
             if method == 'Search and scrape sites':
                 st.session_state.query = st.text_input('Query')
 
+            llm_model = st.selectbox('Optional Set a specific LLM to use', LLM_MODELS, 0)
+
             if st.button('set'):
                 st.session_state.search_assistant = SearchAssistant(sambanova_api_key, serpapi_api_key)
+                st.session_state.search_assistant.set_llm(llm_model)
                 with st.spinner(
                     'setting searchAssistant' if method == 'Search and answer' else 'searching and scraping sites'
                 ):

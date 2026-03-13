@@ -8,12 +8,12 @@ from urllib.parse import urlparse
 import requests
 import yaml
 from dotenv import load_dotenv
-from langchain.chains import ConversationalRetrievalChain, RetrievalQA
-from langchain.docstore.document import Document
-from langchain.memory import ConversationSummaryMemory
-from langchain.output_parsers import ResponseSchema, StructuredOutputParser
-from langchain.prompts import ChatPromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_classic.chains import ConversationalRetrievalChain, RetrievalQA
+from langchain_classic.docstore.document import Document
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.output_parsers import ResponseSchema, StructuredOutputParser
+from langchain_classic.prompts import ChatPromptTemplate
+from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -68,7 +68,13 @@ class SearchAssistant:
     Class used to do generation over search query results and scraped sites
     """
 
-    def __init__(self, sambanova_api_key: str, serpapi_api_key: str, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self,
+        sambanova_api_key: str,
+        serpapi_api_key: str,
+        sambanova_api_base: Optional[str] = None,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Initializes the search assistant with the given configuration parameters.
 
@@ -91,6 +97,7 @@ class SearchAssistant:
             self.config = config
         config_info = self._get_config_info(CONFIG_PATH)
         self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.serpapi_api_key = serpapi_api_key
         self.embedding_model_info = config_info[0]
         self.llm_info = config_info[1]
@@ -162,6 +169,7 @@ class SearchAssistant:
 
         llm = ChatSambaNova(
             api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **llm_info,
             model=model,
         )
@@ -214,10 +222,14 @@ class SearchAssistant:
         str: The parsed output with HTML links instead of reference numbers.
         """
         for i, link in enumerate(links):
-            answer = answer.replace(f'[reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
-            answer = answer.replace(f'[reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
-            answer = answer.replace(f'[Reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
-            answer = answer.replace(f'[Reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link})')
+            answer = answer.replace(f'[reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'[reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'[Reference:{i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'[Reference: {i + 1}]', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【reference:{i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【reference: {i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【Reference:{i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
+            answer = answer.replace(f'【Reference: {i + 1}】', f'[<sup>{i + 1}</sup>]({link}) ')
         return answer
 
     def querySerper(
@@ -552,7 +564,9 @@ class SearchAssistant:
         chunks = self.get_text_chunks_with_references(
             self.documents, self.retrieval_info['chunk_size'], self.retrieval_info['chunk_overlap']
         )
-        embeddings = SambaNovaEmbeddings(api_key=self.sambanova_api_key, **self.embedding_model_info)
+        embeddings = SambaNovaEmbeddings(
+            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+        )
         if update and os.path.exists(persist_directory):
             self.config['update'] = True
             self.vector_store = self.vectordb.update_vdb(

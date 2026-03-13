@@ -29,7 +29,7 @@ web_crawling:
         - 'wa.me' 
 
 additional_env_vars:
-  - SERPAPI_API_KEY
+  SERPAPI_API_KEY: ''
 
 extra_loaders:
     - "pdf"

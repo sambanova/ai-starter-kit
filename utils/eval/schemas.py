@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 
 class SNCloudSchema(BaseModel):
-    type: str
     model: str
     temperature: float
     max_tokens: int

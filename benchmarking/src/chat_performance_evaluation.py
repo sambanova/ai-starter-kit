@@ -11,7 +11,7 @@ from benchmarking.streamlit.streamlit_utils import set_api_variables
 
 
 class ChatPerformanceEvaluator:
-    """Samba Studio Bundle handler that wraps SamabaNova LLM client to parse output"""
+    """Handler that wraps SamabaNova LLM client to parse output"""
 
     def __init__(self, model_name: str, llm_api: str, image_path: str, params: Optional[Dict[str, Any]]) -> None:
         self.model = model_name

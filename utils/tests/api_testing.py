@@ -37,8 +37,8 @@ os.path.join(repo_dir, 'utils', 'tests', 'config.yaml')
 
 import openai
 from dotenv import load_dotenv
-from langchain_community.chat_models import ChatSambaNovaCloud
 from langchain_core.messages import HumanMessage
+from langchain_sambanova import ChatSambaNova
 from openai import OpenAI
 
 from utils.tests.utils_test import (
@@ -182,7 +182,7 @@ class TestAPIModel(unittest.TestCase):
     #         self.assertGreater(len(response.choices[0].message.content), 0)
     #         self.assertTrue(hasattr(response, 'model'))
     #         self.assertEqual(response.model, model)
-    #         self.assertTrue(hasattr(response, 'usage'))
+    #         self.assertTrue(hasattr(response, 'token_usage'))
 
     # def test_request_audio(self) -> None:
     #     for model in audio_models:
@@ -213,14 +213,14 @@ class TestAPIModel(unittest.TestCase):
             if model == 'Meta-Llama-Guard-3-8B':
                 continue
 
-            llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+            llm_model = ChatSambaNova(api_key=self.sambanova_api_key, model=model)
             response = llm_model.invoke(messages)
 
             self.assertTrue(hasattr(response, 'content'))
             self.assertIsInstance(response.content, str)
             self.assertGreater(len(response.content), 0)
             self.assertTrue(hasattr(response, 'response_metadata'))
-            self.assertIn('usage', response.response_metadata)
+            self.assertIn('token_usage', response.response_metadata)
 
     def test_langchain_chat_completion_image(self) -> None:
         message = [
@@ -235,14 +235,14 @@ class TestAPIModel(unittest.TestCase):
             )
         ]
         for model in image_models:
-            llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+            llm_model = ChatSambaNova(api_key=self.sambanova_api_key, model=model)
             response = llm_model.invoke(message)
 
             self.assertTrue(hasattr(response, 'content'))
             self.assertIsInstance(response.content, str)
             self.assertGreater(len(response.content), 0)
             self.assertTrue(hasattr(response, 'response_metadata'))
-            self.assertIn('usage', response.response_metadata)
+            self.assertIn('token_usage', response.response_metadata)
 
     # def test_langchain_chat_completion_audio(self) -> None:
     #     messages = [
@@ -254,14 +254,14 @@ class TestAPIModel(unittest.TestCase):
     #         HumanMessage(audio_prompt),
     #     ]
     #     for model in audio_models:
-    #         llm_model = ChatSambaNovaCloud(samabanova_api_key=self.sambanova_api_key, model=model)
+    #         llm_model = ChatSambaNova(api_key=self.sambanova_api_key, model=model)
     #         response = llm_model.invoke(messages)
 
     #         self.assertTrue(hasattr(response, 'content'))
     #         self.assertIsInstance(response.content, str)
     #         self.assertGreater(len(response.content), 0)
     #         self.assertTrue(hasattr(response, 'response_metadata'))
-    #         self.assertIn('usage', response.response_metadata)
+    #         self.assertIn('token_usage', response.response_metadata)
 
     @classmethod
     def tearDownClass(cls: Type['TestAPIModel']) -> None:
@@ -297,9 +297,9 @@ def main() -> int:
     logger.info('\nTest Results:')
     assert hasattr(test_result, 'test_results')
     for result in test_result.test_results:
-        logger.info(f"{result['name']}: {result['status']}")
+        logger.info(f'{result["name"]}: {result["status"]}')
         if 'message' in result:
-            logger.info(f"  Message: {result['message']}")
+            logger.info(f'  Message: {result["message"]}')
 
     failed_tests = len(test_result.failures) + len(test_result.errors)
     logger.info(f'\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}')

@@ -1,8 +1,8 @@
 
 <a href="https://sambanova.ai/">
 <picture>
- <source media="(prefers-color-scheme: dark)" srcset="../images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="../images/SambaNova-dark-logo-1.png" height="100">
+ <source media="(prefers-color-scheme: dark)" srcset="../images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="../images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -23,18 +23,18 @@ Table of Contents:
     - [2.2.1. Set up the generative model](#221-set-up-the-generative-model)
     - [2.2.2. Set up the vector database](#222-set-up-the-vector-database)
   - [2.2. Windows requirements](#22-windows-requirements)
-- [2. Deploy the starter kit GUI](#2-deploy-the-starter-kit-gui)
-  - [2.1. Option 1: Use a virtual environment](#21-option-1-use-a-virtual-environment)
-  - [2.2. Option 2: Deploy the starter kit in a Docker container](#22-option-2-deploy-the-starter-kit-in-a-docker-container)
-- [2. Use the starter kit](#2-use-the-starter-kit)
-- [3. Customizing the starter kit](#3-customizing-the-starter-kit)
-  - [3.1. Import Data](#31-import-data)
-  - [3.2. Split Data](#32-split-data)
-  - [3.3. Store embeddings](#33-store-embeddings)
-  - [3.4. Retrieval and Reranking](#34-retrieval-and-reranking)
-  - [3.5. Customize the LLM](#35-customize-the-llm)
-  - [3.6. Experiment with prompt engineering](#36-experiment-with-prompt-engineering)
-- [2. Third-party tools and data sources](#2-third-party-tools-and-data-sources)
+- [3. Deploy the starter kit GUI](#3-deploy-the-starter-kit-gui)
+  - [3.1. Option 1: Use a virtual environment](#31-option-1-use-a-virtual-environment)
+  - [3.2. Option 2: Deploy the starter kit in a Docker container](#32-option-2-deploy-the-starter-kit-in-a-docker-container)
+- [4. Use the starter kit](#4-use-the-starter-kit)
+- [5. Customizing the starter kit](#5-customizing-the-starter-kit)
+  - [5.1. Import Data](#51-import-data)
+  - [5.2. Split Data](#52-split-data)
+  - [5.3. Store embeddings](#53-store-embeddings)
+  - [5.4. Retrieval and Reranking](#54-retrieval-and-reranking)
+  - [5.5. Customize the LLM](#55-customize-the-llm)
+  - [5.6. Experiment with prompt engineering](#56-experiment-with-prompt-engineering)
+- [6. Third-party tools and data sources](#6-third-party-tools-and-data-sources)
 
 <!-- /TOC -->
 
@@ -86,11 +86,11 @@ Choose your vector database from the accessible integrations to power your RAG p
 
 - If you are using Windows, make sure your system has Microsoft Visual C++ Redistributable installed. You can install it from [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and make sure to check all boxes regarding C++ section. (Compatible versions: 2015, 2017, 2019 or 2022)
 
-# 2. Deploy the starter kit GUI
+# 3. Deploy the starter kit GUI
 
 We recommend that you run the starter kit in a virtual environment or use a container. We also recommend using Python >= 3.10 and < 3.12.
 
-## 2.1. Option 1: Use a virtual environment
+## 3.1. Option 1: Use a virtual environment
 
 If you want to use virtualenv or conda environment:
 
@@ -115,7 +115,7 @@ After deploying the starter kit you see the following user interface:
 
 ![capture of enterprise_knowledge_retriever_demo](./docs/enterprise_knowledge_app.png)
 
-## 2.2. Option 2: Deploy the starter kit in a Docker container 
+## 3.2. Option 2: Deploy the starter kit in a Docker container 
 
 NOTE: If you are deploying the docker container in Windows be sure to open the docker desktop application. 
 
@@ -126,7 +126,7 @@ To run the starter kit  with docker, run the following command:
 You will be prompted to go to the link (http://localhost:8501/) in your browser where you will be greeted with the streamlit page as above.
 
 
-# 2. Use the starter kit 
+# 4. Use the starter kit 
 
 After you've deployed the GUI, you can use the starter kit. Follow these steps:
 
@@ -184,11 +184,11 @@ Before being sent to the LLM, the user's query is combined with the retrieved co
 
 </details>
 
-# 3. Customizing the starter kit
+# 5. Customizing the starter kit
 
 You can further customize the starter kit based on the use case.
 
-## 3.1. Import Data
+## 5.1. Import Data
 
 Different packages are available to extract text from different file documents. They can be broadly categorized as:
 - OCR-based: [pytesseract](https://pypi.org/project/pytesseract/), [paddleOCR](https://pypi.org/project/paddleocr/), [unstructured](https://unstructured.io/)
@@ -211,7 +211,7 @@ This enterprise knowledge retriever kit uses either PyMuPDF or a custom implemen
 
 *You can also modify several parameters in the loading strategies by changing the [../utils/parsing/config.yaml](../utils/parsing/config.yaml) file, see more [here](../utils/parsing/README.md)*.
 
-## 3.2. Split Data
+## 5.2. Split Data
 
 You can experiment with different ways of splitting the data, such as splitting by tokens or using context-aware splitting for code or markdown files. LangChain provides several examples of different kinds of splitting; see more [here](https://python.langchain.com/docs/modules/data_connection/document_transformers/).
 
@@ -219,13 +219,13 @@ The `chunking` inside the parser utils config, which is used in this starter kit
 
 You can modify this and other parameters in the `chunking` config in the [../utils/parsing/config.yaml](../utils/parsing/config.yaml); see more [here](../utils/parsing/README.md).
 
-## 3.3. Store embeddings
+## 5.3. Store embeddings
 
 The template can be customized to use different vector databases to store the embeddings generated by the embedding model. The [LangChain vector stores documentation](https://python.langchain.com/v0.1/docs/modules/data_connection/vectorstores/) provides a broad collection of vector stores that can be easily integrated.
 
 By default, we use Chroma. You can change the vector store by setting `db_type` in the `create_vector_store()` function in [document_retrieval.py](./src/document_retrieval.py). 
 
-## 3.4. Retrieval and Reranking
+## 5.4. Retrieval and Reranking
 
 A wide collection of retriever options is available. In this starter kit, the vector store is used as a retriever, but it can be enhanced and customized, as shown in some of the examples [here](https://python.langchain.com/v0.1/docs/modules/data_connection/retrievers/).
 
@@ -245,11 +245,11 @@ There, you will be able to select the final number of retrieved documents and de
 
 The implementation can be customized by modifying the `get_qa_retrieval_chain()` function in the [document_retrieval.py](src/document_retrieval.py) file.
 
-## 3.5. Customize the LLM
+## 5.5. Customize the LLM
 
 Certain customizations to the LLM itself can affect the starter kit performance. To modify the parameters for calling the model, make changes to the [config file](./config.yaml). You can also set the values of `temperature` and `max_tokens_to_generate` in that file. 
 
-## 3.6. Experiment with prompt engineering
+## 5.6. Experiment with prompt engineering
 
 Prompting has a significant effect on the quality of LLM responses. Prompts can be further customized to improve the overall quality of the responses from the LLMs. For example, in this starter kit, the following prompt template was used to generate a response from the LLM, where `question` is the user query and `context` is the documents retrieved by the retriever.
 
@@ -272,6 +272,6 @@ You can make modifications to the prompt template in the following file:
 file: prompts/qa_prompt.yaml
 ```
 
-# 2. Third-party tools and data sources
+# 6. Third-party tools and data sources
 
 All the packages/tools are listed in the `requirements.txt` file in the project directory.

@@ -17,19 +17,19 @@ import uuid
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import nltk
-import streamlit as st
 import yaml
 from chromadb.config import Settings
 from dotenv import load_dotenv
-from langchain.chains import RetrievalQA
-from langchain.memory import ConversationSummaryMemory
-from langchain.prompts import ChatPromptTemplate, load_prompt
-from langchain.retrievers.multi_vector import MultiVectorRetriever
-from langchain.schema import Document
-from langchain.storage import InMemoryByteStore
 from langchain_chroma import Chroma
+from langchain_classic.chains import RetrievalQA
+from langchain_classic.memory import ConversationSummaryMemory
+from langchain_classic.prompts import ChatPromptTemplate, load_prompt
+from langchain_classic.retrievers.multi_vector import MultiVectorRetriever
+from langchain_classic.schema import Document
+from langchain_classic.storage import InMemoryByteStore
 from langchain_core.output_parsers import StrOutputParser
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
+from pydantic import SecretStr
 from unstructured.partition.pdf import partition_pdf
 
 try:
@@ -87,7 +87,9 @@ class MultimodalRetrieval:
     Class used to perform multimodal retrieval tasks.
     """
 
-    def __init__(self, conversational: bool = False) -> None:
+    def __init__(
+        self, sambanova_api_key: str, sambanova_api_base: Optional[str] = None, conversational: bool = False
+    ) -> None:
         """
         initialize MultimodalRetrieval object.
         """
@@ -97,6 +99,8 @@ class MultimodalRetrieval:
         self.embedding_model_info = config_info[2]
         self.retrieval_info = config_info[3]
         self.prod_mode = config_info[4]
+        self.sambanova_api_key = SecretStr(sambanova_api_key)
+        self.sambanova_api_base = sambanova_api_base
         self.set_llm()
         self.set_lvlm()
         self.collection_id = str(uuid.uuid4())
@@ -132,19 +136,12 @@ class MultimodalRetrieval:
         Model (str): The name of the model to use for the LLM (overwrites the param set in config).
         """
 
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
-
         if model is None:
             model = self.llm_info['model']
         llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
         llm = ChatSambaNova(
-            api_key=sambanova_api_key,
+            api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **llm_info,
             model=model,
         )
@@ -157,19 +154,13 @@ class MultimodalRetrieval:
         Parameters:
         model (str): The name of the model to use for the LVLM (overwrites the param set in config).
         """
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
         if model is None:
             model = self.lvlm_info['model']
         lvlm_info = {k: v for k, v in self.lvlm_info.items() if k != 'model'}
         lvlm = ChatSambaNova(
-            api_key=sambanova_api_key,
+            api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **lvlm_info,
             model=model,
         )
@@ -361,15 +352,10 @@ class MultimodalRetrieval:
         Returns:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         """
-        if self.prod_mode:
-            sambanova_api_key = st.session_state.SAMBANOVA_API_KEY
-        else:
-            if 'SAMBANOVA_API_KEY' in st.session_state:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY') or st.session_state.SAMBANOVA_API_KEY
-            else:
-                sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY')
 
-        self.embeddings = SambaNovaEmbeddings(api_key=sambanova_api_key, **self.embedding_model_info)
+        self.embeddings = SambaNovaEmbeddings(
+            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+        )
 
         collection_name = f'collection_{self.collection_id}'
         logger.info(f'This is the collection name: {collection_name}')
@@ -609,7 +595,7 @@ class MultimodalRetrieval:
         upload_folder = os.path.join(kit_dir, 'data', data_sub_folder)
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
-        print('Extracting content from documents')
+        logger.debug('Extracting content from documents')
         for pdf in pdf_files:
             file_path = os.path.join(upload_folder, pdf.name)
             with open(file_path, 'wb') as file:
@@ -627,21 +613,21 @@ class MultimodalRetrieval:
             image_paths.append(single_images_folder)
         text_docs, table_docs, image_paths = self.process_raw_elements(raw_elements, image_paths)
         if len(image_paths) > 0:
-            print(
+            logger.debug(
                 f'* {len(image_paths)} calls to the multimodal model will be done to summarize and '
                 'ingest images in provided documents\n\n'
             )
         if summarize_texts and len(text_docs) > 0:
-            print(
+            logger.debug(
                 f'* {len(text_docs)} calls to the LLM will be done to summarize and '
                 'ingest texts in provided documents\n\n'
             )
         if summarize_tables and len(table_docs) > 0:
-            print(
+            logger.debug(
                 f'* {len(table_docs)} calls to the LLM will be done to summarize and '
                 'ingest tables in provided documents\n\n'
             )
-        print(
+        logger.info(
             f'* **In total {len(image_paths) + len(text_docs) + len(table_docs)} '
             'chunks will be sent to the embeddings model to ingest**\n'
         )

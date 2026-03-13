@@ -32,6 +32,23 @@ jobs:
       ACTIONS_RUNNER_DEBUG: 'true'
       ACTIONS_STEP_DEBUG: 'true'
     steps:
+      - name: Hard cleanup
+        run: |
+          echo "Initial free space:"
+          df -h
+      
+          # Clean Docker safely
+          docker system prune -af || true
+          docker builder prune -af || true
+    
+          sudo rm -rf /opt/hostedtoolcache || true
+      
+          # Remove ONLY log files from runner diagnostics - safe
+          sudo find /home/runner/actions-runner -type f -name "*.log" -delete || true
+      
+          echo "Free space after cleanup:"
+          df -h
+    
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -66,12 +83,6 @@ jobs:
           echo "Creating .env file with secrets..."
           set +x  # Disable command echoing to protect secrets
           {
-            echo "SAMBASTUDIO_URL=${{ secrets.SAMBASTUDIO_URL }}"
-            echo "SAMBASTUDIO_API_KEY=${{ secrets.SAMBASTUDIO_API_KEY }}"
-            echo "SAMBASTUDIO_EMBEDDINGS_BASE_URL=${{ secrets.SAMBASTUDIO_EMBEDDINGS_BASE_URL }}"
-            echo "SAMBASTUDIO_EMBEDDINGS_PROJECT_ID=${{ secrets.SAMBASTUDIO_EMBEDDINGS_PROJECT_ID }}"
-            echo "SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID=${{ secrets.SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID }}"
-            echo "SAMBASTUDIO_EMBEDDINGS_API_KEY=${{ secrets.SAMBASTUDIO_EMBEDDINGS_API_KEY }}"
             echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY }}"
             echo "LVLM_API_KEY=${{ secrets.LVLM_API_KEY }}"
             echo "SAMBANOVA_API_KEY=${{ secrets.SAMBANOVA_API_KEY }}"
@@ -101,12 +112,6 @@ jobs:
             python tests/test_framework.py --env docker --skip-streamlit
         env:
           # Pass secrets as environment variables
-          SAMBASTUDIO_URL: ${{ secrets.SAMBASTUDIO_URL }}
-          SAMBASTUDIO_API_KEY: ${{ secrets.SAMBASTUDIO_API_KEY }}
-          SAMBASTUDIO_EMBEDDINGS_BASE_URL: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_BASE_URL }}
-          SAMBASTUDIO_EMBEDDINGS_PROJECT_ID: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_PROJECT_ID }}
-          SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_ENDPOINT_ID }}
-          SAMBASTUDIO_EMBEDDINGS_API_KEY: ${{ secrets.SAMBASTUDIO_EMBEDDINGS_API_KEY }}
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
           LVLM_API_KEY: ${{ secrets.LVLM_API_KEY }}
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}

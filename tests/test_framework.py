@@ -45,6 +45,7 @@ STARTER_KITS: List[str] = [
     'multimodal_knowledge_retriever',
     'document_comparison',
     'utils',
+    'chat_templates',
 ]
 
 # Dictionary to store CLI test commands for each kit
@@ -71,6 +72,7 @@ CLI_TEST_COMMANDS: Dict[str, str] = {
     'search_assistant': 'python tests/search_assistant_test.py',
     'document_comparison': 'python tests/dc_test.py',
     'utils': 'python tests/api_testing.py',
+    'chat_templates': 'python tests/chat_template_tests.py',
 }
 
 
@@ -277,7 +279,7 @@ class StarterKitTest(unittest.TestCase):
         else:
             logging.warning(f'activate_this.py not found at {activate_this}. Falling back to manual activation.')
             os.environ['VIRTUAL_ENV'] = base_venv_path
-            os.environ['PATH'] = f"{base_venv_path}/bin:{os.environ['PATH']}"
+            os.environ['PATH'] = f'{base_venv_path}/bin:{os.environ["PATH"]}'
             sys.prefix = base_venv_path
 
         logging.info(f'Activated base virtual environment at {base_venv_path}')

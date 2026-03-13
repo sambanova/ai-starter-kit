@@ -19,11 +19,11 @@ import logging
 import os
 from typing import Any
 
-from langchain.document_loaders import DirectoryLoader
-from langchain.embeddings import HuggingFaceInstructEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS, Qdrant
 from langchain_chroma import Chroma
+from langchain_classic.document_loaders import DirectoryLoader
+from langchain_classic.embeddings import HuggingFaceInstructEmbeddings
+from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
+from langchain_classic.vectorstores import FAISS, Qdrant
 
 # Configure the logger
 logging.basicConfig(

@@ -42,7 +42,7 @@ class PDFReport(FPDF):  # type: ignore
 
         # Rendering logo:
         self.image(
-            os.path.join(repo_dir, 'images', 'SambaNova-light-logo-1.png'),
+            os.path.join(repo_dir, 'images', 'light-logo.png'),
             self.w - self.l_margin - LOGO_WIDTH,
             self.t_margin - self.t_margin / 2,
             LOGO_WIDTH,
@@ -409,7 +409,7 @@ def invoke_abstract_chain(final_summary: str) -> Any:
     abstract_chain = abstact_prompt | sambanova_llm.llm | abstract_parser
 
     # Run chain
-    abstract = abstract_chain.invoke(final_summary).summary  # type: ignore
+    abstract = abstract_chain.invoke(final_summary).summary
 
     return abstract
 
@@ -439,7 +439,7 @@ def invoke_reduction_chain(intermediate_summaries: List[str]) -> Any:
     reduce_chain = reduce_prompt | sambanova_llm.llm | reduce_parser
 
     # Run chain
-    final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary  # type: ignore
+    final_summary = reduce_chain.invoke('\n'.join(intermediate_summaries)).summary
 
     return final_summary
 
@@ -468,7 +468,7 @@ def invoke_summary_map_chain(doc: Document) -> Any:
     # Map chain
     map_chain = map_prompt | sambanova_llm.llm | map_parser
 
-    return map_chain.invoke(doc)  # type: ignore
+    return map_chain.invoke(doc)
 
 
 class PDFRAGInput(BaseModel):

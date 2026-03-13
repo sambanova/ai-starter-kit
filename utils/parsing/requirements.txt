@@ -1,6 +1,6 @@
-unstructured==0.13.6
-unstructured-client==0.18.0
-unstructured-inference==0.7.29
-langchain==0.1.16
-PyMuPDF==1.23.4
-PyMuPDFb==1.23.3
+unstructured==0.18.15
+unstructured-client==0.25.9
+unstructured-inference==1.0.5
+langchain==1.0.2
+pymupdf==1.26.5
+pymupdfb==1.24.10

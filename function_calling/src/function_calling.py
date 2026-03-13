@@ -97,6 +97,7 @@ class FunctionCallingLlm:
         json_correction_prompt: Optional[str] = None,
         config_path: str = CONFIG_PATH,
         sambanova_api_key: Optional[str] = None,
+        sambanova_api_base: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
         """
@@ -111,6 +112,7 @@ class FunctionCallingLlm:
             self.sambanova_api_key: Union[None, SecretStr] = SecretStr(sambanova_api_key)
         else:
             self.sambanova_api_key = sambanova_api_key
+        self.sambanova_api_base = sambanova_api_base
         configs = self.get_config_info(config_path)
         self.llm_info = configs[0]
         self.prod_mode = configs[1]
@@ -146,14 +148,20 @@ class FunctionCallingLlm:
                     return mapped_tool
                 # if mapped is a ToolClass
                 else:
-                    tool = mapped_tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()  # type: ignore
+                    tool = mapped_tool(
+                        sambanova_api_key=self.sambanova_api_key,
+                        sambanova_api_base=self.sambanova_api_base,
+                        **self.kwargs,
+                    ).get_tool()  # type: ignore
                     return tool  # type: ignore
             else:
                 raise ValueError(f'Tool {tool} not found in TOOLS mapping dict')
         # if is a ToolClass
         elif isinstance(tool, type):
             if issubclass(tool, ToolClass):
-                tool = tool(sambanova_api_key=self.sambanova_api_key, **self.kwargs).get_tool()
+                tool = tool(
+                    sambanova_api_key=self.sambanova_api_key, sambanova_api_base=self.sambanova_api_base, **self.kwargs
+                ).get_tool()
                 return tool
             else:
                 raise TypeError(
@@ -190,6 +198,7 @@ class FunctionCallingLlm:
         llm_info = {k: v for k, v in self.llm_info.items() if k != 'model'}
         llm = ChatSambaNova(
             api_key=self.sambanova_api_key,
+            base_url=self.sambanova_api_base,
             **llm_info,
             model=model,
         )

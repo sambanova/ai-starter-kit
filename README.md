@@ -1,7 +1,7 @@
 <a href="https://sambanova.ai/">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./images/SambaNova-light-logo-1.png" height="100">
-  <img alt="SambaNova logo" src="./images/SambaNova-dark-logo-1.png" height="100">
+  <source media="(prefers-color-scheme: dark)" srcset="./images/light-logo.png" height="100">
+  <img alt="SambaNova logo" src="./images/dark-logo.png" height="100">
 </picture>
 </a>
 
@@ -11,7 +11,7 @@
 
 SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises.
 
-To run these examples, you can obtain a free API key using [SambaCloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStack](https://sambanova.ai/products/sambastack). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
+To run these examples, you can obtain a free API key using [SambaCloud](https://cloud.sambanova.ai). Alternatively, if you are a current SambaNova customer, you can deploy your models using [SambaStack](https://sambanova.ai/products/sambastack) or [SambaManaged](https://sambanova.ai/products/sambamanaged). Most of the code examples are written in Python, although the concepts can be applied to any programming language.
 
 Questions? Just <a href="https://community.sambanova.ai/latest" target="_blank">message us</a> on SambaNova Community <a href="https://community.sambanova.ai/latest" target="_blank"><img src="https://github.com/sambanova/ai-starter-kit/assets/150964187/aef53b52-1dc0-4cbf-a3be-55048675f583" alt="Community" width="22"/></a> or <a href="https://github.com/sambanova/ai-starter-kit/issues/new/choose" target="_blank">create an issue</a> in GitHub. We're happy to help live!
 
@@ -40,12 +40,6 @@ For functionalities related to third-party integrations, find a list in our [Int
 </tr>
 
 <tr>
-<td width="20%"><a href="e2e_fine_tuning/README.md">End to End Fine-tuning</a></td>
-<td width="40%"> Recipe to upload and train a Language Model (LLM) using your own data in SambaStudio platform. </td>
-<td width="20%"> Data Ingestion & Preparation </td>
-</tr>
-
-<tr>
 <td width="20%"><a href="enterprise_knowledge_retriever/README.md">Enterprise Knowledge Retrieval</a></td>
 <td width="40%">Sample implementation of the semantic search workflow using the SambaNova platform to get answers to questions about your documents. Includes a runnable demo.</td>
 <td width="20%"> Intelligent Information Retrieval </td>  
@@ -71,14 +65,8 @@ For functionalities related to third-party integrations, find a list in our [Int
 
 <tr>
 <td width="20%"><a href="benchmarking/README.md">Benchmarking</a></td>
-<td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaStudio. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
+<td width="40%">This kit evaluates the performance of multiple LLM models hosted in SambaNova Solutions. It offers various performance metrics and configuration options. Users can also see these metrics within a chat interface.</td>
 <td width="20%"> Advanced AI Capabilities </td>    
-</tr>
-
-<tr>
-<td width="20%"><a href="https://github.com/sambanova/integrations/tree/main/continue">Code Copilot</a></td>
-<td width="40%">This example guide shows a simple integration with Continue VSCode and JetBrains extension using SambaNova platforms, to use Sambanova's hosted models as your custom coding assistant. </td>
-<td width="20%"> Integrations </td>  
 </tr>
 
 <tr>
@@ -93,6 +81,12 @@ For functionalities related to third-party integrations, find a list in our [Int
 <td width="20%"> Advanced AI Capabilities </td>
 </tr>
 
+<tr>
+<td width="20%"><a href="chat_templates/README.md">Custom Chat Templates</a></td>
+<td width="40%"> complete workflow of how modern chat models format, send, and interpret conversations. From Jinja chat templates to Completions API invocation and tool-call parsing.</td>
+<td width="20%"> Advanced AI Capabilitie </td>
+</tr>
+
 </tbody>
 </table>
 
@@ -102,7 +96,7 @@ Go to [SambaNova Quickstart Guide](./quickstart/README.md) if it's your first ti
 
 ## Getting a SambaNova API key and setting your generative models
 
-Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaCloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStack.
+Currently, there are two ways to obtain an API key from SambaNova. You can get a free API key using SambaCloud. Alternatively, if you are a current SambaNova customer, you can deploy your models using SambaStack or SambaManaged.
 
 ### Use SambaCloud (Option 1)
 
@@ -116,13 +110,13 @@ To integrate SambaCloud LLMs with this AI starter kit, update the API informatio
 SAMBANOVA_API_KEY = "your-sambanova-api-key"
 ```
 
-### Use SambaStack (Option 2)
+### Use SambaStack/SambaManaged (Option 2)
 
-Begin by deploying your LLM of choice (e.g., Llama 3.3 70B) to an endpoint for inference in SambaStack. 
+Begin by deploying your LLM of choice (e.g., Llama 3.3 70B) to an endpoint for inference in SambaStack/SambaManaged. 
 
-To integrate your LLM deployed on SambaStack with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file,  use [.env-example](.env-example) as template:
+To integrate your LLM deployed on SambaStack/SambaManaged with this AI starter kit, update the API information by configuring the environment variables in the `ai-starter-kit/.env` file,  use [.env-example](.env-example) as template:
 
-- Set your SambaStack variables, for example:
+- Set your SambaStack/SambaManaged variables, for example:
 
 ``` bash
 SAMBANOVA_API_KEY = "your-sambanova-api-key"
@@ -134,167 +128,6 @@ SAMBANOVA_API_BASE = "you-sambanova-base-url"
 Go to the `README.md` of the starter kit you want to use and follow the instructions. See [Available AI Starter Kits](#available-ai-starter-kits).
 
 ## Additional information
-
-<details>
-<summary>Use Sambanova's LLMs and Langchain chat model wrappers</summary>
-
-### LLM Wrappers
-
-Set your environment as shown in [integrate your model](#integrate-your-model-in-the-starter-kit).
-
-#### Using Sambastudio LLMs
-
-1. Import the **SambaStudio** langchain integration in your project and define your **SambaStudio* ChatModel:
-
-``` bash
-pip install langchain-sambanova
-```
-
-- If using a Bundle endpoint:
-
-```python
-from langchain_sambanova import ChatSambaStudio
-
-load_dotenv('.env')
-
-llm = ChatSambaStudio(
-  max_tokens_to_generate = 512,
-  temperature = 0.0,
-  model = "Meta-Llama-3-8B-Instruct"
-)
-```
-
-- If using a single model endpoint
-
-```python
-from langchain_sambanova import ChatSambaStudio
-
-load_dotenv('.env')
-
-llm = ChatSambaStudio(
-  max_tokens_to_generate = 512,
-  temperature = 0.0
-)
-```
-
-2. Use the model
-
-```python
-llm.invoke("your prompt")
-```
-
-See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
-
-### Using SambaNova Cloud LLMs
-
-1. Import our **SambaNovaCloud** langchain integration in your project and define your **SambaNovaCloud* ChatModel:
-
-
-``` bash
-pip install langchain-sambanova
-```
-
-```python
-from langchain_sambanova import ChatSambaNovaCloud
-
-load_dotenv('.env')
-
-llm = ChatSambaNovaCloud(model='Meta-Llama-3.3-70B-Instruct')
-```
-
-2. Use the model
-
-```python
-llm.invoke("your prompt")
-```
-
-See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
-
-### Embedding Wrapper
-
-1. Import the **SambaStudioEmbedding** langchain integration in your project and define your **SambaStudioEmbedding*  embedding:
-
-``` bash
-pip install langchain-sambanova
-```
-
-- If using a Bundle endpoint
-
-```python
-from langchain_sambanova import SambaStudioEmbeddings
-
-load_dotenv('.env')
-
-embedding = SambaStudioEmbeddings(
-              batch_size=1,
-              model_kwargs = {
-                  "select_expert":"e5-mistral-7b-instruct"
-                  }
-              )
-```
-
-- If using a single embedding model endpoint
-
-```python
-from langchain_sambanova import SambaStudioEmbeddings
-
-load_dotenv('.env')
-
-embedding = SambaStudioEmbeddings(batch_size=32)
-```
-
-> Note that using different embedding models (cpu or sambastudio) may change the results, and change the way they are set and their parameters
-
-2. Use your embedding model in your langchain pipeline
-
-See [utils/usage.ipynb](./utils/usage.ipynb) for an example.
-
-### Javascript Example
-
-1. Before running the code, ensure that you have Node.js installed on your system. You can download the latest version from the official Node.js [website](https://nodejs.org/en).
-
-2. Set Up the Environment. To set up the environment, run the following commands in your terminal:
-
-``` bash
-npm init -y
-```
-
-``` bash
-npm install @langchain/openai @langchain/core
-```
-
-> These commands will create a new package.json file and install the required dependencies.
-
-3. Create a new file named `app.js` and add the following code:
-
-```javascript
-import { ChatOpenAI } from "@langchain/openai";
-
-const SambaNovaCloudBaseURL = "https://api.sambanova.ai/v1";
-const apiKey = "your-api-key";
-
-const SambaNovaCloudChatModel = new ChatOpenAI({
-  temperature: 0.9,
-  model: "Meta-Llama-3.3-70B-Instruct",
-  configuration: {
-    baseURL: SambaNovaCloudBaseURL,
-    apiKey: apiKey,
-  },
-});
-
-const response = await SambaNovaCloudChatModel.invoke("Hi there, tell me a joke!");
-console.log(response.content);
-```
-
-4. To run the app, execute the following command in your terminal:
-
-``` bash
-node app.js
-```
-
----
-
-</details>
 
 <details>
 <summary>Setting up your virtual environment</summary><br/>
@@ -512,7 +345,7 @@ If you continue to experience issues, please [open an issue](https://github.com/
 
 ### API Reference
 
-- Find more information about SambaCloud and SambaStack [here](https://docs.sambanova.ai/cloud/docs/get-started/overview)
+- Find more information about SambaCloud and SambaStack [here](https://docs.sambanova.ai/cloud/docs/get-started/overview).
 
 **Note:** These AI Starter Kit code samples are provided "as-is," and are not production-ready or supported code. Bugfix/support will be on a best-effort basis only. Code may use third-party open-source software. You are responsible for performing due diligence per your organization policies for use in your applications.
 
