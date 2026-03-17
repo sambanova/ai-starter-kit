@@ -11,6 +11,7 @@ from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     MULTIMODAL_IMAGE_SIZE_OPTIONS,
     QPS_DISTRIBUTION_OPTIONS,
+    model_selector_widget,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
@@ -161,14 +162,7 @@ def main() -> None:
         st.title('Configuration')
         st.markdown('**Modify the following parameters before running the process**')
 
-        llm_model = st.text_input(
-            'Model Name',
-            value='Meta-Llama-3.3-70B-Instruct',
-            help='Look at your model card and introduce the same name \
-                of the model/expert',
-            disabled=st.session_state.running,
-        )
-        st.session_state.llm = f'{llm_model}'
+        st.session_state.llm = model_selector_widget(disabled=st.session_state.running)
 
         if st.session_state.llm_api == 'sncloud':
             st.selectbox(

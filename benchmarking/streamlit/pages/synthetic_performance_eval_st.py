@@ -17,6 +17,7 @@ from benchmarking.streamlit.streamlit_utils import (
     calculate_kit_summary_metrics,
     display_summary_metrics_comparison,
     get_vllm_summary_metrics,
+    model_selector_widget,
     plot_client_vs_server_barplots,
     plot_dataframe_summary,
     plot_requests_gantt_chart,
@@ -406,14 +407,9 @@ def main() -> None:
 
         st.divider()
 
-        llm_model = st.text_input(
-            'Model Name',
-            value='Meta-Llama-3.3-70B-Instruct',
-            help='Look at your model card and introduce the same name \
-                of the model/expert',
-            disabled=st.session_state.running or st.session_state.optional_download,
+        st.session_state.llm = model_selector_widget(
+            disabled=st.session_state.running or st.session_state.optional_download
         )
-        st.session_state.llm = f'{llm_model}'
 
         if st.session_state.llm_api == 'sncloud':
             st.selectbox(

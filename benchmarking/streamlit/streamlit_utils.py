@@ -2,6 +2,8 @@ import base64
 import os
 from typing import Any, Dict, List, Optional
 
+import requests
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -129,6 +131,45 @@ def setup_credentials() -> None:
             else:
                 save_credentials('', {var: '' for var in additional_env_vars}, st.session_state.prod_mode)
             st.rerun()
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_available_models(api_base: str, api_key: str) -> Optional[List[str]]:
+    """Fetch model IDs from GET {api_base}/models. Returns None on any failure."""
+    try:
+        url = api_base.rstrip('/') + '/models'
+        resp = requests.get(url, headers={'Authorization': f'Bearer {api_key}'}, timeout=10)
+        resp.raise_for_status()
+        models = [m['id'] for m in resp.json().get('data', [])]
+        return sorted(models) if models else None
+    except Exception:
+        return None
+
+
+def model_selector_widget(disabled: bool = False) -> str:
+    """Dropdown populated from /models endpoint; falls back to text input on failure."""
+    if are_credentials_set():
+        if st.session_state.prod_mode:
+            api_base = st.session_state.SAMBANOVA_API_BASE
+            api_key = st.session_state.SAMBANOVA_API_KEY
+        else:
+            api_base = os.environ.get('SAMBANOVA_API_BASE', SAMBANOVA_API_BASE)
+            api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+        models = fetch_available_models(api_base, api_key) if api_key else None
+    else:
+        models = None
+
+    default = 'Meta-Llama-3.3-70B-Instruct'
+    help_text = 'Select or type the model name'
+
+    if models:
+        current = st.session_state.get('llm') or default
+        idx = models.index(current) if current in models else 0
+        return st.selectbox('Model Name', options=models, index=idx, disabled=disabled, help=help_text)
+    else:
+        return st.text_input(
+            'Model Name', value=st.session_state.get('llm') or default, disabled=disabled, help=help_text
+        )
 
 
 def save_uploaded_file(internal_save_path: str) -> str:
