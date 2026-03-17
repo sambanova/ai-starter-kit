@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+import yaml
 
 from benchmarking.benchmarking_utils import get_tokenizer_model_name
 
@@ -57,6 +58,8 @@ class VLLMBenchmarkExecutor:
         num_input_tokens: int,
         num_output_tokens: int,
         num_requests: int,
+        use_multiple_prompts: bool = False,
+        prompt_yaml_path: str = None,
         num_concurrent_requests: Optional[int] = None,
         request_rate: Optional[float] = None,
         api_base: Optional[str] = None,
@@ -103,40 +106,75 @@ class VLLMBenchmarkExecutor:
         # Get tokenizer model name for vLLM's --model parameter
         tokenizer_model_name = get_tokenizer_model_name(self.model_name)
 
-        # Build vLLM command using random dataset
+        # Load prompts from YAML file (default: user-prompt_template-text_instruct.yaml)
+        if prompt_yaml_path is None:
+            file_location = os.path.dirname(os.path.abspath(__file__))
+            prompt_yaml_path = os.path.join(file_location, '../prompts/user-prompt_template-text_instruct.yaml')
+        with open(prompt_yaml_path, 'r') as f:
+            prompt_data = yaml.safe_load(f)
+
+        # Select prompt set
+        if use_multiple_prompts and 'multiple_prompts' in prompt_data:
+            prompt_list = prompt_data['multiple_prompts']
+        else:
+            prompt_list = prompt_data['default_prompt']
+
+        from benchmarking.benchmarking_utils import get_tokenizer
+        tokenizer = get_tokenizer(self.model_name)
+
+        # Prepare prompts for all requests (cycle if fewer prompts than requests)
+        # Use raw template text without chat-template wrapping — the openai-chat backend
+        # sends this as a user message and the server applies the template exactly once,
+        # matching the KIT behaviour. Target num_input_tokens - 1 to match KIT's
+        # adjust_to_exact_tokens logic.
+        processed_prompts = []
+        target_tokens = num_input_tokens - 1
+        for i in range(num_requests):
+            prompt_text = prompt_list[i % len(prompt_list)]['template']
+            tokens = tokenizer.tokenize(prompt_text)
+            if len(tokens) > target_tokens:
+                tokens = tokens[:target_tokens]
+                prompt_text = tokenizer.convert_tokens_to_string(tokens)
+            elif len(tokens) < target_tokens:
+                pad_token = tokenizer.pad_token if tokenizer.pad_token else '<pad>'
+                tokens += [pad_token] * (target_tokens - len(tokens))
+                prompt_text = tokenizer.convert_tokens_to_string(tokens)
+            processed_prompts.append(prompt_text)
+
+        # Write all prompts to JSONL file for vLLM CustomDataset
+        import json
+        prompt_file = os.path.join(result_dir_path, "custom_prompts.jsonl")
+        with open(prompt_file, "w") as pf:
+            for prompt in processed_prompts:
+                pf.write(json.dumps({"prompt": prompt}) + "\n")
+
+        # Build vLLM command using custom dataset
         cmd = [
             "vllm", "bench", "serve",
             "--backend", "openai-chat",
             "--base-url", api_base,
-            "--dataset-name", "random",
+            "--dataset-name", "custom",
+            "--dataset-path", prompt_file,
             "--endpoint", endpoint,
             "--model", tokenizer_model_name,  # HuggingFace tokenizer model
             "--served_model_name", self.model_name,  # Actual API model name
-            "--random-input-len", str(num_input_tokens),
-            "--random-output-len", str(num_output_tokens),
+            "--custom-output-len", str(num_output_tokens),
             "--num-prompts", str(num_requests),
             "--save-detailed",
             "--save-result",
             "--result-dir", result_dir_path,
         ]
+        if request_rate is not None:
+            cmd.extend(["--request-rate", str(request_rate)])
+        elif num_concurrent_requests is not None and num_concurrent_requests > 1:
+            cmd.extend(["--request-rate", str(num_concurrent_requests)])
+        else:
+            cmd.extend(["--request-rate", "1"])
 
-        # Add API key as environment variable
         env = os.environ.copy()
         if api_key:
             env['OPENAI_API_KEY'] = api_key
 
-        # Add request rate or calculate from concurrent requests
-        if request_rate is not None:
-            cmd.extend(["--request-rate", str(request_rate)])
-        elif num_concurrent_requests is not None and num_concurrent_requests > 1:
-            # Use concurrent requests as request rate (approximate)
-            # This means we'll send num_concurrent_requests requests per second
-            cmd.extend(["--request-rate", str(num_concurrent_requests)])
-        else:
-            # Default to 1 request per second for sequential execution
-            cmd.extend(["--request-rate", "1"])
-
-        # Run the benchmark
         try:
             if progress_bar:
                 progress_bar(0, 100)
@@ -209,8 +247,8 @@ class VLLMBenchmarkExecutor:
             num_failed = results.get('failed', 0)
             num_total = results.get('num_prompts', 0)
             if num_failed > 0:
-                print(f"\nWarning: {num_failed}/{num_total} requests failed. \
-                    Charts will show the {num_total - num_failed} successful requests.\n")
+                print(f"\nWarning: {num_failed}/{num_total} requests failed.")
+                print(f"\n{'='*80}")
 
             # Create compatible output files
             self._create_compatible_output(results, num_input_tokens, num_output_tokens, num_concurrent_requests)
@@ -226,7 +264,15 @@ class VLLMBenchmarkExecutor:
                 "It benchmarks remote APIs like SambaNova Cloud."
             )
         except Exception as e:
+            print(f"Charts will show the {num_total - num_failed} successful requests.\n")
             raise Exception(f"Error running vLLM benchmark: {str(e)}")
+        finally:
+            # Clean up the custom prompts file after the run
+            try:
+                if os.path.exists(prompt_file):
+                    os.remove(prompt_file)
+            except Exception as cleanup_err:
+                print(f"Warning: Failed to remove prompt file {prompt_file}: {cleanup_err}")
 
     def _monitor_stderr(self, stderr_pipe: Any) -> None:
         """Read vLLM stderr, parse tqdm progress (X/Y), and forward output to terminal."""

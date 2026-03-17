@@ -259,13 +259,13 @@ class BasePerformanceEvaluator(abc.ABC):
                 continue
 
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            raw_quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
             quantiles_reformatted_keys = {}
-            for quantile, value in quantiles.items():
+            for quantile, value in raw_quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
                 if self.show_results_in_terminal:
-                    logger.info(f'    {reformatted_key} = {value}')
-                quantiles_reformatted_keys[reformatted_key] = value
+                    logger.info(f'    {reformatted_key} = {value:.6g}')
+                quantiles_reformatted_keys[reformatted_key] = round(value, 4)
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
             series_mean = round(series.mean(), 4)
             metrics_summary[metric]['mean'] = series_mean
@@ -277,10 +277,10 @@ class BasePerformanceEvaluator(abc.ABC):
             metrics_summary[metric]['stddev'] = series_std
 
             if self.show_results_in_terminal:
-                logger.info(f'    mean = {series_mean}')
-                logger.info(f'    min = {series_min}')
-                logger.info(f'    max = {series_max}')
-                logger.info(f'    stddev = {series_std}')
+                logger.info(f'    mean = {series.mean():.6g}')
+                logger.info(f'    min = {series.min():.6g}')
+                logger.info(f'    max = {series.max():.6g}')
+                logger.info(f'    stddev = {series.std():.6g}')
 
         # Record descriptive statistics for the metrics in the following list
         for metric in [
@@ -307,13 +307,13 @@ class BasePerformanceEvaluator(abc.ABC):
                 continue
 
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            raw_quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
             quantiles_reformatted_keys = {}
-            for quantile, value in quantiles.items():
+            for quantile, value in raw_quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
                 if self.show_results_in_terminal:
-                    logger.info(f'    {reformatted_key} = {value}')
-                quantiles_reformatted_keys[reformatted_key] = value
+                    logger.info(f'    {reformatted_key} = {value:.6g}')
+                quantiles_reformatted_keys[reformatted_key] = round(value, 4)
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
             series_mean = round(series.mean(), 4)
             metrics_summary[metric]['mean'] = series_mean
@@ -325,10 +325,10 @@ class BasePerformanceEvaluator(abc.ABC):
             metrics_summary[metric]['stddev'] = series_std
 
             if self.show_results_in_terminal:
-                logger.info(f'    mean = {series_mean}')
-                logger.info(f'    min = {series_min}')
-                logger.info(f'    max = {series_max}')
-                logger.info(f'    stddev = {series_std}')
+                logger.info(f'    mean = {series.mean():.6g}')
+                logger.info(f'    min = {series.min():.6g}')
+                logger.info(f'    max = {series.max():.6g}')
+                logger.info(f'    stddev = {series.std():.6g}')
 
         # Record number of requests started
         metrics_summary[common_metrics.NUM_REQ_STARTED] = len(metrics)
