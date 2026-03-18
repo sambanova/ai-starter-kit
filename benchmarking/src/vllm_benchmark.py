@@ -59,7 +59,7 @@ class VLLMBenchmarkExecutor:
         num_output_tokens: int,
         num_requests: int,
         use_multiple_prompts: bool = False,
-        prompt_yaml_path: str = None,
+        prompt_yaml_path: Optional[str] = None,
         num_concurrent_requests: Optional[int] = None,
         request_rate: Optional[float] = None,
         api_base: Optional[str] = None,
