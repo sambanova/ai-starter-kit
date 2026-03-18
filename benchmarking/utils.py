@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Any, Dict
 
 import pandas as pd
 
@@ -11,7 +12,7 @@ SAMBANOVA_API_BASE = 'https://api.sambanova.ai/v1'
 CONFIG_PATH = os.path.join(project_root, 'config.yaml')
 
 
-def build_standard_prompt(model_name: str, user_prompt: str) -> dict:
+def build_standard_prompt(model_name: str, user_prompt: str) -> Dict[str, Any]:
     """
     Build a prompt dict using the same chat-template logic as the kit.
     Args:
@@ -22,7 +23,8 @@ def build_standard_prompt(model_name: str, user_prompt: str) -> dict:
     """
     family_model_type = benchmarking_utils.find_family_model_type(model_name)
     if family_model_type == 'llama3':
-        prompt_template = f"""<|start_header_id|>user<|end_header_id|>{user_prompt}<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>"""
+        prompt_template = f"""<|start_header_id|>user<|end_header_id|>{user_prompt}<|eot_id|>\n\
+            <|start_header_id|>assistant<|end_header_id|>"""
     else:
         prompt_template = f'[INST]{user_prompt}[/INST]'
     return {'name': 'chat_prompt', 'template': prompt_template}

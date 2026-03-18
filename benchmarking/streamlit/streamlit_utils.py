@@ -2,12 +2,11 @@ import base64
 import os
 from typing import Any, Dict, List, Optional
 
-import requests
-
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import requests
 import streamlit as st
 from plotly.graph_objs import Figure
 
