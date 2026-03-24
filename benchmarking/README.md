@@ -582,4 +582,11 @@ All the packages/tools are listed in the `requirements.txt` file in the project 
 
 # TroubleShooting
 
-1. There's a Frecuently Asked Questions documentation [here](./FAQ.md) that has several useful common questions and answers about the kit, including troubleshooting questions.
+1. A Frequently Asked Questions (FAQ) document is available [here](FAQ.md)
+. It covers common questions about the kit, including troubleshooting guidance.
+2. If you encounter issues after updating:
+Verify your virtual environment and reinstall dependencies from requirements.txt.
+If the issue persists, delete your existing environment and create a new one, reinstalling packages with pip install --force-reinstall.
+If problems continue, consider switching to a different package manager such as pip, conda, or uv.
+3. There is a [known issue with macOS on Intel chips and PyTorch](https://dev-discuss.pytorch.org/t/pytorch-macos-x86-builds-deprecation-starting-january-2024/1690?utm_source=chatgpt.com)
+. We recommend recreating your virtual environment or trying one of the alternative package managers mentioned above.
