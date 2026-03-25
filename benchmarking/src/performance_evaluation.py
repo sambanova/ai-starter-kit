@@ -457,15 +457,32 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.num_concurrent_requests = num_concurrent_requests
         self.file_name = os.path.basename(input_file_path)
         self.dataset = self.read_dataset(input_file_path)
-        self.prompt_key = list(self.dataset[0].keys())[0]
+        first_key = list(self.dataset[0].keys())[0]
+        self.is_messages_format = first_key == 'messages'
+        self.prompt_key = first_key  # 'prompt' or 'messages'
         self.img_path_key = None
-        if len(list(self.dataset[0].keys())) == 2:
+        if not self.is_messages_format and len(list(self.dataset[0].keys())) == 2:
             self.img_path_key = list(self.dataset[0].keys())[1]
         self.save_response_texts = save_response_texts
 
     @staticmethod
     def read_dataset(input_file_path: str) -> List[Dict[str, Any]]:
         """Utility function for reading in the `.jsonl` file provided by the user for custom dataset evaluation.
+
+        Supports two row formats:
+
+        **Prompt format** (plain text, optionally with a local image)::
+
+            {"prompt": "Tell me a joke"}
+            {"prompt": "Describe this image", "image_path": "/path/to/img.png"}
+
+        **Messages format** (full chat history with optional tool definitions)::
+
+            {"messages": [{"role": "user", "content": "Hello"}]}
+            {"messages": [...], "tools": [...]}
+
+        All rows in a file must use the same format. The ``model`` key is accepted but ignored
+        (the model is configured at the evaluator level).
 
         Args:
             input_file_path (str): The absolute file path of the input file provided by the user
@@ -477,25 +494,38 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         with open(input_file_path, 'r') as file:
             data = [json.loads(line) for line in file]
 
-        # check if dataframe headers contain 'prompt'
-        if not all([list(d.keys())[0] == 'prompt' for d in data]):
-            raise ValueError(
-                'All rows in input file must contain the same first column name "prompt" \
-                and its respective text value'
-            )
+        first_keys = [list(d.keys())[0] for d in data]
 
-        # check if dataframe headers contain 'img_path' if there are two columns
-        if all([len(list(d.keys())) == 2 for d in data]):
-            if not all([list(d.keys())[1] == 'image_path' for d in data]):
-                raise ValueError(
-                    'If input file has two columns, all rows in input file must contain \
-                    the same second column name "image_path" and its respective text value'
-                )
-            if any([d['image_path'].startswith('http') for d in data]):
-                raise ValueError('Urls are not supported for image_path. Please provide local image paths.')
-        # check if there are more than two columns
-        elif any([len(list(d.keys())) > 2 for d in data]):
-            raise ValueError('Input file can not contain more then two columns.')
+        if all(k == 'messages' for k in first_keys):
+            # Messages format validation
+            for d in data:
+                if not isinstance(d['messages'], list) or len(d['messages']) == 0:
+                    raise ValueError('Each row in messages format must have a non-empty "messages" list.')
+                allowed_keys = {'messages', 'tools', 'model'}
+                unknown = set(d.keys()) - allowed_keys
+                if unknown:
+                    raise ValueError(
+                        f'Messages-format rows may only contain "messages", "tools", and "model" keys. '
+                        f'Got unexpected keys: {unknown}'
+                    )
+        elif all(k == 'prompt' for k in first_keys):
+            # Prompt format validation (original behaviour)
+            if all([len(list(d.keys())) == 2 for d in data]):
+                if not all([list(d.keys())[1] == 'image_path' for d in data]):
+                    raise ValueError(
+                        'If input file has two columns, all rows in input file must contain \
+                        the same second column name "image_path" and its respective text value'
+                    )
+                if any([d['image_path'].startswith('http') for d in data]):
+                    raise ValueError('Urls are not supported for image_path. Please provide local image paths.')
+            elif any([len(list(d.keys())) > 2 for d in data]):
+                raise ValueError('Input file can not contain more then two columns.')
+        else:
+            raise ValueError(
+                'All rows in input file must use the same format. '
+                'Either all rows start with "prompt" (plain-text format) '
+                'or all rows start with "messages" (chat/tool format).'
+            )
 
         return data
 
@@ -551,10 +581,16 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
                 with open(self.response_texts_file_path, 'w') as f:
                     for response in individual_responses:
                         if isinstance(response, LLMResponse):
-                            output_json = {
-                                'prompt': response.request_config.prompt_tuple[0],
-                                'completion': str(response.response_text),
-                            }
+                            if response.request_config.messages is not None:
+                                output_json = {
+                                    'messages': response.request_config.messages,
+                                    'completion': str(response.response_text),
+                                }
+                            else:
+                                output_json = {
+                                    'prompt': response.request_config.prompt_tuple[0],
+                                    'completion': str(response.response_text),
+                                }
                             f.write(json.dumps(output_json))
                             f.write('\n')
             except Exception as e:
@@ -718,6 +754,22 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         return metadata, llm_responses
 
+    def _get_messages_token_count(self, messages: List[Dict[str, Any]]) -> int:
+        """Returns the total token count for all text content across a list of chat messages.
+
+        Args:
+            messages (List[Dict[str, Any]]): List of message dicts (role/content).
+
+        Returns:
+            int: Sum of token counts for all non-null string content fields.
+        """
+        total = 0
+        for msg in messages:
+            content = msg.get('content')
+            if isinstance(content, str) and content:
+                total += self.get_token_length(content)
+        return total
+
     def build_request_configs(self, sampling_params: Dict[str, Any]) -> List[RequestConfig]:
         """Builds a list of request configs for the LLM API. This method iterates through the provided dataset and
         builds a RequestConfig object for each data point. The RequestConfig object contains the necessary information
@@ -736,29 +788,44 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
 
         # Iterate through data points and build a request config for each
         for request_idx, data_point in enumerate(self.dataset):
-            # Make raw prompt dictionary
-            raw_prompt = {'name': 'custom_prompt', 'template': data_point[self.prompt_key]}
-
-            # Apply prompt templating to get final prompt to send to LLM API along with tokenized prompt length
-            prompt_tuple = self.build_prompt(raw_prompt=raw_prompt)
-
-            # Image to be sent in LLM request if exists
-            image = None
-            if self.img_path_key:
-                image = self.get_image(data_point[self.img_path_key])
-
-            request_config = RequestConfig(
-                request_idx=request_idx,
-                model=self.model_name,
-                prompt_tuple=prompt_tuple,
-                image=image,
-                sampling_params=sampling_params,
-                llm_api=self.llm_api,
-                use_debugging_mode=self.use_debugging_mode,
-                api_variables=self.api_variables,
-                is_stream_mode=self.is_stream_mode,
-                num_concurrent_requests=self.num_concurrent_requests,
-            )
+            if self.is_messages_format:
+                messages = data_point['messages']
+                tools = data_point.get('tools', None)
+                # Token count is the sum of all text content across messages
+                token_count = self._get_messages_token_count(messages)
+                prompt_tuple = ({'name': 'custom_messages', 'template': ''}, token_count)
+                request_config = RequestConfig(
+                    request_idx=request_idx,
+                    model=self.model_name,
+                    prompt_tuple=prompt_tuple,
+                    messages=messages,
+                    tools=tools,
+                    sampling_params=sampling_params,
+                    llm_api=self.llm_api,
+                    use_debugging_mode=self.use_debugging_mode,
+                    api_variables=self.api_variables,
+                    is_stream_mode=self.is_stream_mode,
+                    num_concurrent_requests=self.num_concurrent_requests,
+                )
+            else:
+                # Legacy plain-text prompt format
+                raw_prompt = {'name': 'custom_prompt', 'template': data_point[self.prompt_key]}
+                prompt_tuple = self.build_prompt(raw_prompt=raw_prompt)
+                image = None
+                if self.img_path_key:
+                    image = self.get_image(data_point[self.img_path_key])
+                request_config = RequestConfig(
+                    request_idx=request_idx,
+                    model=self.model_name,
+                    prompt_tuple=prompt_tuple,
+                    image=image,
+                    sampling_params=sampling_params,
+                    llm_api=self.llm_api,
+                    use_debugging_mode=self.use_debugging_mode,
+                    api_variables=self.api_variables,
+                    is_stream_mode=self.is_stream_mode,
+                    num_concurrent_requests=self.num_concurrent_requests,
+                )
 
             request_configs.append(request_config)
 

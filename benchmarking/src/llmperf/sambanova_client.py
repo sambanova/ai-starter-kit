@@ -275,7 +275,6 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             dict: API call body
         """
 
-        prompt = self.request_config.prompt_tuple[0]['template']
         sampling_params = self.request_config.sampling_params
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
@@ -289,17 +288,24 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             # TODO: support not streaming mode
             raise ValueError('Streaming mode required')
 
-        # If an image is provided, add it to the content
-        content: Any = None
-        if self.request_config.image:
-            content = [
-                {'type': 'text', 'text': prompt},
-                {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{self.request_config.image}'}},
-            ]
+        # If a messages list is provided (chat / tool-use format), use it directly
+        if self.request_config.messages is not None:
+            data: Dict[str, Any] = {'messages': self.request_config.messages}
+            if self.request_config.tools:
+                data['tools'] = self.request_config.tools
         else:
-            content = prompt
+            # Legacy single-prompt format
+            prompt = self.request_config.prompt_tuple[0]['template']
+            content: Any = None
+            if self.request_config.image:
+                content = [
+                    {'type': 'text', 'text': prompt},
+                    {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{self.request_config.image}'}},
+                ]
+            else:
+                content = prompt
+            data = {'messages': [{'role': 'user', 'content': content}]}
 
-        data = {'messages': [{'role': 'user', 'content': content}]}
         data.update(sampling_params)
         return data
 

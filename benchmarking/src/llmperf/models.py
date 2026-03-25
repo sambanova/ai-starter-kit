@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel
 
@@ -10,6 +10,9 @@ class RequestConfig(BaseModel):
         request_idx: The index of the request
         model: The model to use for the request
         prompt_tuple: A tuple containing the prompt to provide to the LLM API along with the tokenized prompt length.
+        messages: Optional list of chat messages in OpenAI format (role/content dicts). When set, takes precedence
+            over prompt_tuple for the API call body. prompt_tuple is still used for token-count tracking.
+        tools: Optional list of tool definitions in OpenAI function-calling format. Only used when messages is set.
         image: Optional image to include in the request
         sampling_params: Optional additional sampling parameters to send with the request.
             For more information see the Router app's documentation for the completions
@@ -25,6 +28,8 @@ class RequestConfig(BaseModel):
     request_idx: int
     model: str
     prompt_tuple: Tuple[Dict[str, Any], int]
+    messages: Optional[List[Dict[str, Any]]] = None
+    tools: Optional[List[Dict[str, Any]]] = None
     image: Optional[str] = None
     sampling_params: Optional[Dict[str, Any]] = None
     llm_api: Optional[str] = None
