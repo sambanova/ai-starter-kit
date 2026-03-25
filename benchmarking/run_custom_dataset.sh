@@ -5,12 +5,12 @@ ulimit -n 4096
 python src/evaluator.py \
 --mode custom \
 --model-name "Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/results/llmperf" \
+--results-dir "./data/results/corethink_tests" \
 --num-concurrent-requests 1 \
 --timeout 600 \
---input-file-path "<AISK_REPOSITORY_PATH>/benchmarking/prompts/custom_prompt_example.jsonl" \
---save-llm-responses False \
---sampling-params '{"max_tokens_to_generate": 256}' \
+--input-file-path "../benchmarking/prompts/custom_prompt_example_corethink.jsonl" \
+--save-llm-responses True \
+--sampling-params '{"max_tokens_to_generate": 1024}' \
 --use-debugging-mode False \
 --llm-api sncloud
 
