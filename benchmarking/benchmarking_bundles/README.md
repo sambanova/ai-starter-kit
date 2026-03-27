@@ -135,7 +135,7 @@ This mode is useful when:
 Once the configuration files are set up, run the benchmark from the **root of the AISK repository**:
 
 ```bash
-bash benchmarking/benchmarking_bundles/run_synthetic_perfomance_bundle_eval.sh
+bash run_synthetic_perfomance_bundle_eval.sh
 ```
 
 ### 5. Results
