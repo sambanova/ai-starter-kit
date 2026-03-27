@@ -142,7 +142,6 @@ class VLLMBenchmarkExecutor:
             processed_prompts.append(prompt_text)
 
         # Write all prompts to JSONL file for vLLM CustomDataset
-        import json
         prompt_file = os.path.join(result_dir_path, "custom_prompts.jsonl")
         with open(prompt_file, "w") as pf:
             for prompt in processed_prompts:
