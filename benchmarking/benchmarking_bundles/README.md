@@ -130,9 +130,17 @@ This mode is useful when:
 - A more real approach needs to be tested
 - Faster turnaround or switching is needed for large bundles
 
-### 4. Results
+### 4. Run the benchmark
 
-#### 4.1 Results per model config
+Once the configuration files are set up, run the benchmark from the **root of the AISK repository**:
+
+```bash
+bash benchmarking/benchmarking_bundles/run_synthetic_perfomance_bundle_eval.sh
+```
+
+### 5. Results
+
+#### 5.1 Results per model config
 
 Individual model config results are stored under: `output_files_dir` in `config.yaml`.
 
@@ -155,7 +163,7 @@ For every model configuration (row in `model_configs_example.csv`), two result f
 
 If you'd like to know more details about these output files, please check the kit's CLI version in the main [README](../README.md).
 
-#### 4.2 Consolidated results
+#### 5.2 Consolidated results
 
 Consolidated results are written to: `consolidated_results_dir` in `config.yaml`.
 
