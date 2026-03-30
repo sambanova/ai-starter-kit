@@ -344,7 +344,7 @@ class BenchmarkRunner:
         num_requests = int(row['num_requests'])
         input_tokens = int(row['input_tokens'])
         output_tokens = int(row['output_tokens'])
-        concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
+        concurrent_requests = int(row['concurrent_requests']) if not pd.isna(row['concurrent_requests']) else 0
         qps = float(row.get('qps', 0.0) or 0.0)
         multimodal_img_size = (
             row.get('multimodal_img_size')
