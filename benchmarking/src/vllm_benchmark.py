@@ -18,6 +18,7 @@ import pandas as pd
 import yaml
 
 from benchmarking.benchmarking_utils import get_tokenizer_model_name
+from benchmarking.utils import SAMBANOVA_API_BASE
 
 
 class VLLMBenchmarkExecutor:
@@ -76,7 +77,7 @@ class VLLMBenchmarkExecutor:
             num_requests: Total number of requests to send
             num_concurrent_requests: Number of concurrent requests (converted to request rate)
             request_rate: Request rate in queries per second (overrides num_concurrent_requests)
-            api_base: API base URL (e.g., https://api.sambanova.ai/)
+            api_base: API base URL (e.g., https://api.sambanova.ai/v1)
             api_key: API key for authentication
             endpoint: API endpoint to use
             progress_bar: Optional callback for progress updates
@@ -86,7 +87,7 @@ class VLLMBenchmarkExecutor:
         """
         # Get API credentials from environment if not provided
         if api_base is None:
-            api_base = os.environ.get('SAMBANOVA_API_BASE', 'https://api.sambanova.ai/')
+            api_base = os.environ.get('SAMBANOVA_API_BASE', SAMBANOVA_API_BASE)
         if api_key is None:
             api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
