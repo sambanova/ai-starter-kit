@@ -63,7 +63,9 @@ The next step is to set up your environment variables to use one of the models a
 
 Please follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) for setting up your environment variables.
 
-**Note**: You can also use an OpenAI compatible endpoint from other providers. You will need to generate respective API keys on their platforms and map the URL and API Key SambaNova Cloud environment variables.
+**Notes**: 
+1. You can modify `SAMBANOVA_API_BASE` if you'd like to use another SambaNova URL if available.
+2. You can also use an OpenAI compatible endpoint from other providers. You will need to generate respective API keys on their platforms and map the URL and API Key SambaNova Cloud environment variables.
 
 ## Create the (virtual) environment
 1. (Recommended) Create a virtual environment and activate it (python version 3.11 recommended): 
