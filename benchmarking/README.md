@@ -61,7 +61,7 @@ git clone https://github.com/sambanova/ai-starter-kit.git
 
 The next step is to set up your environment variables to use one of the models available from SambaNova. You can self-service provision API endpoints using SambaNova Cloud.
 
-Please follow the instructions [here](../README.md#use-sambanova-cloud-option-1) for setting up your environment variables.
+Please follow the instructions [here](../README.md#getting-a-sambanova-api-key-and-setting-your-generative-models) for setting up your environment variables.
 
 **Note**: You can also use an OpenAI compatible endpoint from other providers. You will need to generate respective API keys on their platforms and map the URL and API Key SambaNova Cloud environment variables.
 
