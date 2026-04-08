@@ -18,7 +18,7 @@ import warnings
 from dotenv import load_dotenv
 from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
-from benchmarking.benchmarking_utils import get_tokenizer
+from benchmarking.benchmarking_utils import DEFAULT_MODEL, get_tokenizer
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.src.llmperf.models import RequestConfig
 from benchmarking.utils import SAMBANOVA_API_BASE
@@ -453,7 +453,7 @@ if __name__ == '__main__':
     load_dotenv('../.env', override=True)
     env_vars = dict(os.environ)
 
-    model = 'Meta-Llama-3.3-70B-Instruct'
+    model = DEFAULT_MODEL
     llm_api = 'sncloud'
     tokenizer = get_tokenizer(model)
 

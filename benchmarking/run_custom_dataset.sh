@@ -37,7 +37,7 @@ python src/evaluator.py \
 
 # python src/evaluator.py \
 # --mode custom \
-# --model-name "Llama-3.2-11B-Vision-Instruct" \
+# --model-name "Llama-4-Maverick-17B-128E-Instruct" \
 # --results-dir "./data/results/llmperf" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \

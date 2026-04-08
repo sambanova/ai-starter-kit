@@ -6,6 +6,9 @@ from typing import Any
 
 from transformers import AutoTokenizer
 
+# Default model used across the benchmarking kit
+DEFAULT_MODEL = 'Meta-Llama-3.3-70B-Instruct'
+
 # Model family identifiers for tokenizer selection
 FAMILY_MODEL_TYPE_IDENTIFIER = {
     'mistral': ['mistral'],

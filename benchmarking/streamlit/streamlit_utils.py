@@ -10,6 +10,7 @@ import requests
 import streamlit as st
 from plotly.graph_objs import Figure
 
+from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.utils import SAMBANOVA_API_BASE
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
@@ -158,7 +159,7 @@ def model_selector_widget(disabled: bool = False) -> str:
     else:
         models = None
 
-    default = 'Meta-Llama-3.3-70B-Instruct'
+    default = DEFAULT_MODEL
     help_text = 'Select or type the model name'
 
     if models:

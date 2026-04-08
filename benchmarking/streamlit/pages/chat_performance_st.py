@@ -9,6 +9,7 @@ sys.path.append('../')
 import warnings
 from typing import Any, Dict
 
+from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.streamlit.streamlit_utils import (
@@ -134,7 +135,7 @@ def main() -> None:
         # Show LLM parameters
         llm_model = st.text_input(
             'Model Name',
-            value='Meta-Llama-3.3-70B-Instruct',
+            value=DEFAULT_MODEL,
             help='Look at the model card and introduce the same name \
                 of the model/expert',
         )

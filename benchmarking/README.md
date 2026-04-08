@@ -128,9 +128,9 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 
 2. Enter a model name and choose the right API type
 
-     _Note: Currently we have specific prompting support for GPT, Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
+     _Note: Currently we have specific prompting support for GPT, Llama, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `Meta-Llama-3.3-70B-Instruct`.
 
 3. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A.
 
@@ -259,9 +259,9 @@ This option allows you to evaluate the performance of the selected LLM on real w
 
 1. Enter a model name and choose the right API type
 
-     _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
+     _Note: Currently we have specific prompting support for GPT, Llama, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `Meta-Llama-3.3-70B-Instruct`.
 
 2. If the model selected is **multimodal**, then select the pre-set image size to include in the benchmarking requests. There are three categories: Small (500x500px), Medium (1000x1000px) and Large (2000x2000px). Otherwise, if model is not multimodal, then leave the value to N/A.
 
@@ -329,9 +329,9 @@ This option allows you to evaluate the performance of the selected LLM on your o
 
 3. Enter a model name and choose the right API type
 
-    _Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
+    _Note: Currently we have specific prompting support for GPT, Llama, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `Meta-Llama-3.3-70B-Instruct`.
 
 4. Set the configuration and tuning parameters
 
@@ -373,7 +373,7 @@ This option allows you to measure performance during a multi-turn conversation w
 
 1. Enter a model name and choose the right API type
 
-  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `DeepSeek-R1`.
+  Use one of the models displayed in the website. Then, choose `SambaNova Cloud` in the API type dropdown option. E.g. `Meta-Llama-3.3-70B-Instruct`.
 
 2. If the model to benchmark is multimodal, then you can upload an image using the option in the sidebar. (Limit size: 200MB) **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing prompt may help to solve the issue.
 
@@ -413,7 +413,7 @@ You have 3 options for running the program from terminal:
 <details id="synthetic-dataset">
 <summary><strong>Synthetic Dataset</summary></strong>
 
-_Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
+_Note: Currently we have specific prompting support for GPT, Llama, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
@@ -473,7 +473,7 @@ Synthetic prompts for performance evaluation can be found [here](./prompts/). Yo
 <details id="real-workload-dataset">
 <summary><strong>Real Workload Dataset</summary></strong>
 
-_Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
+_Note: Currently we have specific prompting support for GPT, Llama, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_real_workload_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Real Workload Evaluation](#real-workload-performance-evaluation) for more information about model name.
@@ -532,7 +532,7 @@ Synthetic prompts for performance evaluation can be found [here](./prompts/). Yo
 <details id="custom-dataset">
 <summary><strong>Custom Dataset</summary></strong>
 
-_Note: Currently we have specific prompting support for Llama2, Llama3, Llama3.1, Llama3.2, Llama3.3, Llama4, Mistral, Deepseek, Qwen, QwQ, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
+_Note: Currently we have specific prompting support for GPT, Llama, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_custom_dataset.sh` and configure the following parameters:
   - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
