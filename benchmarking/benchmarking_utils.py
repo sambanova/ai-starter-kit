@@ -22,6 +22,7 @@ FAMILY_MODEL_TYPE_IDENTIFIER = {
     'gpt-oss': ['gptoss'],
     'allam': ['allam'],
     'minimax': ['minimax'],
+    'gemma': ['gemma'],
 }
 
 
@@ -119,5 +120,7 @@ def get_tokenizer_model_name(model_name: str) -> str:
         return 'humain-ai/ALLaM-7B-Instruct-preview'
     elif family_model_type == 'minimax':
         return 'MiniMaxAI/MiniMax-M2.5'
+    elif family_model_type == 'gemma':
+        return 'unsloth/gemma-3-1b-it'
     else:
         return 'openai/gpt-oss-120b'
