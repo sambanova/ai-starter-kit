@@ -33,7 +33,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     uv pip install --system -r base-requirements.txt
 
 # Final stage
-FROM python:3.11.5-slim-bookworm
+FROM python:3.11.5-slim-bookworm AS final
 
 # Copy installed packages from builder stage
 COPY --from=builder /usr/local /usr/local

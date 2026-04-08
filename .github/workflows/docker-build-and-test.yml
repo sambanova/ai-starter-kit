@@ -63,6 +63,11 @@ jobs:
 
       - name: Create empty .env file
         run: touch .env
+      
+      - name: Reset Docker auth (fix 401 issue)
+        run: |
+          docker logout || true
+          rm -f ~/.docker/config.json || true
 
       - name: Build Docker image with BuildKit and verbose logging
         run: |
