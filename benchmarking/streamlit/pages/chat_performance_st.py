@@ -9,6 +9,7 @@ sys.path.append('../')
 import warnings
 from typing import Any, Dict
 
+from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.src.llmperf import common_metrics
 from benchmarking.streamlit.streamlit_utils import (
@@ -72,6 +73,13 @@ def _parse_llm_response(llm: ChatPerformanceEvaluator, prompt: str) -> Dict[str,
 
 
 def _initialize_sesion_variables() -> None:
+    # Clear results when navigating from a different page
+    if st.session_state.get('current_page') != 'chat':
+        st.session_state.chat_history = []
+        st.session_state.perf_metrics_history = []
+        st.session_state.chat_disabled = True
+        st.session_state.current_page = 'chat'
+
     # Initialize chat history
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
@@ -127,7 +135,7 @@ def main() -> None:
         # Show LLM parameters
         llm_model = st.text_input(
             'Model Name',
-            value='Meta-Llama-3.3-70B-Instruct',
+            value=DEFAULT_MODEL,
             help='Look at the model card and introduce the same name \
                 of the model/expert',
         )

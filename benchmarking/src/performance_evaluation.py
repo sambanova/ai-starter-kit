@@ -26,12 +26,9 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
 import benchmarking.src.llmperf.llmperf_utils as llmperf_utils
+from benchmarking.benchmarking_utils import get_tokenizer
 from benchmarking.src.llmperf import common_metrics
-from benchmarking.src.llmperf.llmperf_utils import (
-    LLMPerfResults,
-    flatten,
-    get_tokenizer,
-)
+from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
 from benchmarking.utils import CONFIG_PATH
@@ -246,6 +243,7 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.REQ_OUTPUT_THROUGHPUT,
             common_metrics.NUM_INPUT_TOKENS,
             common_metrics.NUM_OUTPUT_TOKENS,
+            common_metrics.MEAN_INTER_TOKEN_LATENCY,
         ]:
             if self.show_results_in_terminal:
                 logger.info(f'Building Client Metrics Summary for metric: {metric}')
@@ -254,14 +252,20 @@ class BasePerformanceEvaluator(abc.ABC):
             # Get flattened list from metric column in metrics df
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
+            # Skip metric if no valid data (for backward compatibility with old result files)
+            if len(series) == 0:
+                if self.show_results_in_terminal:
+                    logger.info(f'    No valid data for {metric}, skipping')
+                continue
+
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            raw_quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
             quantiles_reformatted_keys = {}
-            for quantile, value in quantiles.items():
+            for quantile, value in raw_quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
                 if self.show_results_in_terminal:
-                    logger.info(f'    {reformatted_key} = {value}')
-                quantiles_reformatted_keys[reformatted_key] = value
+                    logger.info(f'    {reformatted_key} = {value:.6g}')
+                quantiles_reformatted_keys[reformatted_key] = round(value, 4)
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
             series_mean = round(series.mean(), 4)
             metrics_summary[metric]['mean'] = series_mean
@@ -273,10 +277,10 @@ class BasePerformanceEvaluator(abc.ABC):
             metrics_summary[metric]['stddev'] = series_std
 
             if self.show_results_in_terminal:
-                logger.info(f'    mean = {series_mean}')
-                logger.info(f'    min = {series_min}')
-                logger.info(f'    max = {series_max}')
-                logger.info(f'    stddev = {series_std}')
+                logger.info(f'    mean = {series.mean():.6g}')
+                logger.info(f'    min = {series.min():.6g}')
+                logger.info(f'    max = {series.max():.6g}')
+                logger.info(f'    stddev = {series.std():.6g}')
 
         # Record descriptive statistics for the metrics in the following list
         for metric in [
@@ -296,14 +300,20 @@ class BasePerformanceEvaluator(abc.ABC):
             # Get flattened list from metric column in metrics df
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
 
+            # Skip metric if no valid data (for backward compatibility with old result files)
+            if len(series) == 0:
+                if self.show_results_in_terminal:
+                    logger.info(f'    No valid data for {metric}, skipping')
+                continue
+
             # Generate statistics for specific metric
-            quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]).round(4).to_dict()
+            raw_quantiles = series.quantile([0.05, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
             quantiles_reformatted_keys = {}
-            for quantile, value in quantiles.items():
+            for quantile, value in raw_quantiles.items():
                 reformatted_key = f'p{int(quantile * 100)}'
                 if self.show_results_in_terminal:
-                    logger.info(f'    {reformatted_key} = {value}')
-                quantiles_reformatted_keys[reformatted_key] = value
+                    logger.info(f'    {reformatted_key} = {value:.6g}')
+                quantiles_reformatted_keys[reformatted_key] = round(value, 4)
             metrics_summary[metric]['quantiles'] = quantiles_reformatted_keys
             series_mean = round(series.mean(), 4)
             metrics_summary[metric]['mean'] = series_mean
@@ -315,10 +325,10 @@ class BasePerformanceEvaluator(abc.ABC):
             metrics_summary[metric]['stddev'] = series_std
 
             if self.show_results_in_terminal:
-                logger.info(f'    mean = {series_mean}')
-                logger.info(f'    min = {series_min}')
-                logger.info(f'    max = {series_max}')
-                logger.info(f'    stddev = {series_std}')
+                logger.info(f'    mean = {series.mean():.6g}')
+                logger.info(f'    min = {series.min():.6g}')
+                logger.info(f'    max = {series.max():.6g}')
+                logger.info(f'    stddev = {series.std():.6g}')
 
         # Record number of requests started
         metrics_summary[common_metrics.NUM_REQ_STARTED] = len(metrics)
@@ -345,6 +355,14 @@ class BasePerformanceEvaluator(abc.ABC):
             4,
         )
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
+
+        # Calculate mean output throughput (average of per-request throughputs)
+        mean_output_throughput = round(
+            metrics_df[common_metrics.REQ_OUTPUT_THROUGHPUT].mean(),
+            4,
+        )
+        metrics_summary[common_metrics.MEAN_OUTPUT_THROUGHPUT] = mean_output_throughput
+
         # Record number of requests completed
         num_completed_requests = len(metrics_df)
         num_completed_requests_per_min = round(num_completed_requests / (end_time - start_time) * 60, 4)
@@ -1518,3 +1536,4 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
             request_configs.append(request_config)
 
         return request_configs
+
