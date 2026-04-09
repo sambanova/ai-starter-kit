@@ -65,14 +65,15 @@ done
 # Load and clean environment variables from .env file
 if [ -f ".env" ]; then
     while IFS='=' read -r key value || [[ -n "$key" ]]; do
-        # Trim leading and trailing whitespace from key and value
+        # Trim leading and trailing whitespace from key and value, then strip surrounding quotes
         key=$(echo "$key" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        value=$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')
         
         # Skip comments and empty lines
         if [[ ! $key =~ ^# && -n $key ]]; then
             # Export the cleaned variable
             export "$key=$value"
+            [ "$verbose" == "true" ] && echo "  [.env] $key=$value"
         fi
     done < .env
 fi
