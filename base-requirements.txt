@@ -7,7 +7,7 @@ langchain-huggingface==1.0.0
 langchain-milvus==0.2.2
 langchain-sambanova==1.0.0
 langchain==1.0.2
-langgraph==1.0.1
+langgraph==1.0.10rc1
 langchain-experimental==0.4.0
 litellm==1.80.0
 crewai==1.2.1
