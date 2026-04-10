@@ -244,6 +244,13 @@ def main() -> None:
             help='Whether to save the llm responses to an output JSONL file. (default: %(default)s)',
         )
 
+        parser.add_argument(
+            '--benchmark-mode',
+            choices=['kit', 'vllm', 'both'],
+            default='kit',
+            help='Benchmark mode: kit only, vllm only, or both for a side-by-side comparison. (default: %(default)s)',
+        )
+
         # Parse arguments and instantiate evaluator
         args = parser.parse_args()
         model_names = args.model_names.strip().split()
@@ -251,27 +258,70 @@ def main() -> None:
         # running perf eval for multiple bundle models
         for model_idx, model_name in enumerate(model_names):
             user_metadata['model_idx'] = model_idx
-            # set synthetic evaluator
-            synthetic_evaluator = SyntheticPerformanceEvaluator(
-                multimodal_image_size=args.multimodal_image_size,
-                model_name=model_name,
-                results_dir=args.results_dir,
-                num_concurrent_requests=args.num_concurrent_requests,
-                timeout=args.timeout,
-                user_metadata=user_metadata,
-                use_multiple_prompts=args.use_multiple_prompts,
-                save_response_texts=args.save_llm_responses,
-                use_debugging_mode=args.use_debugging_mode,
-                llm_api=args.llm_api,
-            )
 
-            # Run performance evaluation
-            synthetic_evaluator.run_benchmark(
-                num_input_tokens=args.num_input_tokens,
-                num_output_tokens=args.num_output_tokens,
-                num_requests=args.num_requests,
-                sampling_params=json.loads(args.sampling_params),
-            )
+            kit_individual_responses_path = None
+
+            # --- Kit path ---
+            if args.benchmark_mode in ('kit', 'both'):
+                # set synthetic evaluator
+                synthetic_evaluator = SyntheticPerformanceEvaluator(
+                    multimodal_image_size=args.multimodal_image_size,
+                    model_name=model_name,
+                    results_dir=args.results_dir,
+                    num_concurrent_requests=args.num_concurrent_requests,
+                    timeout=args.timeout,
+                    user_metadata=user_metadata,
+                    use_multiple_prompts=args.use_multiple_prompts,
+                    save_response_texts=args.save_llm_responses,
+                    use_debugging_mode=args.use_debugging_mode,
+                    llm_api=args.llm_api,
+                )
+
+                # Run performance evaluation
+                synthetic_evaluator.run_benchmark(
+                    num_input_tokens=args.num_input_tokens,
+                    num_output_tokens=args.num_output_tokens,
+                    num_requests=args.num_requests,
+                    sampling_params=json.loads(args.sampling_params),
+                )
+
+                kit_individual_responses_path = synthetic_evaluator.individual_responses_file_path
+
+            # --- vLLM path ---
+            vllm_executor = None
+            if args.benchmark_mode in ('vllm', 'both'):
+                from benchmarking.src.vllm_benchmark import VLLMBenchmarkExecutor
+
+                vllm_executor = VLLMBenchmarkExecutor(
+                    model_name=model_name,
+                    results_dir=args.results_dir,
+                    timeout=args.timeout,
+                    user_metadata=user_metadata,
+                )
+
+                vllm_executor.run_benchmark(
+                    num_input_tokens=args.num_input_tokens,
+                    num_output_tokens=args.num_output_tokens,
+                    num_requests=args.num_requests,
+                    use_multiple_prompts=args.use_multiple_prompts,
+                    num_concurrent_requests=args.num_concurrent_requests,
+                )
+
+            # --- Comparison report ---
+            if args.benchmark_mode == 'both' and kit_individual_responses_path and vllm_executor:
+                import pandas as pd
+
+                from benchmarking.src.comparison_utils import (
+                    calculate_kit_summary_metrics,
+                    get_vllm_summary_metrics,
+                    print_comparison_report,
+                )
+
+                kit_df = pd.read_json(kit_individual_responses_path)
+                kit_metrics = calculate_kit_summary_metrics(kit_df)
+                vllm_metrics = get_vllm_summary_metrics(vllm_executor.result_file_path)
+                vllm_df = vllm_executor.get_results_dataframe()
+                print_comparison_report(kit_metrics, vllm_metrics, kit_df, vllm_df, model_name)
 
     # Real workload evaluation path
     elif args.mode == 'real_workload':

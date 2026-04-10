@@ -15,7 +15,8 @@ python src/evaluator.py \
 --use-multiple-prompts False \
 --save-llm-responses False \
 --use-debugging-mode False \
---llm-api sncloud
+--llm-api sncloud \
+--benchmark-mode both
 
 
 # Notes:
