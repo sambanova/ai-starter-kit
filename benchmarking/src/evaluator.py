@@ -200,8 +200,9 @@ def main() -> None:
             '--multimodal-image-size',
             choices=['na', 'small', 'medium', 'large'],
             required=True,
+            default='na',
             help="The image size to select if a vision model is going to be evaluated.\
-                If no multimodal model will be used, select 'na'.",
+                If no multimodal model will be used, select 'na'. Note: vLLM benchmark only supports 'na' for now. (default: %(default)s)",
         )
         parser.add_argument(
             '--num-input-tokens',
@@ -241,7 +242,7 @@ def main() -> None:
             type=str2bool,
             required=False,
             default=False,
-            help='Whether to save the llm responses to an output JSONL file. (default: %(default)s)',
+            help='Whether to save the kit\'s llm responses to an output JSONL file. (default: %(default)s)',
         )
 
         parser.add_argument(
