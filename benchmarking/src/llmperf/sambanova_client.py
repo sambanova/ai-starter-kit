@@ -334,6 +334,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         headers = self._get_headers()
         json_data = self._get_json_data()
         
+        # for debugging purposes
         # print(f'Making request to SambaNova Cloud API with url: {url}, headers: {headers} and json body: {json_data}')
 
         # Set variables
@@ -346,7 +347,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
-            # print(f'Response content: {response.content}')
+            # print(f'Response content: {response.content}') # for debugging purposes
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response) # type: ignore[arg-type]
