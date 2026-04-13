@@ -202,7 +202,8 @@ def main() -> None:
             required=True,
             default='na',
             help="The image size to select if a vision model is going to be evaluated.\
-                If no multimodal model will be used, select 'na'. Note: vLLM benchmark only supports 'na' for now. (default: %(default)s)",
+                If no multimodal model will be used, select 'na'. Note: vLLM benchmark only supports 'na' for now.\
+                    (default: %(default)s)",
         )
         parser.add_argument(
             '--num-input-tokens',
@@ -249,7 +250,8 @@ def main() -> None:
             '--benchmark-mode',
             choices=['kit', 'vllm', 'both'],
             default='kit',
-            help='Benchmark mode: kit only, vllm only, or both for a side-by-side comparison. (default: %(default)s)',
+            help='Benchmark mode: "kit" only, "vllm" only, or "both" for a side-by-side comparison.\
+                (default: %(default)s)',
         )
 
         # Parse arguments and instantiate evaluator

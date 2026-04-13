@@ -137,18 +137,30 @@ def build_comparison_dataframe(kit_metrics: Dict[str, Any], vllm_metrics: Dict[s
             return str(val)
 
     rows = [
-        ('Duration (s)',                         fmt(kit_metrics['duration']),                          fmt(vllm_metrics['duration'])),
-        ('Completed Requests',                   str(kit_metrics['completed_requests']),                str(vllm_metrics['completed_requests'])),
-        ('Failed Requests',                      str(kit_metrics['failed_requests']),                   str(vllm_metrics['failed_requests'])),
-        ('Total Input Tokens',                   str(kit_metrics['total_input_tokens']),                str(vllm_metrics['total_input_tokens'])),
-        ('Total Output Tokens',                  str(kit_metrics['total_output_tokens']),               str(vllm_metrics['total_output_tokens'])),
-        ('Request Throughput (req/s)',            fmt(kit_metrics['request_throughput'],   '.4f'),       fmt(vllm_metrics['request_throughput'],   '.4f')),
-        ('Output Throughput (tokens/s)',          fmt(kit_metrics['output_throughput']),                 fmt(vllm_metrics['output_throughput'])),
-        ('Total Token Throughput (tokens/s)',     fmt(kit_metrics['total_token_throughput']),            fmt(vllm_metrics['total_token_throughput'])),
-        ('Mean TTFT (ms)',                        fmt(kit_metrics['mean_ttft_ms']),                      fmt(vllm_metrics['mean_ttft_ms'])),
-        ('Median TTFT (ms)',                      fmt(kit_metrics['median_ttft_ms']),                    fmt(vllm_metrics['median_ttft_ms'])),
-        ('Mean ITL (ms)',                         fmt(kit_metrics.get('mean_itl_ms')),                   fmt(vllm_metrics.get('mean_itl_ms'))),
-        ('Median ITL (ms)',                       fmt(kit_metrics.get('median_itl_ms')),                 fmt(vllm_metrics.get('median_itl_ms'))),
+        ('Duration (s)',                         fmt(kit_metrics['duration']),                          \
+            fmt(vllm_metrics['duration'])),
+        ('Completed Requests',                   str(kit_metrics['completed_requests']),                \
+            str(vllm_metrics['completed_requests'])),
+        ('Failed Requests',                      str(kit_metrics['failed_requests']),                   \
+            str(vllm_metrics['failed_requests'])),
+        ('Total Input Tokens',                   str(kit_metrics['total_input_tokens']),                \
+            str(vllm_metrics['total_input_tokens'])),
+        ('Total Output Tokens',                  str(kit_metrics['total_output_tokens']),               \
+            str(vllm_metrics['total_output_tokens'])),
+        ('Request Throughput (req/s)',            fmt(kit_metrics['request_throughput'],   '.4f'),       \
+            fmt(vllm_metrics['request_throughput'],   '.4f')),
+        ('Output Throughput (tokens/s)',          fmt(kit_metrics['output_throughput']),                 \
+            fmt(vllm_metrics['output_throughput'])),
+        ('Total Token Throughput (tokens/s)',     fmt(kit_metrics['total_token_throughput']),            \
+            fmt(vllm_metrics['total_token_throughput'])),
+        ('Mean TTFT (ms)',                        fmt(kit_metrics['mean_ttft_ms']),                      \
+            fmt(vllm_metrics['mean_ttft_ms'])),
+        ('Median TTFT (ms)',                      fmt(kit_metrics['median_ttft_ms']),                    \
+            fmt(vllm_metrics['median_ttft_ms'])),
+        ('Mean ITL (ms)',                         fmt(kit_metrics.get('mean_itl_ms')),                   \
+            fmt(vllm_metrics.get('mean_itl_ms'))),
+        ('Median ITL (ms)',                       fmt(kit_metrics.get('median_itl_ms')),                 \
+            fmt(vllm_metrics.get('median_itl_ms'))),
     ]
 
     return pd.DataFrame(rows, columns=['Metric', 'Kit', 'vLLM'])
