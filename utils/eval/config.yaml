@@ -20,7 +20,8 @@ rag:
     collection_name: "demo"
   
   embeddings:
-    model: "E5-Mistral-7B-Instruct"
+    type: "cpu"
+    model: "intfloat/e5-large-v2"
 
   llm:
     model: "Meta-Llama-3.3-70B-Instruct"

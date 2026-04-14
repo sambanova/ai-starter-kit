@@ -499,8 +499,55 @@ def display_summary_metrics_comparison(kit_metrics: Dict[str, Any], vllm_metrics
     """
     st.markdown('### Summary Metrics Comparison')
 
-    df_comparison = build_comparison_dataframe(kit_metrics, vllm_metrics)
+    # Create comparison DataFrame
+    comparison_data = {
+        'Metric': [
+            'Duration (s)',
+            'Completed Requests',
+            'Failed Requests',
+            'Total Input Tokens',
+            'Total Output Tokens',
+            'Request Throughput (req/s)',
+            'Output Throughput (tokens/s)',
+            'Total Token Throughput (tokens/s)',
+            'Mean TTFT (ms)',
+            'Median TTFT (ms)',
+            'Mean ITL (ms)',
+            'Median ITL (ms)',
+        ],
+        'Kit': [
+            f'{kit_metrics["duration"]:.2f}',
+            str(kit_metrics['completed_requests']),
+            str(kit_metrics['failed_requests']),
+            str(kit_metrics['total_input_tokens']),
+            str(kit_metrics['total_output_tokens']),
+            f'{kit_metrics["request_throughput"]:.4f}',
+            f'{kit_metrics["output_throughput"]:.2f}',
+            f'{kit_metrics["total_token_throughput"]:.2f}',
+            f'{kit_metrics["mean_ttft_ms"]:.2f}',
+            f'{kit_metrics["median_ttft_ms"]:.2f}',
+            f'{kit_metrics["mean_itl_ms"]:.2f}' if kit_metrics['mean_itl_ms'] is not None else 'N/A',
+            f'{kit_metrics["median_itl_ms"]:.2f}' if kit_metrics['median_itl_ms'] is not None else 'N/A',
+        ],
+        'vLLM': [
+            f'{vllm_metrics["duration"]:.2f}',
+            str(vllm_metrics['completed_requests']),
+            str(vllm_metrics['failed_requests']),
+            str(vllm_metrics['total_input_tokens']),
+            str(vllm_metrics['total_output_tokens']),
+            f'{vllm_metrics["request_throughput"]:.4f}',
+            f'{vllm_metrics["output_throughput"]:.2f}',
+            f'{vllm_metrics["total_token_throughput"]:.2f}',
+            f'{vllm_metrics["mean_ttft_ms"]:.2f}',
+            f'{vllm_metrics["median_ttft_ms"]:.2f}',
+            f'{vllm_metrics["mean_itl_ms"]:.2f}',
+            f'{vllm_metrics["median_itl_ms"]:.2f}',
+        ],
+    }
 
+    df_comparison = pd.DataFrame(comparison_data)
+
+    # Display the comparison table
     st.dataframe(
         df_comparison,
         width='stretch',
@@ -519,6 +566,7 @@ def calculate_sum_itl_per_request(df: pd.DataFrame, itl_column: str) -> pd.Serie
     Returns:
         pd.Series: Sum of ITLs in seconds per request
     """
+
     def calc_sum_itl(row: pd.Series) -> Any:
         itls = row[itl_column]
         if itls is None or not isinstance(itls, list) or len(itls) == 0:
@@ -543,6 +591,7 @@ def calculate_tpot_per_request(df: pd.DataFrame, itl_column: str, output_tokens_
     Returns:
         pd.Series: TPOT values in seconds per token
     """
+
     def calc_tpot(row: pd.Series) -> Any:
         itls = row[itl_column]
         output_tokens = row[output_tokens_column]
@@ -713,7 +762,9 @@ def plot_tpot_per_request_comparison(kit_df: pd.DataFrame, vllm_df: pd.DataFrame
         kit_df_copy, 'client_inter_token_latencies_s', 'number_output_tokens'
     )
     vllm_df_copy['tpot_s'] = calculate_tpot_per_request(
-        vllm_df_copy, 'client_inter_token_latencies_s', 'number_output_tokens'  # vLLM now uses same column names
+        vllm_df_copy,
+        'client_inter_token_latencies_s',
+        'number_output_tokens',  # vLLM now uses same column names
     )
 
     return plot_per_request_comparison(

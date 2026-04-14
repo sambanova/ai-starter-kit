@@ -350,7 +350,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
             # print(f'Response content: {response.content}') # for debugging purposes
             if response.status_code != 200:
                 response.raise_for_status()
-            client = sseclient.SSEClient(response) # type: ignore[arg-type]
+            client = sseclient.SSEClient(response)  # type: ignore[arg-type]
             generated_text = ''
 
             for event in client.events():

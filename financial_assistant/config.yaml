@@ -1,13 +1,14 @@
 llm: 
-  model: "DeepSeek-V3-0324"
+  model: "DeepSeek-V3.1"
   temperature: 0.0
   max_tokens: 2048
   top_p: null
   top_k: null
 
 rag:
-  embedding_model: 
-    "model": "E5-Mistral-7B-Instruct" 
+  embedding_model:
+    "type": "cpu"
+    "model": "intfloat/e5-large-v2"
   retrieval:
     "k_retrieved_documents": 5
 

@@ -13,14 +13,15 @@ from langchain_classic.docstore.document import Document
 from langchain_classic.memory import ConversationSummaryMemory
 from langchain_classic.prompts import ChatPromptTemplate
 from langchain_core.callbacks import CallbackManagerForChainRun
-from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores.base import VectorStoreRetriever
-from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
+from langchain_sambanova import ChatSambaNova
 from pydantic import SecretStr
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+from utils.vectordb.vector_db import load_embedding_model
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -298,11 +299,12 @@ class DocumentRetrieval:
 
         return langchain_docs
 
-    def load_embedding_model(self) -> Embeddings:
-        embeddings = SambaNovaEmbeddings(
-            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+    def load_embedding_model(self) -> Any:
+        return load_embedding_model(
+            self.embedding_model_info,
+            api_key=self.sambanova_api_key,
+            api_base=self.sambanova_api_base,
         )
-        return embeddings
 
     def create_vector_store(
         self,
