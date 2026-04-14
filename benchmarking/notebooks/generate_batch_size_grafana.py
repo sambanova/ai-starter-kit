@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Step 1: Read the CSV file
-results_dir = '../benchmarking/data/vllm_on_cli/'
-input_filename = results_dir + '4k-4k-dyt-rodrigo.csv'
-output_filename = results_dir + '4k-4k-dyt-rodrigo_grafana_grouped_interim.csv'
-summary_output_filename = results_dir + '4k-4k-dyt-rodrigo_grafana_grouped_summary.csv'
+results_dir = '<AISK_REPOSITORY_PATH>/benchmarking/data/results/grafana/'
+input_filename = results_dir + 'grafana.csv'
+output_filename = results_dir + 'grafana_grouped_interim.csv'
+summary_output_filename = results_dir + 'grafana_grouped_summary.csv'
 
 df = pd.read_csv(input_filename)
 
