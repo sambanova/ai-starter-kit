@@ -70,6 +70,7 @@ def load_embedding_model(
         kwargs['base_url'] = api_base
     return SambaNovaEmbeddings(**kwargs)
 
+
 # Configure the logger
 logging.basicConfig(
     level=logging.INFO,  # Set the logging level (e.g., INFO, DEBUG)

@@ -17,9 +17,9 @@ from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
-from utils.vectordb.vector_db import load_embedding_model
 from pydantic import SecretStr
+
+from utils.vectordb.vector_db import load_embedding_model
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))

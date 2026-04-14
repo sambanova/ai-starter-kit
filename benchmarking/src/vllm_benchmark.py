@@ -65,7 +65,7 @@ class VLLMBenchmarkExecutor:
         request_rate: Optional[float] = None,
         api_base: Optional[str] = None,
         api_key: Optional[str] = None,
-        endpoint: str = "chat/completions",
+        endpoint: str = 'chat/completions',
         progress_bar: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """
@@ -96,8 +96,8 @@ class VLLMBenchmarkExecutor:
             api_base += '/'
 
         # Generate unique result filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        result_dir_name = f"vllm_{timestamp}"
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        result_dir_name = f'vllm_{timestamp}'
         result_dir_path = os.path.join(self.results_dir, result_dir_name)
         os.makedirs(result_dir_path, exist_ok=True)
 
@@ -121,6 +121,7 @@ class VLLMBenchmarkExecutor:
             prompt_list = prompt_data['default_prompt']
 
         from benchmarking.benchmarking_utils import get_tokenizer
+
         tokenizer = get_tokenizer(self.model_name)
 
         # Prepare prompts for all requests (cycle if fewer prompts than requests)
@@ -143,33 +144,45 @@ class VLLMBenchmarkExecutor:
             processed_prompts.append(prompt_text)
 
         # Write all prompts to JSONL file for vLLM CustomDataset
-        prompt_file = os.path.join(result_dir_path, "custom_prompts.jsonl")
-        with open(prompt_file, "w") as pf:
+        prompt_file = os.path.join(result_dir_path, 'custom_prompts.jsonl')
+        with open(prompt_file, 'w') as pf:
             for prompt in processed_prompts:
-                pf.write(json.dumps({"prompt": prompt}) + "\n")
+                pf.write(json.dumps({'prompt': prompt}) + '\n')
 
         # Build vLLM command using custom dataset
         cmd = [
-            "vllm", "bench", "serve",
-            "--backend", "openai-chat",
-            "--base-url", api_base,
-            "--dataset-name", "custom",
-            "--dataset-path", prompt_file,
-            "--endpoint", endpoint,
-            "--model", tokenizer_model_name,  # HuggingFace tokenizer model
-            "--served_model_name", self.model_name,  # Actual API model name
-            "--custom-output-len", str(num_output_tokens),
-            "--num-prompts", str(num_requests),
-            "--save-detailed",
-            "--save-result",
-            "--result-dir", result_dir_path,
+            'vllm',
+            'bench',
+            'serve',
+            '--backend',
+            'openai-chat',
+            '--base-url',
+            api_base,
+            '--dataset-name',
+            'custom',
+            '--dataset-path',
+            prompt_file,
+            '--endpoint',
+            endpoint,
+            '--model',
+            tokenizer_model_name,  # HuggingFace tokenizer model
+            '--served_model_name',
+            self.model_name,  # Actual API model name
+            '--custom-output-len',
+            str(num_output_tokens),
+            '--num-prompts',
+            str(num_requests),
+            '--save-detailed',
+            '--save-result',
+            '--result-dir',
+            result_dir_path,
         ]
         if request_rate is not None:
-            cmd.extend(["--request-rate", str(request_rate)])
+            cmd.extend(['--request-rate', str(request_rate)])
         elif num_concurrent_requests is not None and num_concurrent_requests > 1:
-            cmd.extend(["--request-rate", str(num_concurrent_requests)])
+            cmd.extend(['--request-rate', str(num_concurrent_requests)])
         else:
-            cmd.extend(["--request-rate", "1"])
+            cmd.extend(['--request-rate', '1'])
 
         env = os.environ.copy()
         if api_key:
@@ -180,24 +193,18 @@ class VLLMBenchmarkExecutor:
                 progress_bar(0, 100)
 
             # Print the command for debugging
-            print("\n" + "="*80)
-            print("Running vLLM benchmark command:")
-            print("="*80)
-            print(" ".join(cmd))
-            print("="*80 + "\n")
+            print('\n' + '=' * 80)
+            print('Running vLLM benchmark command:')
+            print('=' * 80)
+            print(' '.join(cmd))
+            print('=' * 80 + '\n')
 
             # Reset progress tracking for this run
             self._progress_completed = 0
             self._progress_total = 0
 
             # Pipe stderr to parse tqdm progress; stdout streams directly to terminal
-            process = subprocess.Popen(
-                cmd,
-                stdout=None,
-                stderr=subprocess.PIPE,
-                text=True,
-                env=env
-            )
+            process = subprocess.Popen(cmd, stdout=None, stderr=subprocess.PIPE, text=True, env=env)
 
             # Background thread: parse tqdm progress from stderr and forward to terminal
             stderr_thread = threading.Thread(
@@ -211,7 +218,7 @@ class VLLMBenchmarkExecutor:
             while True:
                 if self.stop_event.is_set():
                     process.terminate()
-                    raise Exception("Benchmark stopped by user")
+                    raise Exception('Benchmark stopped by user')
 
                 retcode = process.poll()
                 if retcode is not None:
@@ -232,10 +239,10 @@ class VLLMBenchmarkExecutor:
 
             # Check for errors
             if retcode != 0:
-                print(f"\n{'='*80}")
-                print(f"vLLM benchmark failed with return code: {retcode}")
-                print(f"{'='*80}\n")
-                raise Exception(f"vLLM benchmark failed with return code {retcode}")
+                print(f'\n{"=" * 80}')
+                print(f'vLLM benchmark failed with return code: {retcode}')
+                print(f'{"=" * 80}\n')
+                raise Exception(f'vLLM benchmark failed with return code {retcode}')
 
             # Find and parse the result file in the directory
             results, result_file_path = self._find_and_parse_results(result_dir_path)
@@ -247,8 +254,8 @@ class VLLMBenchmarkExecutor:
             num_failed = results.get('failed', 0)
             num_total = results.get('num_prompts', 0)
             if num_failed > 0:
-                print(f"\nWarning: {num_failed}/{num_total} requests failed.")
-                print(f"\n{'='*80}")
+                print(f'\nWarning: {num_failed}/{num_total} requests failed.')
+                print(f'\n{"=" * 80}')
 
             # Create compatible output files
             self._create_compatible_output(results, num_input_tokens, num_output_tokens, num_concurrent_requests)
@@ -257,22 +264,22 @@ class VLLMBenchmarkExecutor:
 
         except FileNotFoundError:
             raise Exception(
-                "vLLM is not installed or not in PATH.\n\n"
-                "To install vLLM (works on all platforms for API benchmarking):\n"
-                "  pip install vllm>=0.6.0\n\n"
+                'vLLM is not installed or not in PATH.\n\n'
+                'To install vLLM (works on all platforms for API benchmarking):\n'
+                '  pip install vllm>=0.6.0\n\n'
                 "Note: For API benchmarking, vLLM doesn't require GPU/local model.\n"
-                "It benchmarks remote APIs like SambaNova Cloud."
+                'It benchmarks remote APIs like SambaNova Cloud.'
             )
         except Exception as e:
-            print(f"Charts will show the {num_total - num_failed} successful requests.\n")
-            raise Exception(f"Error running vLLM benchmark: {str(e)}")
+            print(f'Charts will show the {num_total - num_failed} successful requests.\n')
+            raise Exception(f'Error running vLLM benchmark: {str(e)}')
         finally:
             # Clean up the custom prompts file after the run
             try:
                 if os.path.exists(prompt_file):
                     os.remove(prompt_file)
             except Exception as cleanup_err:
-                print(f"Warning: Failed to remove prompt file {prompt_file}: {cleanup_err}")
+                print(f'Warning: Failed to remove prompt file {prompt_file}: {cleanup_err}')
 
     def _monitor_stderr(self, stderr_pipe: Any) -> None:
         """Read vLLM stderr, parse tqdm progress (X/Y), and forward output to terminal."""
@@ -308,14 +315,14 @@ class VLLMBenchmarkExecutor:
         json_files = [f for f in os.listdir(result_dir) if f.endswith('.json')]
 
         if not json_files:
-            raise Exception(f"No result JSON files found in: {result_dir}")
+            raise Exception(f'No result JSON files found in: {result_dir}')
 
         # Use the first JSON file (vLLM typically creates one main results file)
         result_file = os.path.join(result_dir, json_files[0])
 
-        print(f"\n{'='*80}")
-        print(f"Found vLLM result file: {json_files[0]}")
-        print(f"{'='*80}\n")
+        print(f'\n{"=" * 80}')
+        print(f'Found vLLM result file: {json_files[0]}')
+        print(f'{"=" * 80}\n')
 
         with open(result_file, 'r') as f:
             results = json.load(f)
@@ -358,10 +365,7 @@ class VLLMBenchmarkExecutor:
             if errors_raw is not None and i < len(errors_raw) and errors_raw[i]:
                 return str(errors_raw[i])
             # Fallback heuristic when errors field is absent: zero TTFT + zero output = failed
-            if (
-                i < len(ttfts) and i < len(output_lens)
-                and ttfts[i] == 0.0 and output_lens[i] == 0
-            ):
+            if i < len(ttfts) and i < len(output_lens) and ttfts[i] == 0.0 and output_lens[i] == 0:
                 return 'REQUEST_FAILED'
             return None
 
@@ -385,7 +389,7 @@ class VLLMBenchmarkExecutor:
             mean_e2e_s = sum(calculated_e2e_latencies) / len(calculated_e2e_latencies)
             median_e2e_s = sorted(calculated_e2e_latencies)[len(calculated_e2e_latencies) // 2]
             variance = sum((x - mean_e2e_s) ** 2 for x in calculated_e2e_latencies) / len(calculated_e2e_latencies)
-            std_e2e_s = variance ** 0.5
+            std_e2e_s = variance**0.5
         else:
             mean_e2e_s = 0
             median_e2e_s = 0
@@ -426,7 +430,9 @@ class VLLMBenchmarkExecutor:
                 request_e2e_s = (
                     request_ttft_s + request_itl_sum
                     if request_itls
-                    else vllm_results.get('duration', 1) / num_completed if num_completed > 0 else 1
+                    else vllm_results.get('duration', 1) / num_completed
+                    if num_completed > 0
+                    else 1
                 )
                 output_tokens_per_s = request_output_tokens / request_itl_sum if request_itl_sum > 0 else 0
 
@@ -502,7 +508,7 @@ class VLLMBenchmarkExecutor:
             DataFrame with benchmark results
         """
         if self.individual_responses_file_path is None:
-            raise Exception("No results available. Run benchmark first.")
+            raise Exception('No results available. Run benchmark first.')
 
         df = pd.read_json(self.individual_responses_file_path)
         return df
@@ -537,7 +543,7 @@ def parse_vllm_results_to_dataframe(result_file_path: str) -> pd.DataFrame:
         num_completed = results.get('completed', 0)
         num_prompts = results.get('num_prompts', len(ttfts))
 
-        rows: List[Dict[str,Any]] = []
+        rows: List[Dict[str, Any]] = []
         for i in range(num_prompts):
             # Detect failures
             error_str = None
@@ -547,13 +553,15 @@ def parse_vllm_results_to_dataframe(result_file_path: str) -> pd.DataFrame:
                 error_str = 'REQUEST_FAILED'
 
             if error_str:
-                rows.append({
-                    'client_ttft_s': None,
-                    'client_end_to_end_latency_s': None,
-                    'server_ttft_s': None,
-                    'server_end_to_end_latency_s': None,
-                    'error_code': error_str,
-                })
+                rows.append(
+                    {
+                        'client_ttft_s': None,
+                        'client_end_to_end_latency_s': None,
+                        'server_ttft_s': None,
+                        'server_end_to_end_latency_s': None,
+                        'error_code': error_str,
+                    }
+                )
             else:
                 request_ttft_s = ttfts[i] if i < len(ttfts) else mean_ttft_s
                 request_itls = itls[i] if i < len(itls) and itls[i] else []
@@ -561,15 +569,19 @@ def parse_vllm_results_to_dataframe(result_file_path: str) -> pd.DataFrame:
                 request_e2e_s = (
                     request_ttft_s + request_itl_sum
                     if request_itls
-                    else results.get('duration', 1) / num_completed if num_completed > 0 else 1
+                    else results.get('duration', 1) / num_completed
+                    if num_completed > 0
+                    else 1
                 )
-                rows.append({
-                    'client_ttft_s': request_ttft_s,
-                    'client_end_to_end_latency_s': request_e2e_s,
-                    'server_ttft_s': None,
-                    'server_end_to_end_latency_s': None,
-                    'error_code': None,
-                })
+                rows.append(
+                    {
+                        'client_ttft_s': request_ttft_s,
+                        'client_end_to_end_latency_s': request_e2e_s,
+                        'server_ttft_s': None,
+                        'server_end_to_end_latency_s': None,
+                        'error_code': None,
+                    }
+                )
 
         df = pd.DataFrame(rows)
         return df

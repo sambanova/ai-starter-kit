@@ -7,13 +7,12 @@ from langchain_chroma import Chroma
 from langchain_classic.schema import Document
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_sambanova import SambaNovaEmbeddings
-from utils.vectordb.vector_db import load_embedding_model as _load_embedding_model
 from pydantic import SecretStr
 
 from financial_assistant.constants import *
 from financial_assistant.src.utilities import _get_config_info, get_logger, time_llm
 from financial_assistant.streamlit.llm_model import sambanova_llm
+from utils.vectordb.vector_db import load_embedding_model as _load_embedding_model
 
 logger = get_logger()
 
@@ -107,9 +106,7 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
     return embedding_model_info, retrieval_info
 
 
-def load_embedding_model(
-    embedding_model_info: Dict[str, Any], sambanova_api_key: Optional[str] = None
-) -> Any:
+def load_embedding_model(embedding_model_info: Dict[str, Any], sambanova_api_key: Optional[str] = None) -> Any:
     """Load the embedding model following the config information."""
     if embedding_model_info.get('type') == 'cpu':
         return _load_embedding_model(embedding_model_info)

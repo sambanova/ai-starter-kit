@@ -1536,4 +1536,3 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
             request_configs.append(request_config)
 
         return request_configs
-

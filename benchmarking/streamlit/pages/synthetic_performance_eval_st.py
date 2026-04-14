@@ -241,11 +241,7 @@ def _run_vllm_benchmark(progress_bar: Any = None) -> pd.DataFrame:
 
 
 def _display_benchmark_results(
-    df_req_info: pd.DataFrame,
-    batching_exposed: bool,
-    expected_output_tokens: int,
-    label: str,
-    is_vllm: bool = False
+    df_req_info: pd.DataFrame, batching_exposed: bool, expected_output_tokens: int, label: str, is_vllm: bool = False
 ) -> None:
     """Display benchmark results plots for a single benchmark.
 
@@ -298,7 +294,7 @@ def _display_benchmark_results(
             batching_exposed,
             colors=['#ee7625'] if is_vllm else None,
         ),
-        width='stretch'
+        width='stretch',
     )
     if not is_vllm:
         st.plotly_chart(
@@ -312,7 +308,7 @@ def _display_benchmark_results(
                 'Batch size',
                 batching_exposed,
             ),
-            width='stretch'
+            width='stretch',
         )
         st.plotly_chart(
             plot_client_vs_server_barplots(
@@ -325,7 +321,7 @@ def _display_benchmark_results(
                 'Batch size',
                 batching_exposed,
             ),
-            width='stretch'
+            width='stretch',
         )
     df_itl = df_req_info[['batch_size_used', 'client_mean_inter_token_latency_s']].copy()
     df_itl['client_mean_inter_token_latency_ms'] = df_itl['client_mean_inter_token_latency_s'] * 1000
@@ -342,7 +338,7 @@ def _display_benchmark_results(
             batching_exposed,
             colors=[itl_color],
         ),
-        width='stretch'
+        width='stretch',
     )
     # Compute total throughput per batch
     if batching_exposed:
@@ -384,11 +380,7 @@ def main() -> None:
         st.session_state.benchmark_mode = st.radio(
             'Benchmarking Mode',
             options=['kit', 'vllm', 'both'],
-            format_func=lambda x: {
-                'kit': 'Kit Only',
-                'vllm': 'vLLM Only',
-                'both': 'Both (Side-by-Side Comparison)'
-            }[x],
+            format_func=lambda x: {'kit': 'Kit Only', 'vllm': 'vLLM Only', 'both': 'Both (Side-by-Side Comparison)'}[x],
             help='Select which benchmark to run: Kit (current implementation),\
                 vLLM (vLLM benchmark serve), or Both for comparison',
             disabled=st.session_state.running or st.session_state.optional_download,
@@ -428,8 +420,8 @@ def main() -> None:
             index=0,
             disabled=st.session_state.running or st.session_state.optional_download or vllm_mode,
             help='Select the pre-set image size for multimodal models. '
-                'Small: 500x500, Medium: 1024x1024, Large: 2000x2000. Select N/A for non-multimodal models. '
-                'Not supported in vLLM mode.',
+            'Small: 500x500, Medium: 1024x1024, Large: 2000x2000. Select N/A for non-multimodal models. '
+            'Not supported in vLLM mode.',
         )
         if vllm_mode:
             st.session_state.multimodal_image_size = 'na'
@@ -530,11 +522,7 @@ def main() -> None:
 
     if st.session_state.running:
         st.session_state.mp_events.input_submitted('synthetic_performance_evaluation ')
-        benchmark_mode_label = {
-            'kit': 'Kit',
-            'vllm': 'vLLM',
-            'both': 'Kit and vLLM'
-        }[st.session_state.benchmark_mode]
+        benchmark_mode_label = {'kit': 'Kit', 'vllm': 'vLLM', 'both': 'Kit and vLLM'}[st.session_state.benchmark_mode]
         st.toast(f'{benchmark_mode_label} performance evaluation processing now. It should take few minutes.')
         with st.spinner('Processing'):
             st.session_state.progress_bar = st.progress(0)
@@ -563,8 +551,9 @@ def main() -> None:
                             vllm_raw_content = json.loads(f.read())
                         json_data[vllm_raw_name] = vllm_raw_content
 
-                        vllm_individual_name = st.session_state.vllm_evaluator.\
-                                                individual_responses_file_path.split('/')[-1]
+                        vllm_individual_name = st.session_state.vllm_evaluator.individual_responses_file_path.split(
+                            '/'
+                        )[-1]
                         with open(st.session_state.vllm_evaluator.individual_responses_file_path, 'r') as f:
                             vllm_individual_content = json.loads(f.read())
 
@@ -590,9 +579,11 @@ def main() -> None:
                 st.rerun()
 
     # Display results based on benchmark mode
-    if st.session_state.benchmark_mode == 'both' and \
-        st.session_state.df_req_info is not None \
-            and st.session_state.df_req_info_vllm is not None:
+    if (
+        st.session_state.benchmark_mode == 'both'
+        and st.session_state.df_req_info is not None
+        and st.session_state.df_req_info_vllm is not None
+    ):
         # Side-by-side comparison
         st.header('Side-by-Side Comparison: Kit vs vLLM')
 
@@ -682,7 +673,7 @@ def main() -> None:
             st.session_state.batching_exposed,
             st.session_state.output_tokens,
             'Kit',
-            is_vllm=False
+            is_vllm=False,
         )
 
     elif st.session_state.benchmark_mode == 'vllm' and st.session_state.df_req_info_vllm is not None:
@@ -692,7 +683,7 @@ def main() -> None:
             st.session_state.batching_exposed_vllm,
             st.session_state.output_tokens,
             'vLLM',
-            is_vllm=True
+            is_vllm=True,
         )
 
 

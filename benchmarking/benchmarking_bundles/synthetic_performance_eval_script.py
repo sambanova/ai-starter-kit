@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 #                   DATA CLASSES
 # =========================================================
 
+
 @dataclass
 class ModelConfigRow:
     model_name: str
@@ -43,6 +44,7 @@ class ModelConfigRow:
 # =========================================================
 #                   CONFIG LOADER
 # =========================================================
+
 
 class ConfigLoader:
     def __init__(self, config_path: str) -> None:
@@ -60,6 +62,7 @@ class ConfigLoader:
 # =========================================================
 #                   FILENAME PARSER
 # =========================================================
+
 
 class FileNameParser:
     UUID_RE = re.compile(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
@@ -102,6 +105,7 @@ class FileNameParser:
 #                   BATCH ANALYZER
 # =========================================================
 
+
 class BatchAnalyzer:
     @staticmethod
     def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[int], pd.DataFrame]:
@@ -128,6 +132,7 @@ class BatchAnalyzer:
 #                   REPRESENTATIVE FINDER
 # =========================================================
 
+
 class RepresentativeFinder:
     @staticmethod
     def find_median_in_batches(lst: Sequence[int]) -> Optional[int]:
@@ -145,6 +150,7 @@ class RepresentativeFinder:
 #                   SWITCHING TIME CALCULATOR
 # =========================================================
 
+
 class SwitchingTimeCalculator:
     """Compute switching time per UUID run."""
 
@@ -160,10 +166,7 @@ class SwitchingTimeCalculator:
             lowest_ttft = max_batch_rows['server_ttft_s'].min()
             switching_time = highest_ttft - lowest_ttft
 
-            results.append({
-                'uuid': uuid,
-                'switching_time': switching_time
-            })
+            results.append({'uuid': uuid, 'switching_time': switching_time})
         return pd.DataFrame(results).set_index('uuid')
 
 
@@ -171,14 +174,15 @@ class SwitchingTimeCalculator:
 #                   RESULTS CONSOLIDATOR
 # =========================================================
 
+
 class ResultsConsolidator:
     def __init__(
-            self, 
-            read_perf_eval_json_files_fn: Any, 
-            file_parser: FileNameParser, 
-            batch_analyzer: BatchAnalyzer, 
-            rep_finder: RepresentativeFinder
-        ) -> None:
+        self,
+        read_perf_eval_json_files_fn: Any,
+        file_parser: FileNameParser,
+        batch_analyzer: BatchAnalyzer,
+        rep_finder: RepresentativeFinder,
+    ) -> None:
         self.read_perf_eval_json_files = read_perf_eval_json_files_fn
         self.file_parser = file_parser
         self.batch_analyzer = batch_analyzer
@@ -209,13 +213,13 @@ class ResultsConsolidator:
                 continue
 
         if not dfs_with_batching:
-            logger.warning("No valid batching data found.")
+            logger.warning('No valid batching data found.')
             return
 
         df_all = pd.concat(dfs_with_batching)
-        
+
         df_all['uuid'] = df_all['filename'].apply(self.file_parser.find_uuid)
-        
+
         df_switching = SwitchingTimeCalculator.calculate_switching_time(df_all)
 
         # Merge switching time into summary
@@ -231,13 +235,14 @@ class ResultsConsolidator:
             df_uuid = df_all[df_all['uuid'] == uuid]
             freq = dict(Counter(df_uuid['requests_batching_per_request']))
             return freq
+
         df_summary['request_batching_frequencies'] = df_summary['uuid'].map(get_batching_frequencies)
-        
+
         os.makedirs(consolidated_dir, exist_ok=True)
         out_path = os.path.join(consolidated_dir, f'{run_name}.xlsx')
-        df_summary.sort_values('timestamp', inplace=True)     
+        df_summary.sort_values('timestamp', inplace=True)
 
-       # --- Dynamically determine which columns to include before export ---
+        # --- Dynamically determine which columns to include before export ---
         missing_columns = []
 
         if 'num_concurrent_requests' not in df_summary.columns:
@@ -273,11 +278,11 @@ class ResultsConsolidator:
             'server_end_to_end_latency_s_min',
             'server_end_to_end_latency_s_mean',
             'server_end_to_end_latency_s_p50',
-            'server_end_to_end_latency_s_max',                
+            'server_end_to_end_latency_s_max',
             'server_output_token_per_s_min',
-            'server_output_token_per_s_mean', 
+            'server_output_token_per_s_mean',
             'server_output_token_per_s_p50',
-            'server_output_token_per_s_max',                               
+            'server_output_token_per_s_max',
             'acceptance_rate_min',
             'acceptance_rate_p50',
             'acceptance_rate_max',
@@ -290,11 +295,11 @@ class ResultsConsolidator:
             'client_end_to_end_latency_s_min',
             'client_end_to_end_latency_s_mean',
             'client_end_to_end_latency_s_p50',
-            'client_end_to_end_latency_s_max',                
+            'client_end_to_end_latency_s_max',
             'client_output_token_per_s_min',
-            'client_output_token_per_s_mean',                
+            'client_output_token_per_s_mean',
             'client_output_token_per_s_p50',
-            'client_output_token_per_s_max',                
+            'client_output_token_per_s_max',
             'client_total_output_throughput',
             'num_requests_started',
             'num_completed_requests',
@@ -317,16 +322,17 @@ class ResultsConsolidator:
 #                   BENCHMARK RUNNER
 # =========================================================
 
+
 class BenchmarkRunner:
     def __init__(
-            self, 
-            config: Dict[str, Any],
-            evaluator_factories: Dict[str, Any],
-            read_perf_eval_json_files_fn: Any, 
-            file_parser: FileNameParser, 
-            batch_analyzer: BatchAnalyzer, 
-            rep_finder: RepresentativeFinder
-        ) -> None:
+        self,
+        config: Dict[str, Any],
+        evaluator_factories: Dict[str, Any],
+        read_perf_eval_json_files_fn: Any,
+        file_parser: FileNameParser,
+        batch_analyzer: BatchAnalyzer,
+        rep_finder: RepresentativeFinder,
+    ) -> None:
         self.config = config
         self.evaluator_factories = evaluator_factories
         self.read_perf_eval_json_files = read_perf_eval_json_files_fn
@@ -346,11 +352,7 @@ class BenchmarkRunner:
         output_tokens = int(row['output_tokens'])
         concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
         qps = float(row.get('qps', 0.0) or 0.0)
-        multimodal_img_size = (
-            row.get('multimodal_img_size')
-            if pd.notna(row.get('multimodal_img_size'))
-            else 'na'
-        )
+        multimodal_img_size = row.get('multimodal_img_size') if pd.notna(row.get('multimodal_img_size')) else 'na'
 
         evaluator = None
         try:
@@ -388,20 +390,16 @@ class BenchmarkRunner:
             )
 
         except Exception as e:
-            logger.exception(f"Error running evaluator for model {model_name}: {e}")
+            logger.exception(f'Error running evaluator for model {model_name}: {e}')
 
         time.sleep(self.config.get('time_delay', 0))
 
     def run(self, run_name: Optional[str] = None) -> None:
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        
+
         model_configs_df = pd.read_csv(self.config['model_configs_path'])
         model_configs_df = model_configs_df.astype(
-            {
-                'input_tokens': 'Int64', 
-                'output_tokens': 'Int64', 
-                'num_requests': 'Int64'
-            }
+            {'input_tokens': 'Int64', 'output_tokens': 'Int64', 'num_requests': 'Int64'}
         )
 
         run_time = datetime.now().strftime('%Y%m%d-%H%M%S.%f')
@@ -410,10 +408,7 @@ class BenchmarkRunner:
         output_files_dir = os.path.join(self.config['output_files_dir'], run_name)
 
         if self.config['concurrency_enabled']:
-            logger.info(
-                f"🚀 Running benchmarks with row-level concurrency "
-                f"(max_workers={self.config['max_workers']})"
-            )
+            logger.info(f'🚀 Running benchmarks with row-level concurrency (max_workers={self.config["max_workers"]})')
             with ThreadPoolExecutor(max_workers=self.config['max_workers']) as executor:
                 futures = [
                     executor.submit(self._run_single_row, row, output_files_dir)
@@ -424,9 +419,9 @@ class BenchmarkRunner:
                     try:
                         future.result()
                     except Exception as e:
-                        logger.exception(f"Unhandled exception in concurrent run: {e}")
+                        logger.exception(f'Unhandled exception in concurrent run: {e}')
         else:
-            logger.info("🐢 Running benchmarks sequentially")
+            logger.info('🐢 Running benchmarks sequentially')
             for _, row in model_configs_df.iterrows():
                 self._run_single_row(row, output_files_dir)
 
@@ -447,14 +442,17 @@ class BenchmarkRunner:
 #                   ENTRY POINT
 # =========================================================
 
+
 def read_perf_eval_json_files_wrapper(path: str, type: str) -> pd.DataFrame:
     from benchmarking.utils import read_perf_eval_json_files as _read_fn
+
     return _read_fn(path, type=type)
 
 
 # ---------------------------------------------------------
 # Load per-request dataframe with batching + switching time
 # ---------------------------------------------------------
+
 
 def load_requests_with_switching(
     output_files_dir: str,
@@ -472,25 +470,21 @@ def load_requests_with_switching(
     file_parser = file_parser or FileNameParser()
     batch_analyzer = batch_analyzer or BatchAnalyzer()
 
-    df_individual = read_perf_eval_json_files_fn(
-        output_files_dir, type="individual_responses"
-    )
+    df_individual = read_perf_eval_json_files_fn(output_files_dir, type='individual_responses')
 
     dfs = []
 
     for filename in os.listdir(output_files_dir):
-        if "individual_responses" not in filename:
+        if 'individual_responses' not in filename:
             continue
 
         try:
-            df_file = df_individual[df_individual["filename"] == filename].copy()
+            df_file = df_individual[df_individual['filename'] == filename].copy()
             _, _, _, _, _ = file_parser.extract_file_info(filename)
 
-            _, _, df_with_batching = batch_analyzer.get_grouping_and_batching_info(
-                df_file
-            )
+            _, _, df_with_batching = batch_analyzer.get_grouping_and_batching_info(df_file)
 
-            df_with_batching["uuid"] = filename
+            df_with_batching['uuid'] = filename
             dfs.append(df_with_batching)
 
         except Exception:
@@ -500,17 +494,16 @@ def load_requests_with_switching(
         return pd.DataFrame()
 
     df_all = pd.concat(dfs, ignore_index=True)
-    df_all["uuid"] = df_all["filename"].apply(file_parser.find_uuid)
+    df_all['uuid'] = df_all['filename'].apply(file_parser.find_uuid)
 
     # Compute switching time per UUID
     df_switching = SwitchingTimeCalculator.calculate_switching_time(df_all)
 
     # Broadcast switching time to every request
-    df_all = df_all.merge(
-        df_switching, left_on="uuid", right_index=True, how="left"
-    )
+    df_all = df_all.merge(df_switching, left_on='uuid', right_index=True, how='left')
 
     return df_all
+
 
 def main() -> None:
     current_dir = os.path.dirname(os.path.realpath(__file__))
