@@ -29,7 +29,7 @@ python src/evaluator.py \
 # python src/evaluator.py \
 # --mode synthetic \
 # --model-names "Meta-Llama-3.3-70B-Instruct" \
-# --results-dir "./data/results/llmperf" \
+# --results-dir "./data/results" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
 # --num-input-tokens 1000 \
@@ -45,8 +45,8 @@ python src/evaluator.py \
 
 # python src/evaluator.py \
 # --mode synthetic \
-# --model-names "Llama-4-Maverick-17B-128E-Instruct" \
-# --results-dir "./data/results/llmperf" \
+# --model-names "gemma-3-12b-it" \
+# --results-dir "./data/results" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
 # --num-input-tokens 1000 \
