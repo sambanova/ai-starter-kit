@@ -8,6 +8,7 @@ from langchain_classic.schema import Document
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_sambanova import SambaNovaEmbeddings
+from utils.vectordb.vector_db import load_embedding_model as _load_embedding_model
 from pydantic import SecretStr
 
 from financial_assistant.constants import *
@@ -108,17 +109,15 @@ def get_retrieval_config_info() -> Tuple[Any, Any]:
 
 def load_embedding_model(
     embedding_model_info: Dict[str, Any], sambanova_api_key: Optional[str] = None
-) -> SambaNovaEmbeddings:
+) -> Any:
     """Load the embedding model following the config information."""
+    if embedding_model_info.get('type') == 'cpu':
+        return _load_embedding_model(embedding_model_info)
     # Get the Sambanova API key
     if sambanova_api_key is None:
         sambanova_api_key = os.getenv('SAMBANOVA_API_KEY')
     assert sambanova_api_key is not None
-
-    # Instantiate the embeddings
-    embeddings = SambaNovaEmbeddings(api_key=SecretStr(sambanova_api_key), **embedding_model_info)
-
-    return embeddings
+    return _load_embedding_model(embedding_model_info, api_key=SecretStr(sambanova_api_key))
 
 
 def get_vectorstore(documents: List[Document], sambanova_api_key: Optional[str] = None) -> Chroma:

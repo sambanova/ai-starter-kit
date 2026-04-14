@@ -20,13 +20,14 @@ import argparse
 import logging
 import os
 import sys
-from typing import Any, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 import chromadb
 from langchain_chroma import Chroma
 from langchain_classic.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import DirectoryLoader, UnstructuredURLLoader
 from langchain_community.vectorstores import FAISS, Qdrant
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_milvus import Milvus
 from langchain_sambanova import SambaNovaEmbeddings
 
@@ -42,6 +43,32 @@ import uuid
 EMBEDDING_MODEL = 'intfloat/e5-large-v2'
 NORMALIZE_EMBEDDINGS = True
 VECTORDB_LOG_FILE_NAME = 'vector_db.log'
+
+
+def load_embedding_model(
+    embedding_model_info: Dict[str, Any],
+    api_key: Optional[Any] = None,
+    api_base: Optional[str] = None,
+) -> Any:
+    """Load an embedding model from config.
+
+    When ``type`` is ``'cpu'``, loads the model locally on CPU via
+    HuggingFaceEmbeddings (no API key required).  Otherwise defaults to
+    SambaNovaEmbeddings.
+    """
+    if embedding_model_info.get('type') == 'cpu':
+        model_name = embedding_model_info.get('model', EMBEDDING_MODEL)
+        return HuggingFaceEmbeddings(
+            model_name=model_name,
+            model_kwargs={'device': 'cpu'},
+            encode_kwargs={'normalize_embeddings': NORMALIZE_EMBEDDINGS},
+        )
+    kwargs = {k: v for k, v in embedding_model_info.items() if k != 'type'}
+    if api_key is not None:
+        kwargs['api_key'] = api_key
+    if api_base is not None:
+        kwargs['base_url'] = api_base
+    return SambaNovaEmbeddings(**kwargs)
 
 # Configure the logger
 logging.basicConfig(
@@ -339,7 +366,7 @@ class VectorDb:
         load_txt: bool = True,
         load_pdf: bool = False,
         urls: Optional[List[str]] = None,
-        model: Optional[str] = 'E5-Mistral-7B-Instruct',
+        embedding_model_info: Optional[Dict[str, Any]] = None,
     ) -> Any:
         docs = self.load_files(input_path, recursive=recursive, load_txt=load_txt, load_pdf=load_pdf, urls=urls)
 
@@ -348,7 +375,9 @@ class VectorDb:
         else:
             chunks = self.get_token_chunks(docs, chunk_size, chunk_overlap, tokenizer)
 
-        embeddings = SambaNovaEmbeddings(model=model)
+        if embedding_model_info is None:
+            embedding_model_info = {'type': 'cpu', 'model': EMBEDDING_MODEL}
+        embeddings = load_embedding_model(embedding_model_info)
 
         vector_store = self.create_vector_store(chunks, embeddings, db_type, output_db)
 

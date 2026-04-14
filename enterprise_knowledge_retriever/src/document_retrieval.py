@@ -19,6 +19,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
+from utils.vectordb.vector_db import load_embedding_model
 from pydantic import SecretStr
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -299,10 +300,11 @@ class DocumentRetrieval:
         return langchain_docs
 
     def load_embedding_model(self) -> Embeddings:
-        embeddings = SambaNovaEmbeddings(
-            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+        return load_embedding_model(
+            self.embedding_model_info,
+            api_key=self.sambanova_api_key,
+            api_base=self.sambanova_api_base,
         )
-        return embeddings
 
     def create_vector_store(
         self,

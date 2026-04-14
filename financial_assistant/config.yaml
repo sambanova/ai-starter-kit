@@ -6,8 +6,9 @@ llm:
   top_k: null
 
 rag:
-  embedding_model: 
-    "model": "E5-Mistral-7B-Instruct" 
+  embedding_model:
+    "type": "cpu"
+    "model": "intfloat/e5-large-v2"
   retrieval:
     "k_retrieved_documents": 5
 
