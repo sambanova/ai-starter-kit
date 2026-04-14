@@ -1,12 +1,14 @@
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 # Step 1: Read the CSV file
-results_dir = '<AISK_REPOSITORY_PATH>/benchmarking/data/results/grafana/'
-input_filename = results_dir + 'grafana.csv'
-output_filename = results_dir + 'grafana_grouped_interim.csv'
-summary_output_filename = results_dir + 'grafana_grouped_summary.csv'
+results_dir = '../benchmarking/data/vllm_on_cli/'
+input_filename = results_dir + '4k-4k-dyt-rodrigo.csv'
+output_filename = results_dir + '4k-4k-dyt-rodrigo_grafana_grouped_interim.csv'
+summary_output_filename = results_dir + '4k-4k-dyt-rodrigo_grafana_grouped_summary.csv'
 
 df = pd.read_csv(input_filename)
 
@@ -92,3 +94,57 @@ summary['dominant_batch_size'] = summary['all_batch_size_groupings'].apply(get_d
 
 # 6. Save summary dataframe to CSV
 summary.to_csv(summary_output_filename, index=False)
+
+
+# 7. System Throughput vs Batch Size chart
+# Formula: (total_tokens * batch_size) / (TTFT + (output_tokens / completion_tokens_after_first_per_sec))
+df['system_throughput'] = (
+    (df['total_tokens_count'] * df['batch_size'])
+    / (df['time_to_first_token'] + (df['completion_tokens_count'] / df['completion_tokens_after_first_per_sec']))
+)
+
+# Aggregate mean system throughput per batch size
+throughput_by_batch = (
+    df.groupby('batch_size')['system_throughput']
+    .mean()
+    .reset_index()
+    .sort_values('batch_size')
+)
+
+# Derive prompt/completion token label from filename (e.g. "4k-4k-dyt-rodrigo.csv" -> "4k/4k")
+base_name = os.path.basename(input_filename)
+parts = base_name.split('-')
+token_label = f'{parts[0]}/{parts[1]}' if len(parts) >= 2 else ''
+
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(
+    throughput_by_batch['batch_size'],
+    throughput_by_batch['system_throughput'],
+    marker='o',
+    color='steelblue',
+    linewidth=2,
+    markersize=8,
+)
+
+# Annotate each data point with its value
+for _, row in throughput_by_batch.iterrows():
+    ax.annotate(
+        f"{row['system_throughput']:.1f}",
+        xy=(row['batch_size'], row['system_throughput']),
+        xytext=(-18, 8),
+        textcoords='offset points',
+        fontsize=9,
+        fontweight='bold',
+    )
+
+ax.set_title(f'System Throughput vs Batch Size {token_label}', fontsize=14)
+ax.set_xlabel('Batch Size', fontsize=12)
+ax.set_ylabel('System Throughput (Tokens per Second)', fontsize=12)
+ax.set_xticks(throughput_by_batch['batch_size'])
+ax.grid(True, linestyle='--', alpha=0.6)
+
+chart_output_filename = results_dir + os.path.splitext(base_name)[0] + '_throughput_vs_batch_size.png'
+fig.tight_layout()
+fig.savefig(chart_output_filename, dpi=150)
+plt.close(fig)
+print(f'Chart saved to {chart_output_filename}')
