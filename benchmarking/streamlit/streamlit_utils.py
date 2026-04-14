@@ -12,9 +12,6 @@ from plotly.graph_objs import Figure
 
 from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.src.comparison_utils import (
-    build_comparison_dataframe,
-)
-from benchmarking.src.comparison_utils import (
     calculate_kit_summary_metrics as calculate_kit_summary_metrics,
 )
 from benchmarking.src.comparison_utils import (
