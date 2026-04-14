@@ -13,11 +13,11 @@ from langchain_classic.docstore.document import Document
 from langchain_classic.memory import ConversationSummaryMemory
 from langchain_classic.prompts import ChatPromptTemplate
 from langchain_core.callbacks import CallbackManagerForChainRun
-from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.vectorstores.base import VectorStoreRetriever
+from langchain_sambanova import ChatSambaNova
 from pydantic import SecretStr
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -299,7 +299,7 @@ class DocumentRetrieval:
 
         return langchain_docs
 
-    def load_embedding_model(self) -> Embeddings:
+    def load_embedding_model(self) -> Any:
         return load_embedding_model(
             self.embedding_model_info,
             api_key=self.sambanova_api_key,

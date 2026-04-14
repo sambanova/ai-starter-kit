@@ -17,6 +17,7 @@ from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import AsyncHtmlLoader, UnstructuredURLLoader
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_sambanova import ChatSambaNova
 from pydantic import SecretStr
 
 from utils.vectordb.vector_db import load_embedding_model
