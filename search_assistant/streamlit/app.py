@@ -30,7 +30,7 @@ APP_DESCRIPTION_PATH = os.path.join(kit_dir, 'streamlit', 'app_description.yaml'
 # Available models in dropdown menu
 LLM_MODELS = [
     'gpt-oss-120b',
-    'Llama-4-Maverick-17B-128E-Instruct',
+    'gemma-3-12b-it',
     'Meta-Llama-3.3-70B-Instruct',
     'DeepSeek-V3.1',
     'MiniMax-M2.5',

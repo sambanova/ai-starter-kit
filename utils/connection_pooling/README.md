@@ -35,7 +35,7 @@ python3 test_connection_pooling.py --api-url <URL> --api-key <KEY> --model <MODE
 python3 test_connection_pooling.py \
   --api-url https://api.sambanova.ai/v1/chat/completions \
   --api-key your-api-key-here \
-  --model Llama-4-Maverick-17B-128E-Instruct \
+  --model gemma-3-12b-it \
   --test-duration 100 \
   --sleep-duration 20 \
   --max-tokens 100
