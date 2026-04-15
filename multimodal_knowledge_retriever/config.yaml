@@ -13,6 +13,7 @@ lvlm:
     "top_p": 1
 
 embedding_model:
+    "type": "cpu"
     "model": "intfloat/e5-large-v2"
 
 retrieval:

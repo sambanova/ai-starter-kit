@@ -28,7 +28,8 @@ from langchain_classic.retrievers.multi_vector import MultiVectorRetriever
 from langchain_classic.schema import Document
 from langchain_classic.storage import InMemoryByteStore
 from langchain_core.output_parsers import StrOutputParser
-from langchain_sambanova import ChatSambaNova, SambaNovaEmbeddings
+from langchain_sambanova import ChatSambaNova
+from utils.vectordb.vector_db import load_embedding_model
 from pydantic import SecretStr
 from unstructured.partition.pdf import partition_pdf
 
@@ -353,8 +354,10 @@ class MultimodalRetrieval:
         retriever (MultiVectorRetriever): The retriever object with the vectorstore and docstore.
         """
 
-        self.embeddings = SambaNovaEmbeddings(
-            api_key=self.sambanova_api_key, base_url=self.sambanova_api_base, **self.embedding_model_info
+        self.embeddings = load_embedding_model(
+            self.embedding_model_info,
+            api_key=self.sambanova_api_key,
+            api_base=self.sambanova_api_base,
         )
 
         collection_name = f'collection_{self.collection_id}'
