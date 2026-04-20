@@ -100,7 +100,7 @@ summary.to_csv(summary_output_filename, index=False)
 # Formula: (total_tokens * batch_size) / (TTFT + (output_tokens / completion_tokens_after_first_per_sec))
 df['system_throughput'] = (
     (df['total_tokens_count'] * df['batch_size'])
-    / (df['time_to_first_token'] + (df['completion_tokens_count'] / df['completion_tokens_after_first_per_sec']))
+    / (df['time_to_first_token'] + ((df['completion_tokens_count'] - 1) / df['completion_tokens_after_first_per_sec']))
 )
 
 # Aggregate mean system throughput per batch size
