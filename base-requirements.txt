@@ -47,11 +47,11 @@ stqdm==0.0.5
 xlrd==2.0.2
 
 # Web and API
-boto3==1.40.60
+boto3==1.42.49
 requests==2.32.5
-aiohttp==3.13.1
-fastapi==0.120.1
-uvicorn==0.38.0
+aiohttp==3.13.3
+fastapi==0.129.0
+uvicorn==0.40.0
 fake-useragent==2.2.0
 google-search-results==2.4.2
 nest-asyncio==1.6.0
