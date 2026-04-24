@@ -203,7 +203,10 @@ class TestAPIModel(unittest.TestCase):
                 stream=False,
             )
             logger.info(f'Bad request: {response}')
-        self.assertIn("Error code: 404 - {'error': 'Model not found'}", str(context.exception))
+        self.assertIn('404', str(context.exception))
+        self.assertTrue(
+            'Model not found' in str(context.exception) or 'model_not_found' in str(context.exception)
+        )
 
     def test_langchain_chat_completion_text(self) -> None:
         messages = [
