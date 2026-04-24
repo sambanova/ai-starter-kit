@@ -29,9 +29,10 @@ from langchain_classic.schema import Document
 from langchain_classic.storage import InMemoryByteStore
 from langchain_core.output_parsers import StrOutputParser
 from langchain_sambanova import ChatSambaNova
-from utils.vectordb.vector_db import load_embedding_model
 from pydantic import SecretStr
 from unstructured.partition.pdf import partition_pdf
+
+from utils.vectordb.vector_db import load_embedding_model
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
