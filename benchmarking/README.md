@@ -419,17 +419,23 @@ _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistr
   - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
   - **llm-api**: API type to be chosen.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
-  - **timeout**: Timeout in seconds. _Default_: 600
+  - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1. For `vllm` and `both` benchmark modes, this value is used as the request rate passed to `vllm bench serve`.
+  - **timeout**: Timeout in seconds. _Default_: 600. For `vllm` and `both` benchmark modes, this parameter is not applied on the vLLM runs since it's not supported. 
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It is strongly recommended to set this value to no more than 2000, as most LLMs cannot generate outputs beyond this limit. _Default_: 1000.
-  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
+  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Note_: vLLM benchmarking only supports na (text-only). _Default:_ na.
   - **num-requests**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
   - **use-multiple-prompts**: Whether to use multiple prompts selected randomly or a single default prompt. This option is only available on **text instruct** models. Go to [this link](./prompts/user-prompt_template-text_instruct.yaml) if customization is needed. _Default_: False
-  - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix. _Default_: False
+  - **save-llm-responses**: Whether to save the actual Kit LLM response texts to an output file. The output file will contain the `response_texts` suffix. This only applies to the Kit path; vLLM responses are provided in its original JSON output file. _Default_: False
   - **use-debugging-mode**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
+  - **benchmark-mode**: Controls which benchmarking engine(s) to run. Choose from:
+    - `kit` — run only the SambaNova AI Starter Kit benchmarking engine.
+    - `vllm` — run only the vLLM benchmarking engine (`vllm bench serve`).
+    - `both` — run Kit first, then vLLM sequentially, and print a side-by-side comparison table in the terminal. _Default_: kit.
 
-   _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use.
+   _Note_: You should leave the `--mode` parameter untouched — this indicates the dataset generation mode (synthetic, custom, or real workload) and is separate from `--benchmark-mode`.
+
+   _Note_: `vllm` and `both` modes require vLLM to be installed. It is included in `requirements.txt` and installed automatically during environment setup. No additional configuration is needed beyond the standard `SAMBANOVA_API_KEY` and `SAMBANOVA_API_BASE` environment variables.
 
 2. Run the script
 
@@ -437,32 +443,85 @@ _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistr
 ```shell
 sh run_synthetic_dataset.sh
 ```
-- The evaluation process will start and a progress bar will be shown until it's complete.
+- When running in `kit` or `both` mode, a progress bar for the Kit evaluation will be shown in the terminal until it completes.
+- When running in `vllm` or `both` mode, the `vllm bench serve` command and its progress output will be printed to the terminal.
+- In `both` mode, the two evaluations run sequentially: Kit first, then vLLM. Once both complete, a side-by-side comparison report is printed directly to the terminal.
 
 3. Analyze results
 
 - Results will be saved at the location specified in `results-dir`.
-- The name of the output files will depend on the input file name, mode name, and number of concurrent requests. You should see files that follow a similar format to the following:
 
-```
-synthetic_<MODEL_IDX>_<MODEL_NAME><MULTIMODAL_SUFFIX>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{NUM_CONCURRENT_REQUESTS}_{MODE}
-```
+  **Kit output files**
 
-- For each run, two files are generated with the following suffixes in the output file names: `_individual_responses` and `_summary`.
-  
+  The Kit output file names depend on the model name, number of input/output tokens, and number of concurrent requests. You should see files that follow a similar format to the following:
+
+  ```
+  synthetic_<MODEL_IDX>_<MODEL_NAME><MULTIMODAL_SUFFIX>_{NUM_INPUT_TOKENS}_{NUM_OUTPUT_TOKENS}_{NUM_CONCURRENT_REQUESTS}_{MODE}
+  ```
+
+  For each Kit run, two files are generated with the following suffixes: `_individual_responses` and `_summary`.
+
   - Individual responses file
 
     - This output file contains the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Server (if available) and Client side, for each individual request sent to the LLM. Users can use this data for further analysis. We provide this notebook `notebooks/analyze-results.ipynb` with some charts that they can use to start.
 
-![individual_responses_image](./imgs/synthetic_individual_ouput.png)
+  ![individual_responses_image](./imgs/synthetic_individual_ouput.png)
 
   - Summary file
 
     - This file includes various statistics such as percentiles, mean and standard deviation to describe the number of input and output tokens, number of total tokens, Time To First Token (TTFT), End-To-End Latency (E2E Latency) and Throughput from Client side. It also provides additional data points that bring more information about the overall run, like inputs used, number of errors, and number of completed requests per minute. 
 
-![summary_output_image](./imgs/synthetic_summary_ouput.png)
+  ![summary_output_image](./imgs/synthetic_summary_ouput.png)
 
-- There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A Bundle endpoint is meant to be used for this analysis. 
+  **vLLM output files** (`vllm` and `both` modes)
+
+  vLLM results are saved in a timestamped subdirectory inside `results-dir`:
+
+  ```
+  <results-dir>/vllm_<TIMESTAMP>/
+  ```
+
+  For each vLLM run, three files are generated inside that subdirectory:
+
+  - Raw vLLM result file (`<TIMESTAMP>.json`) — the direct output from `vllm bench serve`, containing aggregate statistics reported by vLLM (duration, throughput, mean/median TTFT, ITL, etc.).
+  - Individual responses file (`<TIMESTAMP>_individual_responses.json`) — per-request metrics converted to the same format as the Kit individual responses file, allowing both outputs to be analyzed with the same notebooks.
+  - Summary file (`<TIMESTAMP>_summary.json`) — aggregate metrics converted to the same format as the Kit summary file.
+
+  **Terminal comparison report** (`both` mode only)
+
+  After both runs complete, a comparison report is printed directly to the terminal. It includes two tables:
+
+  - **Summary Metrics**: A side-by-side table with Kit and vLLM columns covering duration, completed/failed requests, total input/output tokens, request throughput (req/s), output throughput (tokens/s), total token throughput, mean/median TTFT, and mean/median ITL.
+  - **Latency Distribution**: p5/p50/p95 percentiles for TTFT (ms) and ITL (ms) for both backends.
+
+  ```
+  ================================================================================
+    BENCHMARK COMPARISON: <MODEL_NAME>
+  ================================================================================
+  --- Summary Metrics ---
+
+                           Metric      Kit     vLLM
+                     Duration (s)    33.97    32.80
+               Completed Requests       20       20
+                  Failed Requests        0        0
+               Total Input Tokens    83240    83240
+              Total Output Tokens    81920    81920
+        Request Throughput (req/s)   0.5887   0.6098
+       Output Throughput (tokens/s)  2411.36  2497.87
+  Total Token Throughput (tokens/s)  4861.58  5035.99
+                     Mean TTFT (ms) 23075.26 13473.10
+                   Median TTFT (ms) 26707.69 16297.31
+                    Mean ITL (ms)     0.01    39.99
+                  Median ITL (ms)     0.01    40.29 
+  --- Latency Distribution (p5 / p50 / p95) ---
+   Metric                                          Kit                                     vLLM
+   TTFT (ms) p5=16616.82 / p50=26707.69 / p95=33932.97 p5=6886.83 / p50=16297.31 / p95=25736.49
+   ITL (ms)             p5=0.01 / p50=0.01 / p95=0.01         p5=30.04 / p50=41.58 / p95=45.97
+
+  ================================================================================
+  ```
+
+- There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A Bundle endpoint is meant to be used for this analysis.
 
 4. Customize synthetic prompts
 

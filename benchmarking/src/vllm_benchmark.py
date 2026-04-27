@@ -124,24 +124,29 @@ class VLLMBenchmarkExecutor:
 
         tokenizer = get_tokenizer(self.model_name)
 
-        # Prepare prompts for all requests (cycle if fewer prompts than requests)
-        # Use raw template text without chat-template wrapping — the openai-chat backend
-        # sends this as a user message and the server applies the template exactly once,
-        # matching the KIT behaviour. Target num_input_tokens - 1 to match KIT's
-        # adjust_to_exact_tokens logic.
+        # Prepare prompts for all requests (cycle if fewer prompts than requests).
+        # Mirrors Kit's SyntheticPerformanceEvaluator.build_prompt exactly:
+        #   1. Repeat the raw template enough times to exceed the target length.
+        #   2. Trim or pad with the tokenizer to reach exactly num_input_tokens - 1 tokens
+        #      (matching Kit's adjust_to_exact_tokens which uses target_token_count - 1).
         processed_prompts = []
         target_tokens = num_input_tokens - 1
         for i in range(num_requests):
             prompt_text = prompt_list[i % len(prompt_list)]['template']
-            tokens = tokenizer.tokenize(prompt_text)
+
+            # Step 1 — repeat to build sufficient length (Kit's build_prompt logic)
+            num_repeats = max(1, target_tokens // len(prompt_text.split()) + 1)
+            repeated_text = (prompt_text + ' ') * num_repeats
+
+            # Step 2 — trim or pad to exact token count (Kit's adjust_to_exact_tokens logic)
+            tokens = tokenizer.tokenize(repeated_text)
             if len(tokens) > target_tokens:
                 tokens = tokens[:target_tokens]
-                prompt_text = tokenizer.convert_tokens_to_string(tokens)
             elif len(tokens) < target_tokens:
                 pad_token = tokenizer.pad_token if tokenizer.pad_token else '<pad>'
                 tokens += [pad_token] * (target_tokens - len(tokens))
-                prompt_text = tokenizer.convert_tokens_to_string(tokens)
-            processed_prompts.append(prompt_text)
+
+            processed_prompts.append(tokenizer.convert_tokens_to_string(tokens))
 
         # Write all prompts to JSONL file for vLLM CustomDataset
         prompt_file = os.path.join(result_dir_path, 'custom_prompts.jsonl')

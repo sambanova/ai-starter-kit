@@ -74,6 +74,18 @@ If you’re an advanced user or just would like to have more flexibility, then p
 It’s always recommended to use the UI for general purpose cases. If users need more flexibility, then they can use the CLI version. There are also some useful notebooks [here](https://github.com/sambanova/ai-starter-kit/tree/main/benchmarking/notebooks) that provide more insights out from the kit’s output files.
 
 
+#### How synthetic requests are built and how that impacts performance?
+Synthetic requests are constructed in two steps. First, a prompt template is repeated until it exceeds the target token count set by `--num-input-tokens`. Then the repeated text is either trimmed or padded with `<pad>` tokens to hit the exact count. By default, all requests use the same template (a short paragraph about deep learning), but setting `--use-multiple-prompts True` makes the kit randomly sample from a set of 20 diverse templates instead.
+
+A few things to keep in mind when interpreting results:
+- **Repetition may help caching**: Because the same text is repeated, cache-aware backends can reuse KV-cache entries across tokens, potentially producing lower latency than a real varied workload would.
+
+
+#### Is it guaranteed that the expected number of output tokens will be matched?
+No. The `--num-output-tokens` parameter sets `max_tokens_to_generate` in the request, which is an upper bound, not a guaranteed count. The model can stop earlier if it produces a natural end-of-sequence (EOS) token before reaching the limit. This is standard LLM behavior and is not specific to the kit.
+
+The current default prompt templates have been tested extensively across multiple supported models. Larger models tend to respond directly to the prompt, producing outputs that average around 2,000 tokens. In contrast, smaller models are more likely to loop, repeatedly generating the prompt template instead of providing a complete answer.
+
 
 ## Reproducibility & Comparison
 

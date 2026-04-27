@@ -333,6 +333,9 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         url = self._get_url()
         headers = self._get_headers()
         json_data = self._get_json_data()
+        
+        # for debugging purposes
+        # print(f'Making request to SambaNova Cloud API with url: {url}, headers: {headers} and json body: {json_data}')
 
         # Set variables
         generated_text = ''
@@ -344,6 +347,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         start_time = event_start_time = time.monotonic()
 
         with requests.post(url, headers=headers, json=json_data, stream=self.request_config.is_stream_mode) as response:
+            # print(f'Response content: {response.content}') # for debugging purposes
             if response.status_code != 200:
                 response.raise_for_status()
             client = sseclient.SSEClient(response)  # type: ignore[arg-type]
@@ -377,7 +381,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                             response_dict = data['usage']
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
-
+        # print(f'Complete generated text: {generated_text}')  # for debugging purposes
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time

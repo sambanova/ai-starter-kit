@@ -529,6 +529,8 @@ def main() -> None:
             do_rerun = False
             try:
                 json_data = {}
+                st.session_state.df_req_info = None
+                st.session_state.df_req_info_vllm = None
 
                 # Run benchmarks based on selected mode
                 if st.session_state.benchmark_mode in ['kit', 'both']:
@@ -583,6 +585,10 @@ def main() -> None:
         st.session_state.benchmark_mode == 'both'
         and st.session_state.df_req_info is not None
         and st.session_state.df_req_info_vllm is not None
+        and st.session_state.performance_evaluator is not None
+        and st.session_state.performance_evaluator.individual_responses_file_path is not None
+        and st.session_state.vllm_evaluator is not None
+        and st.session_state.vllm_evaluator.result_file_path is not None
     ):
         # Side-by-side comparison
         st.header('Side-by-Side Comparison: Kit vs vLLM')

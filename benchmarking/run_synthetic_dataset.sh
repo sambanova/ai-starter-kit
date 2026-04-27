@@ -5,7 +5,7 @@ ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
 --model-names "Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/results/llmperf" \
+--results-dir "./data/results" \
 --num-concurrent-requests 1 \
 --timeout 600 \
 --num-input-tokens 1000 \
@@ -15,7 +15,8 @@ python src/evaluator.py \
 --use-multiple-prompts False \
 --save-llm-responses False \
 --use-debugging-mode False \
---llm-api sncloud
+--llm-api sncloud \
+--benchmark-mode kit
 
 
 # Notes:
@@ -28,7 +29,7 @@ python src/evaluator.py \
 # python src/evaluator.py \
 # --mode synthetic \
 # --model-names "Meta-Llama-3.3-70B-Instruct" \
-# --results-dir "./data/results/llmperf" \
+# --results-dir "./data/results" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
 # --num-input-tokens 1000 \
@@ -38,13 +39,14 @@ python src/evaluator.py \
 # --save-llm-responses False \
 # --use-debugging-mode False \
 # --llm-api sncloud
+# --benchmark-mode both # will run kit and vllm benchmarks and compare them
 
 #   1.2 Multimodal models 
 
 # python src/evaluator.py \
 # --mode synthetic \
-# --model-names "Llama-4-Maverick-17B-128E-Instruct" \
-# --results-dir "./data/results/llmperf" \
+# --model-names "gemma-3-12b-it" \
+# --results-dir "./data/results" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
 # --num-input-tokens 1000 \
@@ -54,3 +56,4 @@ python src/evaluator.py \
 # --save-llm-responses False \
 # --use-debugging-mode False \
 # --llm-api sncloud
+# --benchmark-mode kit
