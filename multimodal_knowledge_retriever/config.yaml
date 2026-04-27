@@ -6,14 +6,15 @@ llm:
     "model": "gpt-oss-120b"
 
 lvlm:
-    "model": "Llama-4-Maverick-17B-128E-Instruct"
+    "model": "gemma-3-12b-it"
     "max_tokens": 8912 
     "temperature": 1
     "top_k": 50
     "top_p": 1
 
-embedding_model: 
-    "model": "E5-Mistral-7B-Instruct"
+embedding_model:
+    "type": "cpu"
+    "model": "intfloat/e5-large-v2"
 
 retrieval:
     "max_characters": 800

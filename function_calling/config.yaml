@@ -1,5 +1,5 @@
 llm: 
-  "model": "DeepSeek-V3-0324"
+  "model": "DeepSeek-V3.1"
   "temperature": 0.01
   "max_tokens": 8192
   "top_p": null
@@ -8,7 +8,7 @@ llm:
 tools:
     query_db:
       llm: 
-        "model": "DeepSeek-V3-0324" 
+        "model": "DeepSeek-V3.1" 
         "temperature": 0.01 
         "max_tokens": 1024
         "top_p": null
@@ -30,8 +30,9 @@ tools:
         "max_tokens": 8192
         "top_p": null
         "top_k": null
-      embedding_model: 
-        "model": "E5-Mistral-7B-Instruct"
+      embedding_model:
+        "type": "cpu"
+        "model": "intfloat/e5-large-v2"
       vector_db:
         "path": "data/my-vector-db" # path to your previously created chroma vdb
         "collection_name": "ekr_default_collection" # chroma collection name if set

@@ -5,8 +5,9 @@ llm:
     "top_k": null
     "max_tokens": 8192
 
-embedding_model: 
-    "model": "E5-Mistral-7B-Instruct"
+embedding_model:
+    "type": "cpu"
+    "model": "intfloat/e5-large-v2"
 
 retrieval:
     "db_type": "chroma"
