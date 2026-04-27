@@ -381,7 +381,7 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                             response_dict = data['usage']
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
-
+        # print(f'Complete generated text: {generated_text}')  # for debugging purposes
         # End measuring time
         metrics[common_metrics.REQ_END_TIME] = datetime.now().strftime('%H:%M:%S.%f')
         total_request_time = time.monotonic() - start_time
