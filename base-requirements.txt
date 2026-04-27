@@ -111,3 +111,6 @@ wandb==0.22.2
 
 # client
 openai==1.109.1
+
+# vllm
+vllm>=0.6.0
