@@ -90,7 +90,8 @@ If you want to use a Python virtual environment:
 2. Run the following command:
 
     ```bash
-        streamlit run streamlit/financial_assistant/app.py --browser.gatherUsageStats false 
+        cd streamlit
+        streamlit run app.py --browser.gatherUsageStats false 
     ```
 
 ## Further settings

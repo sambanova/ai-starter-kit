@@ -1,10 +1,10 @@
 models:
   text:
-    - "Llama-4-Maverick-17B-128E-Instruct"
+    - "gemma-3-12b-it"
     - "Meta-Llama-3.3-70B-Instruct"
 
   text-image:
-    - "Llama-4-Maverick-17B-128E-Instruct"
+    - "gemma-3-12b-it"
 
   text-audio:
     - "Whisper-Large-v3"

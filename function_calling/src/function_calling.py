@@ -330,6 +330,8 @@ class FunctionCallingLlm:
             llm_response = self.llm.invoke(history)
             print(f'\nFunction calling LLM response: \n{llm_response}\n---\n')
             parsed_tools_llm_response = json_parsing_chain.invoke(llm_response)
+            if isinstance(parsed_tools_llm_response, dict):
+                parsed_tools_llm_response = [parsed_tools_llm_response]
             history.append(llm_response)
             final_answer, tools_msgs = self.execute(parsed_tools_llm_response)
             if final_answer:  # if response was marked as final response in execution
