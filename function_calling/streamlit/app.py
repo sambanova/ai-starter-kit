@@ -147,6 +147,7 @@ def set_fc_llm(tools: List[Any]) -> None:
     st.session_state.fc = FunctionCallingLlm(
         tools,
         sambanova_api_key=st.session_state.get('SAMBANOVA_API_KEY'),
+        sambanova_api_base=st.session_state.get('SAMBANOVA_API_BASE'),
         session_temp_db=st.session_state.session_temp_db,
     )
 
