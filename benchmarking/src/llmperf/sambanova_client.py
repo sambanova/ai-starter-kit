@@ -210,6 +210,13 @@ class BaseAPIEndpoint(abc.ABC):
         metrics[common_metrics.NUM_TOTAL_TOKENS_SERVER] = response_dict.get('total_tokens_count') or response_dict.get(
             'total_tokens'
         )
+
+        completion_tokens_details = response_dict.get('completion_tokens_details') or {}
+        metrics[common_metrics.NUM_REASONING_TOKENS_SERVER] = completion_tokens_details.get('reasoning_tokens')
+
+        prompt_tokens_details = response_dict.get('prompt_tokens_details') or {}
+        metrics[common_metrics.NUM_CACHED_TOKENS_SERVER] = prompt_tokens_details.get('cached_tokens')
+
         ttft_server = response_dict.get('time_to_first_token') or response_dict.get('time_to_first_response')
 
         metrics[common_metrics.TTFT_SERVER] = ttft_server
