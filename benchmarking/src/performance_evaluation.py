@@ -244,10 +244,18 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_INPUT_TOKENS,
             common_metrics.NUM_OUTPUT_TOKENS,
             common_metrics.MEAN_INTER_TOKEN_LATENCY,
+            common_metrics.NETWORK_LATENCY_TTFT,
+            common_metrics.NETWORK_LATENCY_E2E,
         ]:
             if self.show_results_in_terminal:
                 logger.info(f'Building Client Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
+
+            # Skip metric if column is absent (for backward compatibility with old result files)
+            if metric not in metrics_df.columns:
+                if self.show_results_in_terminal:
+                    logger.info(f'    Column {metric} not present, skipping')
+                continue
 
             # Get flattened list from metric column in metrics df
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
@@ -298,6 +306,12 @@ class BasePerformanceEvaluator(abc.ABC):
             if self.show_results_in_terminal:
                 logger.info(f'Building Server Metrics Summary for metric: {metric}')
             metrics_summary[metric] = {}
+
+            # Skip metric if column is absent (for backward compatibility with old result files)
+            if metric not in metrics_df.columns:
+                if self.show_results_in_terminal:
+                    logger.info(f'    Column {metric} not present, skipping')
+                continue
 
             # Get flattened list from metric column in metrics df
             series = pd.Series(list(flatten(metrics_df[metric]))).dropna()
