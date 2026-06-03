@@ -160,6 +160,19 @@ class BaseAPIEndpoint(abc.ABC):
 
         metrics[common_metrics.E2E_LAT] = total_request_time
 
+        # Client network latency: client-observed time minus server-reported time.
+        # Captures round-trip, request upload, SSE transport, and server queueing.
+        # Left as None when the server didn't report the corresponding timing.
+        ttft_server = metrics.get(common_metrics.TTFT_SERVER)
+        metrics[common_metrics.NETWORK_LATENCY_TTFT] = (
+            ttft - ttft_server if ttft_server is not None else None
+        )
+
+        e2e_lat_server = metrics.get(common_metrics.E2E_LAT_SERVER)
+        metrics[common_metrics.NETWORK_LATENCY_E2E] = (
+            total_request_time - e2e_lat_server if e2e_lat_server is not None else None
+        )
+
         if number_chunks_received == 1:
             metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
                 metrics[common_metrics.NUM_OUTPUT_TOKENS] / total_request_time

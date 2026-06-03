@@ -29,6 +29,10 @@ INTER_TOKEN_LATENCY = 'client_inter_token_latencies_s'  # List of ITLs per reque
 MEAN_INTER_TOKEN_LATENCY = 'client_mean_inter_token_latency_s'  # Mean ITL per request
 MEAN_OUTPUT_THROUGHPUT = 'mean_output_throughput_token_per_s'  # Mean aggregate throughput
 
+# Client network latency metrics (client-observed minus server-reported timings)
+NETWORK_LATENCY_TTFT = 'client_network_latency_ttft_s'  # client_ttft_s - server_ttft_s
+NETWORK_LATENCY_E2E = 'client_network_latency_e2e_s'  # client_end_to_end_latency_s - server_end_to_end_latency_s
+
 # Server-side metrics
 TTFT_SERVER = 'server_ttft_s'
 E2E_LAT_SERVER = 'server_end_to_end_latency_s'
