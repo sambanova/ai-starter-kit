@@ -1,9 +1,11 @@
-model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/model_configs_example.csv'
+model_configs_path: 'model_configs_example.csv'
 llm_api: 'sncloud'
-output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/output_files'
-consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/consolidated_results'
+# output_files_dir: '../data/prompt_caching_tests/with_prompt_caching'
+# consolidated_results_dir: '../data/prompt_caching_tests/with_prompt_caching/consolidated_results'
+output_files_dir: '../data/ignore_eos/with_ignore_eos'
+consolidated_results_dir: '../data/ignore_eos/with_ignore_eos/consolidated_results'
 timeout: 3600
-time_delay: 0
+time_delay: 30
 # Row-level concurrency
 concurrency_enabled: False
 max_workers: 4 # Only used if concurrency_enabled is True

@@ -4,16 +4,16 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode synthetic \
---model-names "Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/results" \
---num-concurrent-requests 1 \
+--model-names "MiniMax-M2.7" \
+--results-dir "./data/ignore_eos/with_ignore_eos" \
+--num-concurrent-requests 10 \
 --timeout 600 \
---num-input-tokens 1000 \
---num-output-tokens 1000 \
+--num-input-tokens 128 \
+--num-output-tokens 64000 \
 --multimodal-image-size na \
---num-requests 16 \
+--num-requests 10 \
 --use-multiple-prompts False \
---save-llm-responses False \
+--save-llm-responses True \
 --use-debugging-mode False \
 --llm-api sncloud \
 --benchmark-mode kit
