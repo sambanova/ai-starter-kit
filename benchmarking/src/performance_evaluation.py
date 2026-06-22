@@ -301,6 +301,7 @@ class BasePerformanceEvaluator(abc.ABC):
             common_metrics.NUM_OUTPUT_TOKENS_SERVER,
             common_metrics.NUM_REASONING_TOKENS_SERVER,
             common_metrics.NUM_CACHED_TOKENS_SERVER,
+            common_metrics.NUM_CACHE_CREATION_TOKENS_SERVER,
             common_metrics.ACCEPTANCE_RATE,
         ]:
             if self.show_results_in_terminal:

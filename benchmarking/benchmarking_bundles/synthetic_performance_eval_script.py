@@ -188,59 +188,82 @@ class ResultsConsolidator:
         self.batch_analyzer = batch_analyzer
         self.rep_finder = rep_finder
 
-    def consolidate(self, output_files_dir: str, consolidated_results_dir: str, run_name: str) -> None:
+    def consolidate(
+        self,
+        output_files_dir: str,
+        consolidated_results_dir: str,
+        run_name: str,
+        failed_records: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        failed_records = failed_records or []
         out_dir = os.path.expanduser(output_files_dir)
         consolidated_dir = os.path.expanduser(consolidated_results_dir)
 
         df_summary = self.read_perf_eval_json_files(out_dir, type='summary')
-        df_individual = self.read_perf_eval_json_files(out_dir, type='individual_responses')
 
-        df_summary['uuid'] = df_summary['name'].apply(self.file_parser.find_uuid)
+        # Enrich successful runs with batching + switching time data. When every config row failed there
+        # are no summary files to process, so we skip enrichment and rely solely on the failed records below.
+        if not df_summary.empty:
+            df_individual = self.read_perf_eval_json_files(out_dir, type='individual_responses')
 
-        # Add batch + switching time data
-        dfs_with_batching = []
-        for filename in os.listdir(out_dir):
-            if 'individual_responses' not in filename:
-                continue
+            df_summary['uuid'] = df_summary['name'].apply(self.file_parser.find_uuid)
 
-            try:
-                df_file = df_individual[df_individual['filename'] == filename].copy()
-                _, _, _, _, _ = self.file_parser.extract_file_info(filename)
-                grouping, batching, df_with_batching = self.batch_analyzer.get_grouping_and_batching_info(df_file)
-                dfs_with_batching.append(df_with_batching)
-            except Exception as e:
-                logger.warning(f'Error processing {filename}: {e}')
-                continue
+            # Add batch + switching time data
+            dfs_with_batching = []
+            for filename in os.listdir(out_dir):
+                if 'individual_responses' not in filename:
+                    continue
 
-        if not dfs_with_batching:
-            logger.warning('No valid batching data found.')
+                try:
+                    df_file = df_individual[df_individual['filename'] == filename].copy()
+                    _, _, _, _, _ = self.file_parser.extract_file_info(filename)
+                    grouping, batching, df_with_batching = self.batch_analyzer.get_grouping_and_batching_info(df_file)
+                    dfs_with_batching.append(df_with_batching)
+                except Exception as e:
+                    logger.warning(f'Error processing {filename}: {e}')
+                    continue
+
+            if dfs_with_batching:
+                df_all = pd.concat(dfs_with_batching)
+
+                df_all['uuid'] = df_all['filename'].apply(self.file_parser.find_uuid)
+
+                df_switching = SwitchingTimeCalculator.calculate_switching_time(df_all)
+
+                # Merge switching time into summary
+                df_summary = df_summary.merge(df_switching, on='uuid', how='left')
+                df_summary['representative_batch_size'] = df_summary['uuid'].map(
+                    lambda u: self.rep_finder.find_median_in_batches(
+                        df_all[df_all['uuid'] == u]['requests_batching_per_request'].tolist()
+                    )
+                )
+
+                # get batching frequencies
+                def get_batching_frequencies(uuid: str) -> Dict[int, int]:
+                    df_uuid = df_all[df_all['uuid'] == uuid]
+                    freq = dict(Counter(df_uuid['requests_batching_per_request']))
+                    return freq
+
+                df_summary['request_batching_frequencies'] = df_summary['uuid'].map(get_batching_frequencies)
+            else:
+                logger.warning('No valid batching data found.')
+        else:
+            logger.warning('No successful benchmark summaries found.')
+
+        # Append failed config rows so they are kept in the report with NA metrics. They are added after the
+        # batching/switching enrichment above (failed rows have no UUID and no per-request data to process).
+        if failed_records:
+            logger.info(f'Adding {len(failed_records)} failed config row(s) to the report with NA metrics.')
+            df_summary = pd.concat([df_summary, pd.DataFrame(failed_records)], ignore_index=True)
+
+        if df_summary.empty:
+            logger.warning('No results (successful or failed) to consolidate; nothing to write.')
             return
-
-        df_all = pd.concat(dfs_with_batching)
-
-        df_all['uuid'] = df_all['filename'].apply(self.file_parser.find_uuid)
-
-        df_switching = SwitchingTimeCalculator.calculate_switching_time(df_all)
-
-        # Merge switching time into summary
-        df_summary = df_summary.merge(df_switching, on='uuid', how='left')
-        df_summary['representative_batch_size'] = df_summary['uuid'].map(
-            lambda u: self.rep_finder.find_median_in_batches(
-                df_all[df_all['uuid'] == u]['requests_batching_per_request'].tolist()
-            )
-        )
-
-        # get batching frequencies
-        def get_batching_frequencies(uuid: str) -> Dict[int, int]:
-            df_uuid = df_all[df_all['uuid'] == uuid]
-            freq = dict(Counter(df_uuid['requests_batching_per_request']))
-            return freq
-
-        df_summary['request_batching_frequencies'] = df_summary['uuid'].map(get_batching_frequencies)
 
         os.makedirs(consolidated_dir, exist_ok=True)
         out_path = os.path.join(consolidated_dir, f'{run_name}.xlsx')
-        df_summary.sort_values('timestamp', inplace=True)
+        if 'timestamp' in df_summary.columns:
+            df_summary.sort_values('timestamp', inplace=True)
 
         # --- Dynamically determine which columns to include before export ---
         missing_columns = []
@@ -340,7 +363,56 @@ class BenchmarkRunner:
         self.batch_analyzer = batch_analyzer
         self.rep_finder = rep_finder
 
-    def _run_single_row(self, row: pd.Series, output_files_dir: str) -> None:
+    @staticmethod
+    def _build_failed_record(row: pd.Series, error_msg: str) -> Dict[str, Any]:
+        """Build a placeholder summary record for a config row that produced no metrics.
+
+        The record carries the row's identifying fields (model, tokens, concurrency/QPS) so the run stays in
+        the consolidated report, while every performance metric is left absent and surfaces as NA on export.
+
+        Args:
+            row (pd.Series): The model config row that failed.
+            error_msg (str): Reason the row produced no metrics (exception message or skip reason).
+
+        Returns:
+            Dict[str, Any]: Minimal summary-shaped record for the failed row.
+        """
+        model_name = row['model_name']
+        input_tokens = int(row['input_tokens'])
+        output_tokens = int(row['output_tokens'])
+        num_requests = int(row['num_requests'])
+        concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
+        qps = float(row.get('qps', 0.0) or 0.0)
+        multimodal_img_size = row.get('multimodal_img_size') if pd.notna(row.get('multimodal_img_size')) else 'na'
+
+        # Mirror the successful filename layout so multimodal size is still recoverable from `name`.
+        name = f'FAILED_{model_name.replace("_", "-")}'
+        if multimodal_img_size != 'na':
+            name += f'_multimodal_{multimodal_img_size}'
+        name += f'_{input_tokens}_{output_tokens}'
+        if concurrent_requests:
+            name += f'_{concurrent_requests}'
+
+        record: Dict[str, Any] = {
+            'name': name,
+            'model': model_name,
+            'num_input_tokens': input_tokens,
+            'num_output_tokens': output_tokens,
+            'num_requests_started': num_requests,
+            'num_completed_requests': 0,
+            'number_errors': num_requests,
+            'error_code_frequency': error_msg,
+        }
+        # Only set the dimension relevant to this run so the export's column-pruning logic is preserved.
+        if concurrent_requests:
+            record['num_concurrent_requests'] = concurrent_requests
+        if qps:
+            record['qps'] = qps
+            record['qps_distribution'] = row.get('qps_distribution', 'constant')
+
+        return record
+
+    def _run_single_row(self, row: pd.Series, output_files_dir: str) -> Optional[Dict[str, Any]]:
         from benchmarking.src.performance_evaluation import (
             RealWorkLoadPerformanceEvaluator,
             SyntheticPerformanceEvaluator,
@@ -354,6 +426,7 @@ class BenchmarkRunner:
         qps = float(row.get('qps', 0.0) or 0.0)
         multimodal_img_size = row.get('multimodal_img_size') if pd.notna(row.get('multimodal_img_size')) else 'na'
 
+        failed_record: Optional[Dict[str, Any]] = None
         evaluator = None
         try:
             if concurrent_requests:
@@ -380,7 +453,7 @@ class BenchmarkRunner:
                 )
             else:
                 logger.warning(f'Skipping {model_name}: missing concurrency or QPS.')
-                return
+                return self._build_failed_record(row, 'Skipped: missing concurrency or QPS.')
 
             evaluator.run_benchmark(
                 num_input_tokens=input_tokens,
@@ -391,8 +464,10 @@ class BenchmarkRunner:
 
         except Exception as e:
             logger.exception(f'Error running evaluator for model {model_name}: {e}')
+            failed_record = self._build_failed_record(row, str(e))
 
         time.sleep(self.config.get('time_delay', 0))
+        return failed_record
 
     def run(self, run_name: Optional[str] = None) -> None:
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -407,6 +482,7 @@ class BenchmarkRunner:
             run_name = run_time
         output_files_dir = os.path.join(self.config['output_files_dir'], run_name)
 
+        failed_records: List[Dict[str, Any]] = []
         if self.config['concurrency_enabled']:
             logger.info(f'🚀 Running benchmarks with row-level concurrency (max_workers={self.config["max_workers"]})')
             with ThreadPoolExecutor(max_workers=self.config['max_workers']) as executor:
@@ -417,13 +493,17 @@ class BenchmarkRunner:
 
                 for future in as_completed(futures):
                     try:
-                        future.result()
+                        failed_record = future.result()
+                        if failed_record:
+                            failed_records.append(failed_record)
                     except Exception as e:
                         logger.exception(f'Unhandled exception in concurrent run: {e}')
         else:
             logger.info('🐢 Running benchmarks sequentially')
             for _, row in model_configs_df.iterrows():
-                self._run_single_row(row, output_files_dir)
+                failed_record = self._run_single_row(row, output_files_dir)
+                if failed_record:
+                    failed_records.append(failed_record)
 
         # Consolidation phase
         # For debugging, you can set a specific run_name here
@@ -435,7 +515,9 @@ class BenchmarkRunner:
             self.batch_analyzer,
             self.rep_finder,
         )
-        consolidator.consolidate(output_files_dir, self.config['consolidated_results_dir'], run_name)
+        consolidator.consolidate(
+            output_files_dir, self.config['consolidated_results_dir'], run_name, failed_records=failed_records
+        )
 
 
 # =========================================================
