@@ -3,7 +3,7 @@ import os
 import re
 import sys
 from pprint import pprint
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import yaml
 from dotenv import load_dotenv
@@ -14,7 +14,7 @@ from langchain_core.messages.system import SystemMessage
 from langchain_core.messages.tool import ToolMessage
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableLambda
+from langchain_core.runnables import RunnableLambda, RunnableSequence
 from langchain_core.tools import StructuredTool, Tool
 from langchain_sambanova import ChatSambaNova
 from pydantic import BaseModel, Field, SecretStr
@@ -237,7 +237,7 @@ class FunctionCallingLlm:
 
         if default is not None:
             if isinstance(default, Tool) or isinstance(default, StructuredTool):
-                tool_schema = default.get_input_schema().model_json_schema()
+                tool_schema = cast(Type[BaseModel], default.get_input_schema()).model_json_schema()
             elif issubclass(default, BaseModel):
                 tool_schema = default.model_json_schema()
             else:
@@ -325,7 +325,9 @@ class FunctionCallingLlm:
         tool_call_id = 0  # identification for each tool calling required to create ToolMessages
 
         for i in range(max_it):
-            json_parsing_chain = RunnableLambda(self.jsonFinder) | JsonOutputParser()
+            json_parsing_chain: RunnableSequence[BaseMessage, Any] = RunnableSequence(
+                RunnableLambda(self.jsonFinder), JsonOutputParser()
+            )
             print(f'\n\n---\nCalling function calling LLM with prompt: \n{history}\n')
             llm_response = self.llm.invoke(history)
             print(f'\nFunction calling LLM response: \n{llm_response}\n---\n')
