@@ -1,6 +1,6 @@
 models:
   text:
-    - "gemma-4-31b-it"
+    # - "gemma-4-31b-it"
     - "Meta-Llama-3.3-70B-Instruct"
 
   text-image:
