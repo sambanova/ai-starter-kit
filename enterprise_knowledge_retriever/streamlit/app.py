@@ -32,7 +32,7 @@ PERSIST_DIRECTORY = os.path.join(kit_dir, f'data/my-vector-db')
 # Available models in dropdown menu
 LLM_MODELS = [
     'gpt-oss-120b',
-    'gemma-4-31b-it',
+    'gemma-4-31B-it',
     'Meta-Llama-3.3-70B-Instruct',
     'DeepSeek-V3.1',
     'MiniMax-M2.5',

@@ -41,7 +41,7 @@ python src/evaluator.py \
 
 # python src/evaluator.py \
 # --mode real_workload \
-# --model-names "gemma-4-31b-it" \
+# --model-names "gemma-4-31B-it" \
 # --results-dir "./data/results/llmperf" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \

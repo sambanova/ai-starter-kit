@@ -6,7 +6,7 @@ llm:
     "model": "gpt-oss-120b"
 
 lvlm:
-    "model": "gemma-4-31b-it"
+    "model": "gemma-4-31B-it"
     "max_tokens": 8912 
     "temperature": 1
     "top_k": 50

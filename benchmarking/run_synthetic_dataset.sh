@@ -45,7 +45,7 @@ python src/evaluator.py \
 
 # python src/evaluator.py \
 # --mode synthetic \
-# --model-names "gemma-4-31b-it" \
+# --model-names "gemma-4-31B-it" \
 # --results-dir "./data/results" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
