@@ -23,6 +23,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Default batch sizes used to infer batching (powers of two up to 128).
+# Can be overridden via the `batch_sizes` key in config.yaml.
+DEFAULT_BATCH_SIZES: List[int] = [1, 2, 4, 8, 16, 32, 64, 128]
+
 
 # =========================================================
 #                   DATA CLASSES
@@ -56,6 +60,7 @@ class ConfigLoader:
             cfg = yaml.load(fh, Loader=yaml.FullLoader)
         cfg['output_files_dir'] = os.path.expanduser(cfg.get('output_files_dir', '..'))
         cfg['model_configs_path'] = os.path.expanduser(cfg.get('model_configs_path', ''))
+        cfg['batch_sizes'] = cfg.get('batch_sizes') or DEFAULT_BATCH_SIZES
         return cfg
 
 
@@ -107,8 +112,25 @@ class FileNameParser:
 
 
 class BatchAnalyzer:
-    @staticmethod
-    def get_grouping_and_batching_info(df: pd.DataFrame) -> Tuple[List[int], List[int], pd.DataFrame]:
+    def __init__(self, batch_sizes: Optional[Sequence[int]] = None) -> None:
+        sizes = batch_sizes if batch_sizes else DEFAULT_BATCH_SIZES
+        self.batch_sizes = sorted({int(s) for s in sizes})
+
+    def _snap_batch_size(self, count: int) -> int:
+        """Snap an observed group count UP to the nearest allowed batch size.
+
+        Requests processed in the same server batch share an identical
+        server_ttft_s, so the count of consecutive identical-TTFT requests is
+        the observed group size. That count is mapped to the smallest configured
+        batch size that is >= it (falling back to the largest configured size if
+        the count exceeds every allowed value).
+        """
+        for size in self.batch_sizes:
+            if size >= count:
+                return size
+        return self.batch_sizes[-1]
+
+    def get_grouping_and_batching_info(self, df: pd.DataFrame) -> Tuple[List[int], List[int], pd.DataFrame]:
         if df.empty:
             return [], [], df
 
@@ -117,10 +139,10 @@ class BatchAnalyzer:
 
         group_counts = df.groupby(['group', 'server_ttft_s']).size().reset_index(name='consecutive_count')
         requests_grouping = group_counts['consecutive_count'].tolist()
-        requests_batching = [1 << (x - 1).bit_length() for x in requests_grouping]
+        requests_batching = [self._snap_batch_size(x) for x in requests_grouping]
 
         group_to_count = group_counts.set_index('group')['consecutive_count']
-        group_to_batching = {g: 1 << (cnt - 1).bit_length() for g, cnt in group_to_count.items()}
+        group_to_batching = {g: self._snap_batch_size(cnt) for g, cnt in group_to_count.items()}
 
         df['requests_grouping_per_request'] = df['group'].map(group_to_count)
         df['requests_batching_per_request'] = df['group'].map(group_to_batching)
@@ -140,10 +162,13 @@ class RepresentativeFinder:
             return None
         total_sum = sum(lst)
         counter = Counter(lst)
-        for value, count in counter.items():
-            if (value * count) / total_sum > 0.5:
-                return value
-        return None
+        if total_sum > 0:
+            for value, count in counter.items():
+                if (value * count) / total_sum > 0.5:
+                    return value
+        # No single batch size dominates (e.g. a failed request skewed the
+        # distribution) - fall back to the most frequently observed batch size.
+        return counter.most_common(1)[0][0]
 
 
 # =========================================================
@@ -427,7 +452,7 @@ class BenchmarkRunner:
 
         # Consolidation phase
         # For debugging, you can set a specific run_name here
-        # run_name = '20251031-180601.530151'
+        # run_name = '20260629-163957.994322'
         # output_files_dir = os.path.join(self.config['output_files_dir'], run_name)
         consolidator = ResultsConsolidator(
             self.read_perf_eval_json_files,
@@ -520,7 +545,7 @@ def main() -> None:
         evaluator_factories={},
         read_perf_eval_json_files_fn=read_perf_eval_json_files_wrapper,
         file_parser=FileNameParser(),
-        batch_analyzer=BatchAnalyzer(),
+        batch_analyzer=BatchAnalyzer(config.get('batch_sizes')),
         rep_finder=RepresentativeFinder(),
     )
 

@@ -9,3 +9,5 @@ concurrency_enabled: False
 max_workers: 4 # Only used if concurrency_enabled is True
 # Prompt behavior
 use_multiple_prompts : False # Only available for synthetic performance evaluation
+# Batch sizes used to infer batching for the switching-time calculation.
+batch_sizes: [1, 2, 4, 8, 16, 32, 64, 128] # add more numbers or non-power-of-two sizes (e.g. 6) when the deployment actually serves those batch sizes, so check your deployment configuration.
