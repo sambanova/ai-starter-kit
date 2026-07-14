@@ -39,6 +39,7 @@ class ModelConfigRow:
     input_tokens: int
     output_tokens: int
     num_requests: int
+    num_warmup_requests: int = 0
     concurrent_requests: Optional[int] = None
     qps: Optional[float] = None
     qps_distribution: str = 'constant'
@@ -373,6 +374,7 @@ class BenchmarkRunner:
 
         model_name = row['model_name']
         num_requests = int(row['num_requests'])
+        num_warmup_requests = int(row.get('num_warmup_requests', 0) or 0)
         input_tokens = int(row['input_tokens'])
         output_tokens = int(row['output_tokens'])
         concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
@@ -391,6 +393,7 @@ class BenchmarkRunner:
                     user_metadata={'model_idx': 0},
                     llm_api=self.config['llm_api'],
                     use_multiple_prompts=self.config['use_multiple_prompts'],
+                    num_warmup_requests=num_warmup_requests,
                 )
             elif qps:
                 evaluator = RealWorkLoadPerformanceEvaluator(
@@ -402,6 +405,7 @@ class BenchmarkRunner:
                     timeout=self.config['timeout'],
                     user_metadata={'model_idx': 0},
                     llm_api=self.config['llm_api'],
+                    num_warmup_requests=num_warmup_requests,
                 )
             else:
                 logger.warning(f'Skipping {model_name}: missing concurrency or QPS.')
@@ -423,9 +427,12 @@ class BenchmarkRunner:
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
         model_configs_df = pd.read_csv(self.config['model_configs_path'])
-        model_configs_df = model_configs_df.astype(
-            {'input_tokens': 'Int64', 'output_tokens': 'Int64', 'num_requests': 'Int64'}
-        )
+        int_columns = {'input_tokens': 'Int64', 'output_tokens': 'Int64', 'num_requests': 'Int64'}
+        # `num_warmup_requests` is an optional per-row column; only cast it when present so older
+        # CSVs without the column still load.
+        if 'num_warmup_requests' in model_configs_df.columns:
+            int_columns['num_warmup_requests'] = 'Int64'
+        model_configs_df = model_configs_df.astype(int_columns)
 
         run_time = datetime.now().strftime('%Y%m%d-%H%M%S.%f')
         if not run_name:

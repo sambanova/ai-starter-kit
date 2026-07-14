@@ -61,6 +61,7 @@ class BasePerformanceEvaluator(abc.ABC):
         api_variables: Dict[str, str] = {},
         is_stream_mode: bool = True,
         timeout: int = 600,
+        num_warmup_requests: int = 0,
         config: Dict[str, Any] = {},
     ) -> None:
         # Set kit's config file
@@ -80,10 +81,16 @@ class BasePerformanceEvaluator(abc.ABC):
         self.api_variables = api_variables
         self.is_stream_mode = is_stream_mode
         self.timeout = timeout
+        self.num_warmup_requests = num_warmup_requests
+        # Absolute monotonic deadline shared across warm-up + measured run. Set at the start of
+        # each run so a timeout stops everything, in whichever phase it is reached. None => no deadline.
+        self.deadline: Optional[float] = None
         self.tokenizer = get_tokenizer(self.model_name)
         self.stop_event = threading.Event()
         self.ui_progress_bar = None
         self.cli_progress_bar = None
+        # Label shown by the UI progress bar; switched to 'Warming up' during the warm-up phase.
+        self.progress_phase_label = 'Running requests'
         self.run_uuid = uuid.uuid4()
 
         # To be set upon saving of results
@@ -183,11 +190,15 @@ class BasePerformanceEvaluator(abc.ABC):
             start_time (float): start time of the process
             num_requests (int): number of total requests
         """
+        # The timeout is a single budget shared across warm-up and the measured run: once the
+        # shared deadline passes, requests stop regardless of which phase is running. Fall back to
+        # the legacy per-call bound if no deadline was set.
+        deadline = self.deadline if self.deadline is not None else (start_time + self.timeout)
         for request_config in request_config_batch:
             if self.stop_event.is_set():
                 logger.info('Stopping request processing in thread due to stop signal.')
                 break
-            if time.monotonic() - start_time >= self.timeout:
+            if time.monotonic() >= deadline:
                 break
             req_metrics, response_text, request_config = llm_request(request_config, self.tokenizer)
 
@@ -204,7 +215,112 @@ class BasePerformanceEvaluator(abc.ABC):
             if self.cli_progress_bar:
                 self.cli_progress_bar.update(update_unit)
             if self.ui_progress_bar:
-                self.ui_progress_bar(len(progress), num_requests)
+                self.ui_progress_bar(len(progress), num_requests, self.progress_phase_label)
+
+    def build_warmup_configs(self, request_configs: List[RequestConfig]) -> List[RequestConfig]:
+        """Selects `num_warmup_requests` configs to use for the warm-up phase.
+
+        Warm-up may request more requests than the measured run builds (e.g. warm up 30 requests for a
+        10-request test), so the available configs are cycled to reach the requested warm-up count. Each
+        config is deep-copied before being sent in `run_warmup`, so reusing the same objects is safe.
+
+        Args:
+            request_configs (List[RequestConfig]): The configs built for the measured run.
+
+        Returns:
+            List[RequestConfig]: Exactly `num_warmup_requests` configs (empty if warm-up is disabled).
+        """
+        if not self.num_warmup_requests or not request_configs:
+            return []
+        return [request_configs[i % len(request_configs)] for i in range(self.num_warmup_requests)]
+
+    def run_warmup(self, warmup_request_configs: List[RequestConfig]) -> None:
+        """Sends throwaway requests to warm the server before the measured run.
+
+        Warm-up is executed BEFORE the measurement clock (`start_time`) is captured and its
+        responses are discarded, so it never enters the metrics summary. Its purpose is to absorb
+        one-time costs that would otherwise skew the reported latencies/throughput and the inferred
+        batch size: server-side cold start (weight/KV-cache allocation, graph compilation, autoscaler
+        spin-up), connection/TLS setup, and the server ramping up to the target batch size.
+
+        Requests are run at the test's concurrency (`num_concurrent_requests`) so the server reaches
+        the same batching regime as the measured phase. When concurrency is unset (e.g. real workload),
+        the warm-up requests are simply fanned out together.
+
+        Args:
+            warmup_request_configs (List[RequestConfig]): Request configs to send as warm-up.
+        """
+        if not warmup_request_configs:
+            return
+
+        # Deep-copy the configs: sending a request mutates its sampling_params in place
+        # (e.g. `max_tokens_to_generate` is popped in the client), so warming up on the
+        # original objects would corrupt the configs the measured run reuses.
+        warmup_request_configs = [rc.model_copy(deep=True) for rc in warmup_request_configs]
+
+        max_workers = self.num_concurrent_requests or len(warmup_request_configs)
+        logger.info(
+            f'Warming up with {len(warmup_request_configs)} request(s) at concurrency {max_workers} '
+            '(results discarded)...'
+        )
+
+        # Throwaway sinks - these are intentionally never returned or summarized
+        throwaway_responses: List[LLMResponse] = []
+        throwaway_progress: List[Any] = []
+
+        # Show warm-up progress on its own indicators so the user knows the wait is warm-up,
+        # not a stall. The CLI gets a dedicated tqdm bar; the Streamlit (UI) callback is kept
+        # live but re-labelled 'Warming up' and re-scaled to the warm-up request count. All of
+        # these are restored to their measured-run state afterwards.
+        saved_cli_progress_bar = self.cli_progress_bar
+        saved_ui_progress_bar = self.ui_progress_bar
+        saved_progress_phase_label = self.progress_phase_label
+        self.cli_progress_bar = tqdm(total=len(warmup_request_configs), desc='Warming Up')
+        self.progress_phase_label = 'Warming up'
+
+        # Show the warm-up label immediately so the (often slow) first cold-start request doesn't
+        # leave the UI looking stalled before the first completion updates the bar.
+        if self.ui_progress_bar:
+            self.ui_progress_bar(0, len(warmup_request_configs), self.progress_phase_label)
+
+        warmup_start = time.monotonic()
+        try:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = []
+                for request_config in warmup_request_configs:
+                    if self.stop_event.is_set():
+                        logger.info('Stopping warm-up due to stop signal.')
+                        break
+                    if self.deadline is not None and time.monotonic() >= self.deadline:
+                        logger.warning('Timeout reached during warm-up; stopping warm-up early.')
+                        break
+                    future = executor.submit(
+                        self.send_requests,
+                        [request_config],
+                        throwaway_responses,
+                        throwaway_progress,
+                        warmup_start,
+                        len(warmup_request_configs),
+                    )
+                    futures.append(future)
+                    for t in executor._threads:
+                        add_script_run_ctx(t)
+
+                for future in as_completed(futures):
+                    try:
+                        future.result()
+                    except Exception as e:
+                        # A failed warm-up request must not abort the benchmark
+                        logger.warning(f'Warm-up request failed (ignored): {e}')
+        finally:
+            if self.cli_progress_bar is not None:
+                self.cli_progress_bar.close()
+            self.cli_progress_bar = saved_cli_progress_bar
+            self.ui_progress_bar = saved_ui_progress_bar
+            self.progress_phase_label = saved_progress_phase_label
+
+        completed = len(throwaway_responses)
+        logger.info(f'Warm-up complete ({completed}/{len(warmup_request_configs)} sent).')
 
     def build_metrics_summary(
         self,
@@ -668,6 +784,19 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
 
+        # Single timeout budget spanning warm-up + measured run: a timeout stops whichever phase
+        # is active. Set before warm-up so warm-up time counts against the same budget.
+        self.deadline = time.monotonic() + self.timeout
+
+        # Warm-up phase (discarded, runs before the measured clock starts)
+        if self.num_warmup_requests:
+            self.run_warmup(self.build_warmup_configs(request_configs))
+
+        # If the shared timeout was exhausted during warm-up, stop before measuring.
+        if time.monotonic() >= self.deadline:
+            logger.warning('Timeout reached during warm-up; skipping measured run (no results collected).')
+            return {}, []
+
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
         with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
@@ -1060,6 +1189,19 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
 
+        # Single timeout budget spanning warm-up + measured run: a timeout stops whichever phase
+        # is active. Set before warm-up so warm-up time counts against the same budget.
+        self.deadline = time.monotonic() + self.timeout
+
+        # Warm-up phase (discarded, runs before the measured clock starts)
+        if self.num_warmup_requests:
+            self.run_warmup(self.build_warmup_configs(request_configs))
+
+        # If the shared timeout was exhausted during warm-up, stop before measuring.
+        if time.monotonic() >= self.deadline:
+            logger.warning('Timeout reached during warm-up; skipping measured run (no results collected).')
+            return {}, []
+
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads
         with ThreadPoolExecutor(max_workers=self.num_concurrent_requests) as executor:
@@ -1391,6 +1533,19 @@ class RealWorkLoadPerformanceEvaluator(SyntheticPerformanceEvaluator):
         # Execute requests concurrently
         llm_responses: List[LLMResponse] = []
         progress: List[Any] = []
+
+        # Single timeout budget spanning warm-up + measured run: a timeout stops whichever phase
+        # is active. Set before warm-up so warm-up time counts against the same budget.
+        self.deadline = time.monotonic() + self.timeout
+
+        # Warm-up phase (discarded, runs before the measured clock starts)
+        if self.num_warmup_requests:
+            self.run_warmup(self.build_warmup_configs(request_configs))
+
+        # If the shared timeout was exhausted during warm-up, stop before measuring.
+        if time.monotonic() >= self.deadline:
+            logger.warning('Timeout reached during warm-up; skipping measured run (no results collected).')
+            return {}, []
 
         start_time = time.monotonic()
         # Use ThreadPoolExecutor to handle threads

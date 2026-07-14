@@ -208,9 +208,16 @@ def find_pages_to_show() -> List[Any]:
     return pages_to_show
 
 
-def update_progress_bar(step: int, total_steps: int) -> None:
-    """Update the progress bar."""
-    st.session_state.progress_bar.progress(value=step / total_steps, text=f'Running requests: {step}/{total_steps}')
+def update_progress_bar(step: int, total_steps: int, phase: str = 'Running requests') -> None:
+    """Update the progress bar.
+
+    Args:
+        step: Number of completed steps.
+        total_steps: Total number of steps for the current phase.
+        phase: Label for the current phase (e.g. 'Warming up' or 'Running requests').
+    """
+    fraction = step / total_steps if total_steps else 0
+    st.session_state.progress_bar.progress(value=fraction, text=f'{phase}: {step}/{total_steps}')
 
 
 def set_api_variables() -> Dict[str, Any]:
