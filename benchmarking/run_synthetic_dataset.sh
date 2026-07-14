@@ -12,6 +12,7 @@ python src/evaluator.py \
 --num-output-tokens 1000 \
 --multimodal-image-size na \
 --num-requests 16 \
+--num-warmup-requests 0 \
 --use-multiple-prompts False \
 --save-llm-responses False \
 --use-debugging-mode False \
@@ -36,6 +37,7 @@ python src/evaluator.py \
 # --num-output-tokens 1000 \
 # --multimodal-image-size na \
 # --num-requests 16 \
+# --num-warmup-requests 0 \
 # --save-llm-responses False \
 # --use-debugging-mode False \
 # --llm-api sncloud
@@ -53,6 +55,7 @@ python src/evaluator.py \
 # --num-output-tokens 1000 \
 # --multimodal-image-size medium \
 # --num-requests 16 \
+# --num-warmup-requests 0 \
 # --save-llm-responses False \
 # --use-debugging-mode False \
 # --llm-api sncloud

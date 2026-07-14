@@ -4,8 +4,8 @@
 ulimit -n 4096
 python src/evaluator.py \
 --mode real_workload \
---model-name "Meta-Llama-3.3-70B-Instruct" \
---results-dir "./data/results/llmperf" \
+--model-names "Meta-Llama-3.3-70B-Instruct" \
+--results-dir "./data/results" \
 --qps 1 \
 --qps-distribution "constant" \
 --timeout 600 \
@@ -13,6 +13,7 @@ python src/evaluator.py \
 --num-output-tokens 1000 \
 --multimodal-image-size na \
 --num-requests 16 \
+--num-warmup-requests 0 \
 --use-debugging-mode False \
 --llm-api sncloud
 
@@ -27,13 +28,14 @@ python src/evaluator.py \
 # python src/evaluator.py \
 # --mode real_workload \
 # --model-names "Meta-Llama-3.3-70B-Instruct" \
-# --results-dir "./data/results/llmperf" \
+# --results-dir "./data/results" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
 # --num-input-tokens 1000 \
 # --num-output-tokens 1000 \
 # --multimodal-image-size na \
 # --num-requests 16 \
+# --num-warmup-requests 0 \
 # --use-debugging-mode False \
 # --llm-api sncloud
 
@@ -42,12 +44,13 @@ python src/evaluator.py \
 # python src/evaluator.py \
 # --mode real_workload \
 # --model-names "gemma-4-31B-it" \
-# --results-dir "./data/results/llmperf" \
+# --results-dir "./data/results" \
 # --num-concurrent-requests 1 \
 # --timeout 600 \
 # --num-input-tokens 1000 \
 # --num-output-tokens 1000 \
 # --multimodal-image-size medium \
 # --num-requests 16 \
+# --num-warmup-requests 0 \
 # --use-debugging-mode False \
 # --llm-api sncloud
