@@ -266,29 +266,44 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         super().__init__(*args, **kwargs)
         # Load sambanova cloud env variables
         if self.request_config.api_variables:
-            self.base_url = (
+            self.sambanova_base_url = (
                 self.request_config.api_variables['SAMBANOVA_API_BASE']
                 if self.request_config.api_variables['SAMBANOVA_API_BASE']
                 else SAMBANOVA_API_BASE
             )
             self.api_key = self.request_config.api_variables['SAMBANOVA_API_KEY']
         else:
-            self.base_url = os.environ.get('SAMBANOVA_API_BASE', SAMBANOVA_API_BASE)
+            self.sambanova_base_url = os.environ.get('SAMBANOVA_API_BASE', SAMBANOVA_API_BASE)
             self.api_key = os.environ.get('SAMBANOVA_API_KEY', '')
 
+        # Determine the full SambaNova endpoint URL (e.g., https://api.sambanova.ai/chat/completions)
+        self.sambanova_target_url = self.sambanova_base_url
+        if 'chat/completions' not in self.sambanova_target_url:
+            self.sambanova_target_url = self.sambanova_target_url.rstrip('/') + '/chat/completions'
+
+        # Load Barewire env variables
+        self.barewire_api_base = os.environ.get('BAREWIRE_API_BASE')
+        self.barewire_api_key = os.environ.get('BAREWIRE_API_KEY')
+
     def _get_url(self) -> str:
-        """Builds url for API call
+        """Builds url for API call, routing through Barewire if configured.
 
         Returns:
             str: url needed for API
         """
-        # if chat/completions included then use that endpoint
-        if 'chat/completions' in self.base_url:
-            return self.base_url
-        # else build the url using base url
+        if self.barewire_api_base:
+            # If Barewire is enabled, the actual request URL is the Barewire endpoint
+            # followed by the path segment from the original SambaNova target URL.
+            # Example: Barewire_API_BASE = https://api.barewire.io/v1
+            #          SambaNova_TARGET_URL = https://api.sambanova.ai/chat/completions
+            #          Request URL = https://api.barewire.io/v1/chat/completions
+            # Extract path after the scheme and host (e.g., '/chat/completions')
+            path_parts = self.sambanova_target_url.split('://', 1)
+            samba_path_segment = '/' + path_parts[-1].split('/', 1)[-1] if '/' in path_parts[-1] else '/chat/completions'
+            return self.barewire_api_base.rstrip('/') + samba_path_segment
         else:
-            self.base_url = self.base_url.rstrip('/') + '/chat/completions'
-        return self.base_url
+            # Otherwise, use the direct SambaNova target URL
+            return self.sambanova_target_url
 
     def _get_headers(self) -> Dict[str, str]:
         """Gets headers for API call"""
@@ -300,6 +315,14 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         if self.request_config.use_debugging_mode:
             header['ss-sn-options'] = 'accuracy_debug'
+
+        if self.barewire_api_base:
+            # If Barewire is used, pass the original SambaNova URL as a target header.
+            # This allows Barewire to know where to forward the request.
+            header['x-barewire-target-url'] = self.sambanova_target_url
+            # Add Barewire API key if provided
+            if self.barewire_api_key:
+                header['x-barewire-api-key'] = self.barewire_api_key
 
         return header
 
