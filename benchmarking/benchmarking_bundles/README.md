@@ -13,7 +13,7 @@ The required steps for Bundle benchmarking are the following:
 
 Modify the following file:
 
-- `<PATH TO AISK REPO HERE>/benchmarking/benchmarking_scripts/config.yaml`
+- `<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/config.yaml`
 
 Example:
 
@@ -29,6 +29,8 @@ concurrency_enabled: False
 max_workers: 4
 # Prompt behavior
 use_multiple_prompts: False
+# Batch sizes used to infer batching for the switching-time calculation
+batch_sizes: [1, 2, 4, 8, 16, 32, 64, 128]
 ```
 
 #### Key notes:
@@ -37,6 +39,7 @@ use_multiple_prompts: False
 - max_workers: Maximum number of parallel benchmark jobs.
 - time_delay: Optional sleep between runs (per row).
 - use_multiple_prompts: If true, multiple prompts in located in `<PATH TO AISK REPO>/benchmarking/prompts/user-prompt_template-text_instruct.yaml` will be used randomly.
+- batch_sizes: The allowed batch sizes used to infer batching behavior for the switching-time calculation (see [Batching analysis](#batching-analysis)). Observed request groups are snapped **up** to the nearest value in this list. Defaults to powers of two up to 128 when omitted; add non-power-of-two sizes (e.g. `6`) only when your deployment actually serves those batch sizes.
 
 ### 2. Model configuration file
 
@@ -46,7 +49,7 @@ Modify:
 
 Header:
 
-`model_name,input_tokens,output_tokens,num_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size`
+`model_name,input_tokens,output_tokens,num_requests,num_warmup_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size`
 
 Each row defines one benchmark job.
 
@@ -66,39 +69,35 @@ The configuration table in `model_configs_example.csv` details each individual m
 - `num_requests`  
   Total number of requests sent.
 
-  ⚠️ The run may timeout before all requests are sent.  
-  Configure the `timeout` parameter in `benchmarking_bundles/config.yaml` accordingly.
+- `num_warmup_requests`  
+  Number of throwaway warm-up requests sent **before** the measured run. Set per
+  row. To disable, leave the cell blank or `0`.
+
+  Synthetic warm-ups match the test's concurrency level, while real-workload warm-ups ignore the pacing rate and just fire everything immediately.
 
 - `concurrent_requests`  
   Enables **synthetic workload benchmarking**.
-
-  - Used when testing batching-enabled models
-  - Typical values: `1`, `4`, `8`, `16`
   - If this value is set, `qps` is ignored
 
 - `qps`  
   Enables **real workload benchmarking** (queries per second).
-
   - Recommended values `< 10`
   - Ignored if `concurrent_requests` is set
 
 - `qps_distribution`  
   Wait-time distribution between requests.
-
   Supported values:
   - `constant` (default)
   - `uniform`
   - `exponential`
-  
   Ignored if concurrent_requests is set
+
 - `multimodal_img_size`  
   Used only for multimodal models to include an image in the benchmark requests.
-
   Supported values:
   - `small` → 500×500 px
   - `medium` → 1000×1000 px
   - `large` → 2000×2000 px
-
   For non-multimodal models, leave it empty.
 
 > **Important:**  
@@ -132,7 +131,7 @@ This mode is useful when:
 
 ### 4. Run the benchmark
 
-Once the configuration files are set up, run the benchmark from the **root of the AISK repository**:
+Once the configuration files are set up, run the benchmark from the **root of the benchmarking_bundles module**:
 
 ```bash
 bash run_synthetic_perfomance_bundle_eval.sh
@@ -202,7 +201,7 @@ Each row in the Excel file corresponds to **one row in `model_configs_example.cs
 The benchmarking pipeline automatically estimates **batching behavior** by analyzing request timing patterns.
 
 - Requests with identical `server_ttft` are grouped together
-- Batch size is inferred as the next power of two of the group size
+- Batch size is inferred by snapping the group size **up** to the nearest value in the `batch_sizes` list configured in `config.yaml` (defaults to powers of two up to 128)
 
 Reported batching fields
 
