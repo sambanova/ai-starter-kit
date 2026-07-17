@@ -121,6 +121,16 @@ def main() -> None:
             (default: %(default)s)',
     )
 
+    parser.add_argument(
+        '--num-warmup-requests',
+        type=int,
+        required=False,
+        default=0,
+        help='Number of throwaway warm-up requests to send before the measured run. Warm-up requests are \
+            sent at the test concurrency and their results are discarded, absorbing cold-start and batch \
+            ramp-up costs so they do not skew the reported metrics. 0 disables warm-up. (default: %(default)s)',
+    )
+
     args, _ = parser.parse_known_args()
 
     # Parse user metadata.
@@ -174,6 +184,7 @@ def main() -> None:
             save_response_texts=args.save_llm_responses,
             use_debugging_mode=args.use_debugging_mode,
             llm_api=args.llm_api,
+            num_warmup_requests=args.num_warmup_requests,
         )
 
         # Run performance evaluation
@@ -278,6 +289,7 @@ def main() -> None:
                     save_response_texts=args.save_llm_responses,
                     use_debugging_mode=args.use_debugging_mode,
                     llm_api=args.llm_api,
+                    num_warmup_requests=args.num_warmup_requests,
                 )
 
                 # Run performance evaluation
@@ -300,6 +312,7 @@ def main() -> None:
                     results_dir=args.results_dir,
                     timeout=args.timeout,
                     user_metadata=user_metadata,
+                    num_warmup_requests=args.num_warmup_requests,
                 )
 
                 vllm_executor.run_benchmark(
@@ -397,6 +410,7 @@ def main() -> None:
                 user_metadata=user_metadata,
                 use_debugging_mode=args.use_debugging_mode,
                 llm_api=args.llm_api,
+                num_warmup_requests=args.num_warmup_requests,
             )
 
             # Run performance evaluation

@@ -81,7 +81,7 @@ Please follow the instructions [here](../README.md#getting-a-sambanova-api-key-a
     uv pip install -r requirements.txt
     ```
 
-_Note: vLLM is also installed for speed benchmarking. The framework will use your existing SambaNova API credentials. No additional setup is needed beyond the standard environment variables._
+_Note: vLLM is also installed (via `requirements.txt`) for the optional vLLM speed-benchmark comparison. It uses your existing SambaNova API credentials, so no additional setup is needed beyond the standard environment variables._
 
 # Use the starter kit
 
@@ -124,7 +124,7 @@ This option allows you to evaluate the performance of the selected LLM on synthe
    - **vLLM Only**: Run benchmarks using vLLM's benchmark serve command
    - **Both (Side-by-Side Comparison)**: Run both benchmarks simultaneously and compare results side-by-side
 
-   _Note: vLLM benchmarking requires vLLM to be installed. See the [vLLM Setup](#vllm-setup) section below for installation instructions._
+   _Note: vLLM benchmarking requires vLLM, which is listed in `requirements.txt` and installed during [environment setup](#create-the-virtual-environment). For API benchmarking, vLLM drives a remote endpoint, so no local GPU is required._
 
 2. Enter a model name and choose the right API type
 
@@ -142,7 +142,8 @@ This option allows you to evaluate the performance of the selected LLM on synthe
 - **Number of output tokens**: The number of output tokens the LLM can generate. *Default*: 1000.
 - **Number of total requests**: Number of requests sent. *Default*: 10. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
 - **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing batching-enabled models, this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
-- **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
+- **Number of warm-up requests**: Number of throwaway requests sent (at the concurrency above) *before* the measured run. Their results are discarded, so one-time costs such as server cold start (weight/KV-cache allocation, autoscaler spin-up) and batch ramp-up don't skew the reported metrics. *Default*: 0 (disabled). *Note*: supported by both the Kit and vLLM benchmarks (the vLLM path maps to vLLM's native `--num-warmups` flag). For the Kit, warm-up shares the same **Timeout** budget as the measured run.
+- **Timeout**: Number of seconds before the program times out. *Default*: 600 seconds. *Note*: this is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
 
 4. Run the performance evaluation
 
@@ -164,13 +165,15 @@ This option allows you to evaluate the performance of the selected LLM on synthe
     
     Additionally, if the endpoint supports dynamic batching, the plots will show per-batch metrics.
 
-    The results are composed of five plots:
+    The results are composed of six plots:
 
     - ```Distribution of TTFT by batch size```: This bar plot shows the median Time to First Token (TTFT) in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics. 
 
     - ```Distribution of end-to-end latency by batch size```: This bar plot shows the median end-to-end latency in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is also mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics. 
 
     - ```Distribution of output throughput by batch size``` plot: This bar plot shows the median number of **output** tokens per second per request in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see good agreement between the client and server-side metrics. For endpoints that support dynamic batching, one should see a decreasing trend in metrics as the batch size increases.
+
+    - ```Distribution of Mean Inter-Token Latency (ITL) by batch size```: This bar plot shows the median mean inter-token latency (in milliseconds) per request in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile.
 
     - ```Total output throughput per batch size```: This bar plot shows the median total tokens generated per second per batch in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see good agreement between the client and server-side metrics. This metric will calculate the same values as the previous metric for batch size = 1. However, for batch size > 1, it is estimated as the average of ```Output throughput by batch size * Batch size``` for each batch, to account for more generated tokens due to concurrent requests being served in batch mode.
 
@@ -274,7 +277,8 @@ This option allows you to evaluate the performance of the selected LLM on real w
 - **Number of total requests**: Number of requests sent. *Default*: 10. *Note*: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
 - **Queries per second**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits. *Default*: 1.0
 - **Queries per second distribution**: the type of wait time distribution in between requests. User can choose the values 'constant', 'uniform', 'exponential'. *Default*: constant.
-- **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
+- **Number of warm-up requests**: Number of throwaway requests sent *before* the measured run. Their results are discarded, so one-time costs such as server cold start and batch ramp-up don't skew the reported metrics. *Default*: 0 (disabled). *Note*: warm-up requests are fired together (not paced by the QPS above) and share the same **Timeout** budget as the measured run.
+- **Timeout**: Number of seconds before the program times out. *Default*: 600 seconds. *Note*: this is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
 
 4. Run the performance evaluation
 
@@ -336,7 +340,8 @@ This option allows you to evaluate the performance of the selected LLM on your o
 4. Set the configuration and tuning parameters
 
 - **Number of concurrent requests**: The number of concurrent requests. *Default*: 1. For testing dynamic batching, this value should be greater than the largest batch_size one needs to test. The typical batch sizes that are supported are 1,4,8 and 16.
-- **Timeout**: Number of seconds before program times out. *Default*: 600 seconds
+- **Num Warm-up Requests**: Number of throwaway requests sent (at the concurrency above) *before* the measured run. Their results are discarded, so one-time costs such as server cold start and batch ramp-up don't skew the reported metrics. *Default*: 0 (disabled). *Note*: warm-up shares the same **Timeout** budget as the measured run.
+- **Timeout**: Number of seconds before the program times out. *Default*: 600 seconds. *Note*: this is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
 - **Max Output Tokens**: Maximum number of tokens to generate. *Default*: 256
 - **Save LLM Responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
 
@@ -354,6 +359,8 @@ This option allows you to evaluate the performance of the selected LLM on your o
     Additionally, if the endpoint supports dynamic batching, the plots will show per-batch metrics.
 
     The results are composed of five plots:
+
+    - ```Distribution of TTFT by batch size```: This bar plot shows the median Time to First Token (TTFT) in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics.
 
     - ```Distribution of end-to-end latency by batch size```: This bar plot shows the median end-to-end latency in a bold colored horizontal line, and a rectangular area representing the range between the 5th and 95th percentile. One should see higher values and higher variance in the client-side metrics compared to the server-side metrics. This difference is also mainly due to the request waiting in the queue to be served (for concurrent requests), which is not included in server-side metrics. 
 
@@ -416,11 +423,12 @@ You have 3 options for running the program from terminal:
 _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
-  - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
+  - **model-names**: Model name(s) to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
   - **llm-api**: API type to be chosen.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1. For `vllm` and `both` benchmark modes, this value is used as the request rate passed to `vllm bench serve`.
-  - **timeout**: Timeout in seconds. _Default_: 600. For `vllm` and `both` benchmark modes, this parameter is not applied on the vLLM runs since it's not supported. 
+  - **num-warmup-requests**: Number of throwaway warm-up requests sent (at the concurrency above) before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: applies to all benchmark modes — for `vllm`/`both`, it maps to vLLM's native `--num-warmups` flag. For the Kit path it shares the same **timeout** budget as the measured run.
+  - **timeout**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped. For `vllm` and `both` benchmark modes, this parameter is not applied on the vLLM runs since it's not supported. 
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It is strongly recommended to set this value to no more than 2000, as most LLMs cannot generate outputs beyond this limit. _Default_: 1000.
   - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Note_: vLLM benchmarking only supports na (text-only). _Default:_ na.
@@ -535,12 +543,13 @@ Synthetic prompts for performance evaluation can be found [here](./prompts/). Yo
 _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
 1. Open the file `run_real_workload_dataset.sh` and configure the following parameters:
-  - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Real Workload Evaluation](#real-workload-performance-evaluation) for more information about model name.
+  - **model-names**: Model name(s) to be used. See section `1. Enter a model name and choose the right API type` in [Real Workload Evaluation](#real-workload-performance-evaluation) for more information about model name.
   - **llm-api**: API type to be chosen. 
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **qps**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits._Default_: 1
   - **qps-distribution**: the type of wait time distribution in between requests. User can choose the values 'constant', 'uniform', 'exponential'. _Default_: constant
-  - **timeout**: Timeout in seconds. _Default_: 600
+  - **num-warmup-requests**: Number of throwaway warm-up requests sent before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: warm-up requests are fired together (not paced by **qps**) and share the same **timeout** budget as the measured run.
+  - **timeout**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
   - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **num-output-tokens**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
   - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
@@ -598,9 +607,11 @@ _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistr
   - **llm-api**: API type to be chosen.
   - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
   - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
-  - **timeout**: Timeout in seconds. _Default_: 600
+  - **num-warmup-requests**: Number of throwaway warm-up requests sent (at the concurrency above) before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: warm-up shares the same **timeout** budget as the measured run.
+  - **timeout**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
   - **input-file-path**: The location of the custom dataset that you want to evaluate with. You can take as example the file [in here.](./prompts/custom_prompt_example.jsonl)
   - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
+  - **sampling-params**: Optional JSON string of sampling parameters sent with each request (e.g. `'{"max_tokens_to_generate": 256}'`). _Default_: `{}` (empty).
   - **use-debugging-mode**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
 
   _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use. 

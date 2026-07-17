@@ -113,11 +113,15 @@ class TestAPIModel(unittest.TestCase):
                 messages=[{'role': 'user', 'content': text_prompt}],
                 stream=True,
             )
-
+            
             for chunk in response:
                 self.assertTrue(hasattr(chunk, 'id'))
                 self.assertTrue(hasattr(chunk, 'choices'))
-                self.assertIsInstance(chunk.choices[0].delta.content, str)
+                if chunk.choices:
+                    self.assertIsInstance(chunk.choices[0].delta.content, str)
+                else:
+                    # Final usage chunk
+                    self.assertIsNotNone(chunk.usage)
                 self.assertTrue(hasattr(chunk, 'model'))
                 self.assertIn(chunk.model, [model, f'{model}-Text'])
                 self.assertTrue(hasattr(chunk, 'usage'))

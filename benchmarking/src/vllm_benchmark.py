@@ -30,6 +30,7 @@ class VLLMBenchmarkExecutor:
         results_dir: str,
         timeout: int = 600,
         user_metadata: Optional[Dict[str, Any]] = None,
+        num_warmup_requests: int = 0,
     ) -> None:
         """
         Initialize the vLLM benchmark executor.
@@ -39,11 +40,15 @@ class VLLMBenchmarkExecutor:
             results_dir: Directory to save benchmark results
             timeout: Timeout for the benchmark in seconds
             user_metadata: Additional metadata to include in results
+            num_warmup_requests: Number of throwaway warm-up requests sent before the measured run
+                via vLLM's native `--num-warmups` flag. vLLM excludes them from the reported metrics
+                so cold-start and batch ramp-up costs don't skew results. 0 disables warm-up.
         """
         self.model_name = model_name
         self.results_dir = results_dir
         self.timeout = timeout
         self.user_metadata = user_metadata or {}
+        self.num_warmup_requests = num_warmup_requests
         self.stop_event = threading.Event()
         self.result_file_path: Any = None
         self.individual_responses_file_path = None
@@ -188,6 +193,12 @@ class VLLMBenchmarkExecutor:
             cmd.extend(['--request-rate', str(num_concurrent_requests)])
         else:
             cmd.extend(['--request-rate', '1'])
+
+        # Warm-up: vLLM sends these throwaway requests first and excludes them from the reported
+        # metrics (native `--num-warmups` flag). Only added when enabled, for compatibility with
+        # older vLLM versions that lack the flag.
+        if self.num_warmup_requests and self.num_warmup_requests > 0:
+            cmd.extend(['--num-warmups', str(self.num_warmup_requests)])
 
         env = os.environ.copy()
         if api_key:

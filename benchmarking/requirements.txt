@@ -27,6 +27,7 @@ transformers==4.57.1
 joblib==1.4.2
 openpyxl==3.1.5
 streamlit==1.51.0
-# vLLM (Optional - Linux only, requires NVIDIA GPU with CUDA)
-# Uncomment the line below if you're on Linux and want vLLM benchmarking support
+# vLLM — used only for the optional vLLM speed-benchmark comparison (benchmark-mode vllm/both).
+# For API benchmarking it drives a remote endpoint, so no local GPU is required.
+# Native install is best supported on Linux; on other platforms it may require extra steps.
 vllm>=0.6.0

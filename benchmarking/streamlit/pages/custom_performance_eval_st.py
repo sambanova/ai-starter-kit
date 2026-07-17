@@ -102,6 +102,7 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
         model_name=st.session_state.llm,
         results_dir=results_path,
         num_concurrent_requests=st.session_state.number_concurrent_requests,
+        num_warmup_requests=st.session_state.number_warmup_requests,
         timeout=st.session_state.timeout,
         input_file_path=st.session_state.file_path,
         save_response_texts=st.session_state.save_llm_responses,
@@ -174,6 +175,19 @@ def main() -> None:
             step=1,
             key='number_concurrent_requests',
             disabled=st.session_state.running,
+        )
+
+        st.number_input(
+            'Num Warm-up Requests',
+            min_value=0,
+            max_value=100,
+            value=0,
+            step=1,
+            key='number_warmup_requests',
+            disabled=st.session_state.running,
+            help='Throwaway requests sent (at the concurrency above) before the measured run. Their results '
+            'are discarded so cold-start and batch ramp-up costs do not skew the metrics. 0 disables warm-up. '
+            'Warm-up shares the same timeout budget as the measured run.',
         )
 
         st.number_input(

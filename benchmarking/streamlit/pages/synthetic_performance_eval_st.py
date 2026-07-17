@@ -70,6 +70,8 @@ def _initialize_session_variables() -> None:
         st.session_state.number_requests = None
     if 'number_concurrent_requests' not in st.session_state:
         st.session_state.number_concurrent_requests = None
+    if 'number_warmup_requests' not in st.session_state:
+        st.session_state.number_warmup_requests = None
     if 'timeout' not in st.session_state:
         st.session_state.timeout = None
     if 'llm_api' not in st.session_state:
@@ -171,6 +173,7 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
         results_dir=results_path,
         multimodal_image_size=st.session_state.multimodal_image_size,
         num_concurrent_requests=st.session_state.number_concurrent_requests,
+        num_warmup_requests=st.session_state.number_warmup_requests,
         timeout=st.session_state.timeout,
         llm_api=st.session_state.llm_api,
         api_variables=api_variables,
@@ -217,6 +220,7 @@ def _run_vllm_benchmark(progress_bar: Any = None) -> pd.DataFrame:
         results_dir=results_path,
         timeout=st.session_state.timeout,
         user_metadata={'model_idx': 0},
+        num_warmup_requests=st.session_state.number_warmup_requests,
     )
 
     st.session_state.vllm_evaluator.run_benchmark(
@@ -461,6 +465,19 @@ def main() -> None:
             value=1,
             step=1,
             disabled=st.session_state.running or st.session_state.optional_download,
+        )
+
+        st.session_state.number_warmup_requests = st.number_input(
+            'Number of warm-up requests',
+            min_value=0,
+            max_value=100,
+            value=0,
+            step=1,
+            disabled=st.session_state.running or st.session_state.optional_download,
+            help='Throwaway requests sent (at the concurrency above) before the measured run. Their results '
+            'are discarded so cold-start and batch ramp-up costs do not skew the metrics. 0 disables warm-up. '
+            'Supported by both the Kit and vLLM benchmarks; for the Kit it shares the same timeout budget as '
+            'the measured run.',
         )
 
         timeout_blocked = st.session_state.benchmark_mode in ['vllm', 'both']
