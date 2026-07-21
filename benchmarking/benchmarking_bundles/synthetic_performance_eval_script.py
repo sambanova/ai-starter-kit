@@ -197,6 +197,130 @@ class SwitchingTimeCalculator:
 
 
 # =========================================================
+#                   BUNDLE SUMMARY CALCULATOR
+# =========================================================
+
+
+class BundleSummaryCalculator:
+    """Derive bundle-level (multi-row) throughput metrics from per-row summary data.
+
+    All inputs come from columns already present in the per-row summary
+    (`timestamp`, `num_completed_requests`, `num_completed_requests_per_min`,
+    `number_errors`, `model`) - no changes to the core evaluator/runner are
+    required or made. Per-row `start_time`/`end_time` are never persisted, so
+    each row's wall-clock window is approximated as
+    `[timestamp - duration_row_s, timestamp]`, where `duration_row_s` is back
+    out of the row's already-computed RPM and completed-request count.
+
+    Output rows expose both the numerator and denominator of `bundle_rps`/
+    `bundle_rpm` so the calculation can be reproduced by hand:
+        total_effective_duration_s = total_duration_s - delay_time_s
+        bundle_rps = total_completed_requests / total_effective_duration_s
+        bundle_rpm = bundle_rps * 60
+    """
+
+    def __init__(self, family_lookup_fn: Any) -> None:
+        self.family_lookup_fn = family_lookup_fn
+
+    @staticmethod
+    def _row_duration_s(row: pd.Series) -> float:
+        rpm = row.get('num_completed_requests_per_min', 0) or 0
+        completed = row.get('num_completed_requests', 0) or 0
+        if rpm <= 0 or completed <= 0:
+            return 0.0
+        return completed / (rpm / 60.0)
+
+    def _annotate_spans(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df['duration_row_s'] = df.apply(self._row_duration_s, axis=1)
+        df['approx_end_wallclock'] = df['timestamp']
+        df['approx_start_wallclock'] = df['timestamp'] - df['duration_row_s']
+        return df
+
+    def _summarize_group(
+        self,
+        df_group: pd.DataFrame,
+        time_delay: float,
+        concurrency_enabled: bool,
+        label: str,
+    ) -> Dict[str, Any]:
+        # Rows with no usable duration (failed/errored runs) can't contribute
+        # a meaningful start/end point, so they're excluded from the span
+        # min/max, but their requests/errors still count toward the totals.
+        valid = df_group[df_group['duration_row_s'] > 0]
+
+        num_model_configs = len(df_group)
+        if 'num_requests_started' in df_group.columns:
+            total_num_requests_started = int(df_group['num_requests_started'].fillna(0).sum())
+        else:
+            total_num_requests_started = 0
+        total_completed = int(df_group['num_completed_requests'].fillna(0).sum())
+        total_errors = int(df_group['number_errors'].fillna(0).sum())
+
+        if valid.empty:
+            total_duration_s = 0.0
+            delay_time_s = 0.0
+            total_effective_duration_s = 0.0
+            bundle_rps = 0.0
+        else:
+            start = valid['approx_start_wallclock'].min()
+            end = valid['approx_end_wallclock'].max()
+            total_duration_s = max(end - start, 0.0)
+
+            if concurrency_enabled or num_model_configs <= 1:
+                delay_time_s = 0.0
+            else:
+                delay_time_s = time_delay * max(num_model_configs - 1, 0)
+
+            total_effective_duration_s = max(total_duration_s - delay_time_s, 0.0)
+            bundle_rps = (total_completed / total_effective_duration_s) if total_effective_duration_s > 0 else 0.0
+
+        bundle_rpm = bundle_rps * 60.0
+
+        return {
+            'family': label,
+            'num_model_configs': num_model_configs,
+            'total_num_requests_started': total_num_requests_started,
+            'total_errors': total_errors,
+            # numerator of bundle_rps/bundle_rpm
+            'total_completed_requests': total_completed,
+            # raw wall-clock window covering all rows in this group
+            'total_duration_s': round(total_duration_s, 4),
+            'delay_time_s': round(delay_time_s, 4),
+            # denominator of bundle_rps/bundle_rpm: total_duration_s - delay_time_s
+            'total_effective_duration_s': round(total_effective_duration_s, 4),
+            # bundle_rps = total_completed_requests / total_effective_duration_s
+            'bundle_rps': round(bundle_rps, 4),
+            # bundle_rpm = bundle_rps * 60
+            'bundle_rpm': round(bundle_rpm, 4),
+            'concurrency_enabled': bool(concurrency_enabled),
+        }
+
+    def build_summary(
+        self,
+        df_summary: pd.DataFrame,
+        time_delay: float,
+        concurrency_enabled: bool,
+    ) -> pd.DataFrame:
+        df = self._annotate_spans(df_summary)
+
+        rows = [self._summarize_group(df, time_delay, concurrency_enabled, label='ALL')]
+
+        # NOTE: unrecognized model names fall back to the 'llama2' family
+        # (see find_family_model_type) - such rows will surface under the
+        # 'llama2' row rather than a distinct 'unknown' bucket. Per-family
+        # spans are only a clean, non-overlapping decomposition when a
+        # family's rows are contiguous in execution order; interleaved
+        # families can produce overlapping family-level spans, which is
+        # expected, not a bug.
+        df['model_family'] = df['model'].apply(self.family_lookup_fn)
+        for family, df_family in df.groupby('model_family'):
+            rows.append(self._summarize_group(df_family, time_delay, concurrency_enabled, label=family))
+
+        return pd.DataFrame(rows)
+
+
+# =========================================================
 #                   RESULTS CONSOLIDATOR
 # =========================================================
 
@@ -208,13 +332,22 @@ class ResultsConsolidator:
         file_parser: FileNameParser,
         batch_analyzer: BatchAnalyzer,
         rep_finder: RepresentativeFinder,
+        bundle_summary_calculator: BundleSummaryCalculator,
     ) -> None:
         self.read_perf_eval_json_files = read_perf_eval_json_files_fn
         self.file_parser = file_parser
         self.batch_analyzer = batch_analyzer
         self.rep_finder = rep_finder
+        self.bundle_summary_calculator = bundle_summary_calculator
 
-    def consolidate(self, output_files_dir: str, consolidated_results_dir: str, run_name: str) -> None:
+    def consolidate(
+        self,
+        output_files_dir: str,
+        consolidated_results_dir: str,
+        run_name: str,
+        time_delay: float = 0.0,
+        concurrency_enabled: bool = False,
+    ) -> None:
         out_dir = os.path.expanduser(output_files_dir)
         consolidated_dir = os.path.expanduser(consolidated_results_dir)
 
@@ -339,9 +472,18 @@ class ResultsConsolidator:
 
         # Remove missing columns safely
         selected_columns = [c for c in selected_columns if c not in missing_columns and c in df_summary.columns]
-        # Keep only selected columns for export
-        df_summary[selected_columns].to_excel(out_path)
-        logger.info(f'✅ Wrote consolidated results with switching time to {out_path}')
+
+        # Bundle-level summary is computed from the full df_summary (before
+        # column pruning) so it stays independent of the per-model sheet's
+        # column set.
+        df_bundle = self.bundle_summary_calculator.build_summary(
+            df_summary, time_delay=time_delay, concurrency_enabled=concurrency_enabled
+        )
+
+        with pd.ExcelWriter(out_path, engine='openpyxl') as writer:
+            df_summary[selected_columns].to_excel(writer, sheet_name='per_model')
+            df_bundle.to_excel(writer, sheet_name='bundle_summary', index=False)
+        logger.info(f'✅ Wrote consolidated results with switching time and bundle summary to {out_path}')
 
 
 # =========================================================
@@ -466,8 +608,15 @@ class BenchmarkRunner:
             self.file_parser,
             self.batch_analyzer,
             self.rep_finder,
+            BundleSummaryCalculator(family_lookup_fn=find_family_model_type_wrapper),
         )
-        consolidator.consolidate(output_files_dir, self.config['consolidated_results_dir'], run_name)
+        consolidator.consolidate(
+            output_files_dir,
+            self.config['consolidated_results_dir'],
+            run_name,
+            time_delay=self.config.get('time_delay', 0),
+            concurrency_enabled=self.config.get('concurrency_enabled', False),
+        )
 
 
 # =========================================================
@@ -479,6 +628,12 @@ def read_perf_eval_json_files_wrapper(path: str, type: str) -> pd.DataFrame:
     from benchmarking.utils import read_perf_eval_json_files as _read_fn
 
     return _read_fn(path, type=type)
+
+
+def find_family_model_type_wrapper(model_name: str) -> str:
+    from benchmarking.benchmarking_utils import find_family_model_type as _find_family_fn
+
+    return _find_family_fn(model_name)
 
 
 # ---------------------------------------------------------
