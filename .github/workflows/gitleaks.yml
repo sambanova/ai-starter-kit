@@ -1,0 +1,36 @@
+name: gitleaks
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # full history so the scan is complete
+      - name: Install and run gitleaks (non-blocking)
+        continue-on-error: true     # reports findings, does not fail the PR yet
+        run: |
+          VERSION=8.28.0
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          code=0
+          ./gitleaks detect --source . --redact -v \
+            --config .gitleaks.toml \
+            --report-format json --report-path gitleaks-report.json || code=$?
+          count=$(jq 'length' gitleaks-report.json 2>/dev/null || echo 0)
+          {
+            echo "## gitleaks: ${count} finding(s)"
+            if [ "$count" -gt 0 ]; then
+              echo ""
+              echo "| Rule | File | Line | Commit |"
+              echo "| --- | --- | --- | --- |"
+              jq -r '.[] | "| \(.RuleID) | \(.File) | \(.StartLine) | \(.Commit[0:8]) |"' gitleaks-report.json
+              echo ""
+              echo "_Secrets redacted. Findings are historical — clean up rather than just delete. Non-blocking during rollout._"
+            else
+              echo "No findings."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
