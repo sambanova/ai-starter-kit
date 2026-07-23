@@ -1,0 +1,19 @@
+# Gitleaks config for ai-starter-kit.
+# Extends the built-in default ruleset. Allowlists cover documentation and
+# tutorial example keys — this is a demo/starter repo, so sample keys in prose
+# and notebooks are expected, not real credentials.
+title = "ai-starter-kit gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Docs, tutorial notebooks, and placeholder sample keys"
+paths = [
+  '''.*\.md$''',                     # README/docs — example keys in prose
+  '''.*\.ipynb$''',                  # tutorial notebooks — example keys in cells
+  '''utils/parsing/config\.yaml''',  # placeholder key value
+]
+regexes = [
+  '''123456789abcde''',              # obvious placeholder used in sample configs
+]
