@@ -164,9 +164,12 @@ If you'd like to know more details about these output files, please check the ki
 
 #### 5.2 Consolidated results
 
-Consolidated results are written to: `consolidated_results_dir` in `config.yaml`.
+Consolidated results are written to: `consolidated_results_dir` in `config.yaml`, as a single `<run_name>.xlsx` workbook with two sheets:
 
-Each row in the Excel file corresponds to **one row in `model_configs_example.csv`**.
+- **`per_model`** — one row per row in `model_configs_example.csv`, as described below.
+- **`bundle_summary`** — aggregated throughput across the whole bundle (see [Bundle-level summary](#53-bundle-level-summary) below).
+
+Each row in the `per_model` sheet corresponds to **one row in `model_configs_example.csv`**.
 
 ##### Terminology
 
@@ -243,3 +246,42 @@ __Note__: Only requests at the **highest batching level** are considered.
 - It's recommended that the user include a warm up set of models, either in the same `model_configs_example.csv` or in a separate csv, so HBM could be set with the model configurations that will be tested. Right after the warm up models are procesed, proceed run the configs that would include the switching time. 
 - Include multiple sequence lengths and batch sizes according to the node environment configuration.
 - Run multiple requests per model config row to obtain stable switching time estimates
+
+#### 5.3 Bundle-level summary
+
+While the `per_model` sheet reports throughput **per model config row** (one model, one batch size/QPS, one context length), the `bundle_summary` sheet reports throughput **for the bundle as a whole** — i.e. how many requests per second/minute the entire set of model configs served, combined.
+
+##### Rows
+
+- **`ALL`** — grand total across every row in `model_configs_example.csv`.
+- **One row per model family** — rows are also grouped by model family (inferred from `model_name`, the same family detection used elsewhere in the benchmarking kit) so you can compare, e.g., the combined throughput of all `llama3` rows against all `qwen` rows in the same bundle.
+
+__Note__: a model name that isn't recognized by the family detector falls back to the `llama2` family bucket rather than an `unknown` one — if you see an unexpected model rolled up under `llama2`, check the model naming.
+
+##### Columns
+
+| Column | Meaning |
+|---|---|
+| `family` | `ALL` for the grand total, or the family name for that group's row |
+| `num_model_configs` | Number of `model_configs_example.csv` rows in this group |
+| `total_num_requests_started` | Requests attempted/dispatched across the group |
+| `total_errors` | Requests that failed |
+| `total_completed_requests` | Requests that completed successfully — the **numerator** of the throughput calculation |
+| `total_duration_s` | Raw wall-clock time from the group's first row starting to its last row finishing |
+| `delay_time_s` | Portion of `total_duration_s` attributable to the configured `time_delay` (see below) |
+| `total_effective_duration_s` | `total_duration_s - delay_time_s` — the **denominator** of the throughput calculation |
+| `bundle_rps` | `total_completed_requests / total_effective_duration_s` |
+| `bundle_rpm` | `bundle_rps * 60` |
+| `concurrency_enabled` | Whether this run used row-level concurrency (copied from `config.yaml`) |
+
+So, for any row: `bundle_rps = total_completed_requests / total_effective_duration_s`, and `bundle_rpm = bundle_rps * 60`.
+
+##### How it's calculated
+
+Per-row start/end timestamps aren't stored in the summary JSON files, so each row's wall-clock window is estimated from data that **is** already stored: its `num_completed_requests`, `num_completed_requests_per_min`, and the completion `timestamp`. `total_duration_s` for a group is then the span from the earliest estimated start to the latest estimated end across its rows — this correctly avoids double-counting overlapping time when `concurrency_enabled: true`.
+
+`delay_time_s` accounts for the `time_delay` sleep the runner inserts after each row:
+- **Sequential mode** (`concurrency_enabled: false`): `delay_time_s = time_delay * (num_model_configs - 1)`, since a delay occurs between every pair of consecutive rows but not after the last one.
+- **Concurrent mode** (`concurrency_enabled: true`) or a single-row group: `delay_time_s = 0`, since row-level sleeps don't chain into a shared timeline the same way.
+
+This keeps `bundle_rps`/`bundle_rpm` from being artificially deflated by dead time that's just an artifact of the benchmark configuration rather than actual request-serving time.
