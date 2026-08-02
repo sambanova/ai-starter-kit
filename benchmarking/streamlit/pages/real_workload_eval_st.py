@@ -113,6 +113,8 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
         api_variables=api_variables,
         user_metadata={'model_idx': 0},
         config=st.session_state.config,
+        use_wandb=st.session_state.get('wandb_enabled', False),
+        wandb_project=st.session_state.get('wandb_project', ''),
     )
 
     st.session_state.performance_evaluator.run_benchmark(

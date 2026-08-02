@@ -109,6 +109,8 @@ def _run_custom_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame
         llm_api=st.session_state.llm_api,
         api_variables=api_variables,
         config=st.session_state.config,
+        use_wandb=st.session_state.get('wandb_enabled', False),
+        wandb_project=st.session_state.get('wandb_project', ''),
     )
 
     # set generic max tokens parameter
