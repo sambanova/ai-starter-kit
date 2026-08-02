@@ -17,7 +17,9 @@ python src/evaluator.py \
 --save-llm-responses False \
 --use-debugging-mode False \
 --llm-api sncloud \
---benchmark-mode kit
+--benchmark-mode kit \
+--use-wandb False \
+--wandb-project sambanova-benchmarking
 
 
 # Notes:

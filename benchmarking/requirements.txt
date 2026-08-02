@@ -31,3 +31,4 @@ streamlit==1.51.0
 # For API benchmarking it drives a remote endpoint, so no local GPU is required.
 # Native install is best supported on Linux; on other platforms it may require extra steps.
 vllm>=0.6.0
+wandb>=0.19.0

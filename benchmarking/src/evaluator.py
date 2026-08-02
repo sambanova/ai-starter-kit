@@ -131,6 +131,57 @@ def main() -> None:
             ramp-up costs so they do not skew the reported metrics. 0 disables warm-up. (default: %(default)s)',
     )
 
+    # W&B arguments
+    parser.add_argument(
+        '--use-wandb',
+        type=str2bool,
+        required=False,
+        default=False,
+        help='Whether to save results to Weights & Biases (W&B). (default: %(default)s)',
+    )
+
+    parser.add_argument(
+        '--wandb-project',
+        type=str,
+        required=False,
+        default='sambanova-benchmarking',
+        help='Name of the W&B project. (default: %(default)s)',
+    )
+
+    parser.add_argument(
+        '--wandb-entity',
+        type=str,
+        required=False,
+        default='',
+        help='W&B entity (team or username). If not set, uses default from wandb login.',
+    )
+
+    parser.add_argument(
+        '--wandb-run-name',
+        type=str,
+        required=False,
+        default='',
+        help='Custom name for this W&B run. If not set, W&B will auto-generate a name.',
+    )
+
+    parser.add_argument(
+        '--wandb-tags',
+        type=str,
+        required=False,
+        default='',
+        help='Comma-separated tags for W&B run (e.g., synthetic,benchmark).',
+    )
+
+    parser.add_argument(
+        '--wandb-mode',
+        type=str,
+        required=False,
+        default='online',
+        choices=['online', 'offline', 'disabled'],
+        help='W&B run mode: online (sync immediately), offline (save locally), disabled (no logging). \
+            (default: %(default)s)',
+    )
+
     args, _ = parser.parse_known_args()
 
     # Parse user metadata.
@@ -185,10 +236,17 @@ def main() -> None:
             use_debugging_mode=args.use_debugging_mode,
             llm_api=args.llm_api,
             num_warmup_requests=args.num_warmup_requests,
+            use_wandb=args.use_wandb,
+            wandb_project=args.wandb_project,
+            wandb_entity=args.wandb_entity or None,
+            wandb_run_name=args.wandb_run_name or None,
+            wandb_tags=[t.strip() for t in args.wandb_tags.split(',') if t.strip()] if args.wandb_tags else None,
+            wandb_mode=args.wandb_mode,
         )
 
         # Run performance evaluation
         custom_evaluator.run_benchmark(sampling_params=json.loads(args.sampling_params))
+        custom_evaluator.finish_wandb()
 
     # Synthetic dataset evaluation path
     elif args.mode == 'synthetic':
@@ -290,6 +348,12 @@ def main() -> None:
                     use_debugging_mode=args.use_debugging_mode,
                     llm_api=args.llm_api,
                     num_warmup_requests=args.num_warmup_requests,
+                    use_wandb=args.use_wandb,
+                    wandb_project=args.wandb_project,
+                    wandb_entity=args.wandb_entity or None,
+                    wandb_run_name=args.wandb_run_name or None,
+                    wandb_tags=[t.strip() for t in args.wandb_tags.split(',') if t.strip()] if args.wandb_tags else None,
+                    wandb_mode=args.wandb_mode,
                 )
 
                 # Run performance evaluation
@@ -300,6 +364,7 @@ def main() -> None:
                     sampling_params=json.loads(args.sampling_params),
                 )
 
+                synthetic_evaluator.finish_wandb()
                 kit_individual_responses_path = synthetic_evaluator.individual_responses_file_path
 
             # --- vLLM path ---
@@ -411,6 +476,12 @@ def main() -> None:
                 use_debugging_mode=args.use_debugging_mode,
                 llm_api=args.llm_api,
                 num_warmup_requests=args.num_warmup_requests,
+                use_wandb=args.use_wandb,
+                wandb_project=args.wandb_project,
+                wandb_entity=args.wandb_entity or None,
+                wandb_run_name=args.wandb_run_name or None,
+                wandb_tags=[t.strip() for t in args.wandb_tags.split(',') if t.strip()] if args.wandb_tags else None,
+                wandb_mode=args.wandb_mode,
             )
 
             # Run performance evaluation
@@ -420,6 +491,7 @@ def main() -> None:
                 num_requests=args.num_requests,
                 sampling_params=json.loads(args.sampling_params),
             )
+            real_workload_evaluator.finish_wandb()
 
     else:
         raise Exception("Performance eval mode not valid. Available values are 'custom', 'synthetic', 'real_workload'")
