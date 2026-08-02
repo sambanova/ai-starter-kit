@@ -19,6 +19,7 @@ from benchmarking.src.comparison_utils import (
 )
 from benchmarking.utils import SAMBANOVA_API_BASE
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
+from utils.visual.env_utils import get_wandb_key
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 kit_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -137,6 +138,36 @@ def setup_credentials() -> None:
             else:
                 save_credentials('', {var: '' for var in additional_env_vars}, st.session_state.prod_mode)
             st.rerun()
+
+    st.divider()
+    st.title('W&B Settings')
+
+    st.markdown('Log benchmark results to Weights & Biases (W&B). Get your API key [here](https://wandb.ai/authorize)')
+
+    if 'wandb_enabled' not in st.session_state:
+        st.session_state.wandb_enabled = False
+    if 'wandb_project' not in st.session_state:
+        st.session_state.wandb_project = ''
+
+    wandb_key = get_wandb_key()
+    if wandb_key:
+        st.session_state.wandb_api_key = wandb_key
+        st.success('W&B API key found')
+
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.session_state.wandb_project = st.text_input(
+            'W&B Project Name',
+            value=st.session_state.wandb_project,
+            placeholder='benchmarking',
+            help='W&B project to log results to. If empty, defaults to "benchmarking".',
+        )
+    with col2:
+        st.session_state.wandb_enabled = st.checkbox(
+            'Enable W&B',
+            value=st.session_state.wandb_enabled,
+            help='Enable logging benchmark results to W&B',
+        )
 
 
 @st.cache_data(ttl=300, show_spinner=False)

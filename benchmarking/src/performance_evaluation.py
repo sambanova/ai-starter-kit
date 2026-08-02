@@ -32,6 +32,12 @@ from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
 from benchmarking.utils import CONFIG_PATH
+from benchmarking.src.wandb_utils import (
+    finish_wandb_run,
+    init_wandb,
+    log_individual_request_metrics,
+    log_summary_metrics,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,6 +69,8 @@ class BasePerformanceEvaluator(abc.ABC):
         timeout: int = 600,
         num_warmup_requests: int = 0,
         config: Dict[str, Any] = {},
+        use_wandb: bool = False,
+        wandb_project: str = '',
     ) -> None:
         # Set kit's config file
         if not config:
@@ -92,6 +100,11 @@ class BasePerformanceEvaluator(abc.ABC):
         # Label shown by the UI progress bar; switched to 'Warming up' during the warm-up phase.
         self.progress_phase_label = 'Running requests'
         self.run_uuid = uuid.uuid4()
+
+        # W&B settings
+        self.use_wandb = use_wandb or self.config.get('wandb', {}).get('enabled', False)
+        self.wandb_project = wandb_project or self.config.get('wandb', {}).get('project', '') or 'benchmarking'
+        self.wandb_run = None
 
         # To be set upon saving of results
         self.summary_file_path: Optional[str] = None
@@ -572,6 +585,9 @@ class BasePerformanceEvaluator(abc.ABC):
             logger.error(individual_responses)
             raise e
 
+        # Log to W&B if enabled
+        self.log_results_to_wandb(summary, individual_responses)
+
     def stop_benchmark(self) -> None:
         """Stops the benchmarking process by setting the stop event."""
         self.stop_event.set()
@@ -592,6 +608,55 @@ class BasePerformanceEvaluator(abc.ABC):
         with open(image_location, 'rb') as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
         return encoded_image
+
+    def init_wandb_run(self, run_name: Optional[str] = None) -> None:
+        """Initialize a W&B run for logging benchmark results.
+
+        Args:
+            run_name: Optional name for the W&B run. If None, uses a generated name.
+        """
+        if not self.use_wandb:
+            return
+
+        self.wandb_run = init_wandb(
+            project_name=self.wandb_project,
+            name=run_name or f'{self.model_name}_{self.run_uuid}',
+            config={
+                'model': self.model_name,
+                'llm_api': self.llm_api,
+            },
+        )
+
+    def log_results_to_wandb(
+        self,
+        summary: Dict[str, Any],
+        individual_responses: (
+            List[LLMResponse]
+            | List[Tuple[Dict[str, Any], str, RequestConfig]]
+            | Tuple[Dict[str, object], List[LLMResponse]]
+        ),
+    ) -> None:
+        """Log benchmark results to W&B.
+
+        Args:
+            summary: Summary metrics dictionary
+            individual_responses: List of individual response objects
+        """
+        if not self.use_wandb or self.wandb_run is None:
+            return
+
+        log_summary_metrics(self.wandb_run, summary)
+
+        response_metrics = [
+            response.metrics for response in individual_responses if isinstance(response, LLMResponse)
+        ]
+        log_individual_request_metrics(self.wandb_run, response_metrics)
+
+    def finish_wandb_run(self) -> None:
+        """Finish the W&B run if it was initialized."""
+        if self.wandb_run is not None:
+            finish_wandb_run(self.wandb_run)
+            self.wandb_run = None
 
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):
@@ -725,19 +790,23 @@ class CustomPerformanceEvaluator(BasePerformanceEvaluator):
         self.cli_progress_bar = tqdm(total=len(self.dataset), desc='Running Requests')
         self.ui_progress_bar = kwargs.get('progress_bar', None)
 
-        # Calculate performance metrics individually and summary
-        summary, individual_responses = self.get_token_throughput_latencies(
-            sampling_params=sampling_params,
-        )
-
-        # Save benchmarking results to the specified results directory, it it exists
-        if self.results_dir:
-            filename = self.create_output_filename()
-            self.save_results(
-                filename,
-                summary,
-                individual_responses,
+        self.init_wandb_run(run_name=f'custom_{self.model_name}_{self.run_uuid}')
+        try:
+            # Calculate performance metrics individually and summary
+            summary, individual_responses = self.get_token_throughput_latencies(
+                sampling_params=sampling_params,
             )
+
+            # Save benchmarking results to the specified results directory, it it exists
+            if self.results_dir:
+                filename = self.create_output_filename()
+                self.save_results(
+                    filename,
+                    summary,
+                    individual_responses,
+                )
+        finally:
+            self.finish_wandb_run()
         return summary, individual_responses
 
     def get_token_throughput_latencies(
@@ -1091,17 +1160,21 @@ class SyntheticPerformanceEvaluator(BasePerformanceEvaluator):
                 'The minimum number of input tokens that will be sent is 40 because of the prompting logic right now'
             )
 
-        # Calculate performance metrics individually and summary
-        summary, individual_responses = self.get_token_throughput_latencies(
-            num_input_tokens=num_input_tokens,
-            num_output_tokens=num_output_tokens,
-            num_requests=num_requests,
-            sampling_params=sampling_params,
-        )
+        self.init_wandb_run(run_name=f'synthetic_{self.model_name}_{self.run_uuid}')
+        try:
+            # Calculate performance metrics individually and summary
+            summary, individual_responses = self.get_token_throughput_latencies(
+                num_input_tokens=num_input_tokens,
+                num_output_tokens=num_output_tokens,
+                num_requests=num_requests,
+                sampling_params=sampling_params,
+            )
 
-        if self.results_dir:
-            filename = self.create_output_filename(num_input_tokens, num_output_tokens)
-            self.save_results(filename, summary, individual_responses)
+            if self.results_dir:
+                filename = self.create_output_filename(num_input_tokens, num_output_tokens)
+                self.save_results(filename, summary, individual_responses)
+        finally:
+            self.finish_wandb_run()
 
         return summary, individual_responses
 
