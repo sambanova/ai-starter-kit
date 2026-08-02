@@ -32,6 +32,7 @@ from benchmarking.src.llmperf.llmperf_utils import LLMPerfResults, flatten
 from benchmarking.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.src.llmperf.sambanova_client import llm_request
 from benchmarking.utils import CONFIG_PATH
+from benchmarking.wandb_logger import WANDBLogger, create_wandb_logger, is_wandb_available
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,6 +64,14 @@ class BasePerformanceEvaluator(abc.ABC):
         timeout: int = 600,
         num_warmup_requests: int = 0,
         config: Dict[str, Any] = {},
+        # W&B configuration
+        use_wandb: bool = False,
+        wandb_project: Optional[str] = None,
+        wandb_entity: Optional[str] = None,
+        wandb_run_name: Optional[str] = None,
+        wandb_tags: Optional[List[str]] = None,
+        wandb_notes: Optional[str] = None,
+        wandb_mode: str = 'online',
     ) -> None:
         # Set kit's config file
         if not config:
@@ -96,6 +105,20 @@ class BasePerformanceEvaluator(abc.ABC):
         # To be set upon saving of results
         self.summary_file_path: Optional[str] = None
         self.individual_responses_file_path: Optional[str] = None
+
+        # W&B logging configuration
+        self.use_wandb = use_wandb
+        self.wandb_project = wandb_project or 'sambanova-benchmarking'
+        self.wandb_entity = wandb_entity
+        self.wandb_run_name = wandb_run_name
+        self.wandb_tags = wandb_tags or []
+        self.wandb_notes = wandb_notes
+        self.wandb_mode = wandb_mode
+        self._wandb_logger: Optional[WANDBLogger] = None
+
+        # Initialize W&B logger if enabled
+        if self.use_wandb:
+            self._init_wandb()
 
     def get_token_length(self, input_text: str) -> int:
         return len(self.tokenizer.encode(input_text))
@@ -572,6 +595,10 @@ class BasePerformanceEvaluator(abc.ABC):
             logger.error(individual_responses)
             raise e
 
+        # Log results to W&B if enabled
+        if self.use_wandb:
+            self.log_results_to_wandb(summary, individual_responses)
+
     def stop_benchmark(self) -> None:
         """Stops the benchmarking process by setting the stop event."""
         self.stop_event.set()
@@ -592,6 +619,99 @@ class BasePerformanceEvaluator(abc.ABC):
         with open(image_location, 'rb') as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
         return encoded_image
+
+    def _init_wandb(self) -> None:
+        """Initialize the W&B logger if enabled."""
+        if not is_wandb_available():
+            logger.warning('W&B is not available. Please install it with: pip install wandb')
+            self.use_wandb = False
+            return
+
+        # Build config for W&B
+        wandb_config = {
+            'model_name': self.model_name,
+            'llm_api': self.llm_api,
+            'timeout': self.timeout,
+            'num_warmup_requests': self.num_warmup_requests,
+            'multimodal_image_size': self.multimodal_image_size,
+        }
+        if hasattr(self, 'num_concurrent_requests') and self.num_concurrent_requests:
+            wandb_config['num_concurrent_requests'] = self.num_concurrent_requests
+        if hasattr(self, 'qps') and self.qps:
+            wandb_config['qps'] = self.qps
+            wandb_config['qps_distribution'] = self.qps_distribution
+
+        self._wandb_logger = create_wandb_logger(
+            project_name=self.wandb_project,
+            entity=self.wandb_entity,
+            run_name=self.wandb_run_name,
+            config=wandb_config,
+            tags=self.wandb_tags,
+            notes=self.wandb_notes,
+            mode=self.wandb_mode,
+        )
+
+        if self._wandb_logger is None:
+            logger.warning('Failed to initialize W&B logger.')
+            self.use_wandb = False
+
+    def log_results_to_wandb(
+        self,
+        summary: Dict[str, Any],
+        individual_responses: (
+            List[LLMResponse]
+            | List[Tuple[Dict[str, Any], str, RequestConfig]]
+            | Tuple[Dict[str, object], List[LLMResponse]]
+        ),
+        prefix: str = '',
+    ) -> None:
+        """Log benchmark results to W&B.
+
+        Args:
+            summary: Summary metrics from the benchmark run.
+            individual_responses: List of individual request responses.
+            prefix: Optional prefix for metric names.
+        """
+        if not self._wandb_logger or not self._wandb_logger.is_initialized():
+            return
+
+        try:
+            # Log summary metrics
+            self._wandb_logger.log_summary_metrics(
+                summary=summary,
+                model_name=self.model_name,
+                prefix=prefix,
+            )
+
+            # Log individual responses as a table
+            response_metrics = [
+                response.metrics for response in individual_responses if isinstance(response, LLMResponse)
+            ]
+            if response_metrics:
+                self._wandb_logger.log_individual_responses(
+                    responses=response_metrics,
+                    model_name=self.model_name,
+                )
+
+                # Log performance plots if pandas is available
+                try:
+                    import pandas as pd
+                    df = pd.DataFrame(response_metrics)
+                    self._wandb_logger.log_performance_plots(
+                        df=df,
+                        model_name=self.model_name,
+                    )
+                except Exception:
+                    pass  # Plot logging is optional
+
+        except Exception as e:
+            logger.warning(f'Failed to log results to W&B: {e}')
+
+    def finish_wandb(self) -> None:
+        """Finish the W&B run."""
+        if self._wandb_logger:
+            self._wandb_logger.finish()
+            self._wandb_logger = None
 
 
 class CustomPerformanceEvaluator(BasePerformanceEvaluator):

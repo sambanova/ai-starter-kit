@@ -70,6 +70,20 @@ def _initialize_session_variables() -> None:
     if 'qps_distribution' not in st.session_state:
         st.session_state.qps_distribution = None
 
+    # W&B configuration
+    if 'use_wandb' not in st.session_state:
+        st.session_state.use_wandb = False
+    if 'wandb_project' not in st.session_state:
+        st.session_state.wandb_project = 'sambanova-benchmarking'
+    if 'wandb_entity' not in st.session_state:
+        st.session_state.wandb_entity = ''
+    if 'wandb_run_name' not in st.session_state:
+        st.session_state.wandb_run_name = ''
+    if 'wandb_tags' not in st.session_state:
+        st.session_state.wandb_tags = ''
+    if 'wandb_mode' not in st.session_state:
+        st.session_state.wandb_mode = 'online'
+
     # Additional initializations
     if 'run_button' in st.session_state and st.session_state.run_button == True:
         st.session_state.running = True
@@ -100,6 +114,11 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
 
     api_variables = set_api_variables()
 
+    # Prepare W&B parameters
+    wandb_entity = st.session_state.wandb_entity.strip() or None
+    wandb_run_name = st.session_state.wandb_run_name.strip() or None
+    wandb_tags = [t.strip() for t in st.session_state.wandb_tags.split(',') if t.strip()] if st.session_state.wandb_tags else None
+
     # Call benchmarking process
     st.session_state.performance_evaluator = RealWorkLoadPerformanceEvaluator(
         model_name=st.session_state.llm,
@@ -113,6 +132,13 @@ def _run_performance_evaluation(progress_bar: Any = None) -> pd.DataFrame:
         api_variables=api_variables,
         user_metadata={'model_idx': 0},
         config=st.session_state.config,
+        # W&B configuration
+        use_wandb=st.session_state.use_wandb,
+        wandb_project=st.session_state.wandb_project,
+        wandb_entity=wandb_entity,
+        wandb_run_name=wandb_run_name,
+        wandb_tags=wandb_tags,
+        wandb_mode=st.session_state.wandb_mode,
     )
 
     st.session_state.performance_evaluator.run_benchmark(
@@ -246,6 +272,58 @@ def main() -> None:
             'Timeout', min_value=60, max_value=1800, value=600, step=1, disabled=st.session_state.running
         )
 
+        st.divider()
+        st.markdown('**W&B Cloud Logging (Optional)**')
+
+        st.session_state.use_wandb = st.checkbox(
+            'Save results to W&B',
+            value=False,
+            disabled=st.session_state.running,
+            help='Save benchmarking results to Weights & Biases (W&B) for cloud storage and visualization.',
+        )
+
+        if st.session_state.use_wandb:
+            st.session_state.wandb_project = st.text_input(
+                'W&B Project Name',
+                value=st.session_state.wandb_project,
+                disabled=st.session_state.running,
+                help='Name of the W&B project. Default: sambanova-benchmarking',
+            )
+
+            st.session_state.wandb_entity = st.text_input(
+                'W&B Entity (Team/User)',
+                value=st.session_state.wandb_entity,
+                placeholder='Optional',
+                disabled=st.session_state.running,
+                help='Your W&B username or team name. If not set, uses default from wandb login.',
+            )
+
+            st.session_state.wandb_run_name = st.text_input(
+                'W&B Run Name',
+                value=st.session_state.wandb_run_name,
+                placeholder='Optional (auto-generated)',
+                disabled=st.session_state.running,
+                help='Custom name for this run. If empty, W&B will auto-generate a name.',
+            )
+
+            st.session_state.wandb_tags = st.text_input(
+                'W&B Tags',
+                value=st.session_state.wandb_tags,
+                placeholder='e.g., real-workload, benchmark',
+                disabled=st.session_state.running,
+                help='Comma-separated tags for organizing runs in W&B.',
+            )
+
+            st.session_state.wandb_mode = st.selectbox(
+                'W&B Mode',
+                options=['online', 'offline', 'disabled'],
+                index=0,
+                disabled=st.session_state.running,
+                help='online: sync immediately, offline: save locally and sync later, disabled: no logging.',
+            )
+
+            st.caption('ℹ️ Make sure you are logged in to W&B. Run `wandb login` in your terminal.')
+
         st.session_state.running = st.sidebar.button(
             'Run!', disabled=st.session_state.running, key='run_button', type='primary', width='stretch'
         )
@@ -267,12 +345,20 @@ def main() -> None:
             try:
                 st.session_state.df_req_info = _run_performance_evaluation(update_progress_bar)
                 st.session_state.running = False
+
+                # Finish W&B run if enabled
+                if st.session_state.performance_evaluator:
+                    st.session_state.performance_evaluator.finish_wandb()
+
                 # workareound to avoid rerun within try block
                 do_rerun = True
             except Exception as e:
                 st.error(f'Error:\n{e}.')
                 # Cleaning df results in case of error
                 st.session_state.df_req_info = None
+                # Finish W&B run on error as well
+                if st.session_state.performance_evaluator:
+                    st.session_state.performance_evaluator.finish_wandb()
             if do_rerun:
                 st.rerun()
 

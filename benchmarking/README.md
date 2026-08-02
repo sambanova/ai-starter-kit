@@ -90,6 +90,34 @@ When using the benchmarking starter kit, you have two options for running the pr
 - [*GUI Option*](#gui-option): This option contains plots and configurations from a web browser.
 - [*CLI Option*](#cli-option): This option allows you to run the program from the command line and provides more flexibility.
 
+### Saving Results to the Cloud (W&B)
+
+The benchmarking kit supports saving results to [Weights & Biases (W&B)](https://wandb.ai/) for cloud storage and visualization. To use this feature:
+
+1. **Install W&B** (if not already installed):
+   ```bash
+   pip install wandb
+   ```
+
+2. **Login to W&B**:
+   ```bash
+   wandb login
+   ```
+   Follow the prompts to authenticate with your W&B account.
+
+3. **Enable W&B logging**:
+   - **GUI**: Check the "Save results to W&B" checkbox in the sidebar and configure the project name, entity, and other options.
+   - **CLI**: Use the `--use-wandb True` flag along with optional `--wandb-project`, `--wandb-entity`, `--wandb-run-name`, and `--wandb-tags` flags.
+
+When enabled, the benchmarking kit will:
+- Log summary metrics (TTFT, latency, throughput, etc.) to your W&B project
+- Log individual request metrics as a searchable table
+- Generate performance distribution plots automatically
+
+_W&B mode options_: 
+- `online`: Sync results immediately to W&B (default)
+- `offline`: Save results locally and sync later with `wandb sync`
+- `disabled`: Disable W&B logging
 
 ## GUI Option
 
