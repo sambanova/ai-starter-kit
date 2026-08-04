@@ -78,7 +78,7 @@ unstructured-client==0.25.9
 unstructured-inference==1.0.5
 
 # Audio and Video
-yt-dlp==2025.10.22
+yt-dlp==2026.2.21
 
 # Miscellaneous
 schedule==1.2.2
