@@ -84,7 +84,7 @@ yt-dlp==2025.10.22
 schedule==1.2.2
 tqdm==4.67.1
 watchdog==6.0.0
-pillow==10.4.0
+pillow==12.1.1
 pillow-heif==0.22.0
 pycountry==24.6.1
 omegaconf==2.3.0
