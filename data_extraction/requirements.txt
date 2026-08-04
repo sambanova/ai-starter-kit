@@ -1,6 +1,6 @@
 InstructorEmbedding==1.0.1
 Pillow==10.0.1
-PyMuPDF==1.25.2
+PyMuPDF==1.27.1
 PyMuPDFb==1.24.10
 PyYAML==6.0.1
 Pygments==2.16.1
@@ -30,7 +30,7 @@ decorator==5.1.1
 etelemetry==0.3.0
 exceptiongroup==1.1.3
 executing==2.0.0
-faiss-cpu==1.7.4
+faiss-cpu==1.13.2
 filelock==3.12.4
 fonttools==4.43.0
 frontend==0.0.3
@@ -88,11 +88,11 @@ pure-eval==0.2.2
 pydantic==2.12.3
 pydantic_core==2.41.4
 pydot==1.4.2
-pypandoc==1.12
+pypandoc==1.16.2
 pyparsing==3.1.1
 pypdf==3.16.2
 python-dateutil==2.8.2
-python-docx==1.1.0
+python-docx==1.2.0
 python-dotenv==1.2.1
 pytz==2023.3.post1
 pyxnat==1.6
@@ -122,5 +122,5 @@ unstructured_pytesseract==0.3.12
 urllib3==2.0.6
 uvicorn==0.23.2
 wcwidth==0.2.8
-xlrd==2.0.1
+xlrd==2.0.2
 yarl==1.9.2
