@@ -516,11 +516,14 @@ class BenchmarkRunner:
 
         model_name = row['model_name']
         num_requests = int(row['num_requests'])
-        num_warmup_requests = int(row.get('num_warmup_requests', 0) or 0)
+        num_warmup_requests_val = row.get('num_warmup_requests', 0)
+        num_warmup_requests = int(num_warmup_requests_val) if pd.notna(num_warmup_requests_val) else 0
         input_tokens = int(row['input_tokens'])
         output_tokens = int(row['output_tokens'])
-        concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
-        qps = float(row.get('qps', 0.0) or 0.0)
+        concurrent_requests_val = row.get('concurrent_requests', 0)
+        concurrent_requests = int(concurrent_requests_val) if pd.notna(concurrent_requests_val) else 0
+        qps_val = row.get('qps', 0.0)
+        qps = float(qps_val) if pd.notna(qps_val) else 0.0
         multimodal_img_size = row.get('multimodal_img_size') if pd.notna(row.get('multimodal_img_size')) else 'na'
 
         evaluator = None
