@@ -1,0 +1,93 @@
+# Job queue for the benchmarking bundles runner. Replaces the old model_configs_example.csv:
+# each job is a dict (not a tabular row), so params that don't fit tabular columns can be
+# expressed just as easily as concurrency-/QPS-based jobs. Bundles run the Kit's own evaluator
+# only (vLLM/aiperf are driven via their native CLIs directly — see ../benchmarking_tools/vllm/ and ../benchmarking_tools/aiperf/).
+# Every job needs a `mode` (custom/synthetic/real_workload); remaining keys are that mode's own
+# parameters — see ../benchmarking_tools/kit/src/job_kwargs.py's build_job_kwargs for the accepted keys (they match
+# evaluator.py's CLI flag names, e.g. --num-input-tokens -> num_input_tokens), so anything that
+# works on the CLI works here too.
+#
+# results_dir/timeout/llm_api/user_metadata are optional per job — they default from this
+# bundle's config.yaml (output_files_dir/timeout/llm_api) if omitted, matching how the old CSV
+# format always inherited them from config.yaml rather than repeating them per row.
+
+jobs:
+  # --- kit / synthetic (concurrency-based) ---
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 1
+    num_concurrent_requests: 1
+
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 2
+    num_concurrent_requests: 2
+
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 4
+    num_concurrent_requests: 4
+
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 8
+    num_concurrent_requests: 8
+
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 16
+    num_concurrent_requests: 16
+
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 32
+    num_concurrent_requests: 32
+
+  - mode: synthetic
+    model_name: DeepSeek-V3.2
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 1
+    num_concurrent_requests: 1
+
+  - mode: synthetic
+    model_name: DeepSeek-V3.2
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 4
+    num_concurrent_requests: 4
+
+  - mode: synthetic
+    model_name: gpt-oss-120b
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 1
+    num_concurrent_requests: 1
+
+  - mode: synthetic
+    model_name: gpt-oss-120b
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 8
+    num_concurrent_requests: 8
+
+  # --- kit / real_workload (QPS-based) ---
+  - mode: real_workload
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 550
+    num_output_tokens: 150
+    num_requests: 20
+    qps: 2.0
+    qps_distribution: constant

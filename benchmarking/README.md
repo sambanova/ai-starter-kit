@@ -415,45 +415,64 @@ This method can be ran from a terminal session. Users have this option if they w
 
 If you face any issues or have questions, please visit the Frecuently Asked Questions documentation [here](./FAQ.md).
 
-You have 3 options for running the program from terminal:
+Run `ulimit -n 4096` once per terminal session before invoking the evaluator, to raise the open-file-descriptor limit for higher-concurrency runs.
+
+**This CLI runs the Kit's own native evaluator** (`benchmarking_tools/kit/src/evaluator.py`). For vLLM or aiperf (including aiperf's AgentX MVP agentic-coding benchmark), those tools are run directly via their own native CLIs instead — see [`vllm/README.md`](./benchmarking_tools/vllm/README.md) and [`aiperf/README.md`](./benchmarking_tools/aiperf/README.md).
+
+**`--mode` is optional and inferred by `benchmarking_tools/kit/src/evaluator.py` itself** from whichever other arguments you give it:
+
+1. `--input-file-path` is given → **custom** (evaluates your own dataset).
+2. `--num-concurrent-requests` equals `--num-requests` (or either is omitted) → **synthetic** (fires all requests as one concurrent burst).
+3. `--num-concurrent-requests` and `--num-requests` are both given and differ → **real_workload** (paces requests over time according to `--qps`/`--qps-distribution`).
+
+You can also pass `--mode` explicitly to bypass inference. Unrecognized arguments for whichever mode gets picked are ignored (with a note printed to the terminal) rather than erroring, so a caller can pass every mode's flags unconditionally without knowing in advance which mode will run.
+
+`--qps-distribution` accepts `constant`, `uniform`, or `exponential`.
+
+There's a separate editable-variables quickstart script **per mode** — each one passes `--mode` explicitly and only exposes the parameters that actually apply to it (no inference, no dead parameters to second-guess):
+- **[`benchmarking_tools/kit/quickstart_synthetic.sh`](./benchmarking_tools/kit/quickstart_synthetic.sh)**
+- **[`benchmarking_tools/kit/quickstart_real_workload.sh`](./benchmarking_tools/kit/quickstart_real_workload.sh)**
+- **[`benchmarking_tools/kit/quickstart_custom.sh`](./benchmarking_tools/kit/quickstart_custom.sh)**
+
+Edit the variables at the top of whichever one matches your use case, then `cd benchmarking_tools/kit && sh quickstart_<mode>.sh`. The sections below show the equivalent direct `python benchmarking_tools/kit/src/evaluator.py <flags>` invocation for each mode — both are the same evaluator, just two ways of passing it parameters.
 
 <details id="synthetic-dataset">
 <summary><strong>Synthetic Dataset</summary></strong>
 
 _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-1. Open the file `run_synthetic_dataset.sh` and configure the following parameters:
-  - **model-names**: Model name(s) to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
-  - **llm-api**: API type to be chosen.
-  - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1. For `vllm` and `both` benchmark modes, this value is used as the request rate passed to `vllm bench serve`.
-  - **num-warmup-requests**: Number of throwaway warm-up requests sent (at the concurrency above) before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: applies to all benchmark modes — for `vllm`/`both`, it maps to vLLM's native `--num-warmups` flag. For the Kit path it shares the same **timeout** budget as the measured run.
-  - **timeout**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped. For `vllm` and `both` benchmark modes, this parameter is not applied on the vLLM runs since it's not supported. 
-  - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
-  - **num-output-tokens**: Number of output tokens in the generation. It is strongly recommended to set this value to no more than 2000, as most LLMs cannot generate outputs beyond this limit. _Default_: 1000.
-  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Note_: vLLM benchmarking only supports na (text-only). _Default:_ na.
-  - **num-requests**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
-  - **use-multiple-prompts**: Whether to use multiple prompts selected randomly or a single default prompt. This option is only available on **text instruct** models. Go to [this link](./prompts/user-prompt_template-text_instruct.yaml) if customization is needed. _Default_: False
-  - **save-llm-responses**: Whether to save the actual Kit LLM response texts to an output file. The output file will contain the `response_texts` suffix. This only applies to the Kit path; vLLM responses are provided in its original JSON output file. _Default_: False
-  - **use-debugging-mode**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
-  - **benchmark-mode**: Controls which benchmarking engine(s) to run. Choose from:
-    - `kit` — run only the SambaNova AI Starter Kit benchmarking engine.
-    - `vllm` — run only the vLLM benchmarking engine (`vllm bench serve`).
-    - `both` — run Kit first, then vLLM sequentially, and print a side-by-side comparison table in the terminal. _Default_: kit.
+1. Set `--num-concurrent-requests` equal to `--num-requests` so the evaluator infers **synthetic** mode (or pass `--mode synthetic` explicitly). Relevant flags:
+  - **`--model-names`**: Model name(s) to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
+  - **`--llm-api`**: API type to be chosen.
+  - **`--results-dir`**: Path to the results directory. _Default_: "./data/results"
+  - **`--num-concurrent-requests`**: Number of concurrent requests, and (together with `--num-requests`) what selects this mode — set it equal to `--num-requests`. _Default_: 16.
+  - **`--num-warmup-requests`**: Number of throwaway warm-up requests sent (at the concurrency above) before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). It shares the same **timeout** budget as the measured run.
+  - **`--timeout`**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
+  - **`--num-input-tokens`**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
+  - **`--num-output-tokens`**: Number of output tokens in the generation. It is strongly recommended to set this value to no more than 2000, as most LLMs cannot generate outputs beyond this limit. _Default_: 1000.
+  - **`--multimodal-image-size`**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
+  - **`--num-requests`**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
+  - **`--use-multiple-prompts`**: Whether to use multiple prompts selected randomly or a single default prompt. This option is only available on **text instruct** models. Go to [this link](./prompts/user-prompt_template-text_instruct.yaml) if customization is needed. _Default_: False
+  - **`--save-llm-responses`**: Whether to save the actual Kit LLM response texts to an output file. The output file will contain the `response_texts` suffix. _Default_: False
+  - **`--use-debugging-mode`**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
 
-   _Note_: You should leave the `--mode` parameter untouched — this indicates the dataset generation mode (synthetic, custom, or real workload) and is separate from `--benchmark-mode`.
+   To run vLLM instead of (or alongside) Kit for a side-by-side comparison, see [`vllm/README.md`](./benchmarking_tools/vllm/README.md) — it's driven via vLLM's own native CLI.
 
-   _Note_: `vllm` and `both` modes require vLLM to be installed. It is included in `requirements.txt` and installed automatically during environment setup. No additional configuration is needed beyond the standard `SAMBANOVA_API_KEY` and `SAMBANOVA_API_BASE` environment variables.
-
-2. Run the script
-
-- Run the following command in your terminal:
+2. Run it — either edit [`quickstart_synthetic.sh`](./benchmarking_tools/kit/quickstart_synthetic.sh)'s variables and `sh quickstart_synthetic.sh`, or call the evaluator directly:
 ```shell
-sh run_synthetic_dataset.sh
+python benchmarking_tools/kit/src/evaluator.py \
+  --mode synthetic \
+  --model-names Meta-Llama-3.3-70B-Instruct \
+  --results-dir ./data/results \
+  --llm-api sncloud \
+  --num-concurrent-requests 16 \
+  --num-requests 16 \
+  --num-input-tokens 1000 \
+  --num-output-tokens 1000 \
+  --multimodal-image-size na \
+  --use-multiple-prompts False
 ```
-- When running in `kit` or `both` mode, a progress bar for the Kit evaluation will be shown in the terminal until it completes.
-- When running in `vllm` or `both` mode, the `vllm bench serve` command and its progress output will be printed to the terminal.
-- In `both` mode, the two evaluations run sequentially: Kit first, then vLLM. Once both complete, a side-by-side comparison report is printed directly to the terminal.
+- A progress bar for the Kit evaluation will be shown in the terminal until it completes.
 
 3. Analyze results
 
@@ -481,54 +500,6 @@ sh run_synthetic_dataset.sh
 
   ![summary_output_image](./imgs/synthetic_summary_ouput.png)
 
-  **vLLM output files** (`vllm` and `both` modes)
-
-  vLLM results are saved in a timestamped subdirectory inside `results-dir`:
-
-  ```
-  <results-dir>/vllm_<TIMESTAMP>/
-  ```
-
-  For each vLLM run, three files are generated inside that subdirectory:
-
-  - Raw vLLM result file (`<TIMESTAMP>.json`) — the direct output from `vllm bench serve`, containing aggregate statistics reported by vLLM (duration, throughput, mean/median TTFT, ITL, etc.).
-  - Individual responses file (`<TIMESTAMP>_individual_responses.json`) — per-request metrics converted to the same format as the Kit individual responses file, allowing both outputs to be analyzed with the same notebooks.
-  - Summary file (`<TIMESTAMP>_summary.json`) — aggregate metrics converted to the same format as the Kit summary file.
-
-  **Terminal comparison report** (`both` mode only)
-
-  After both runs complete, a comparison report is printed directly to the terminal. It includes two tables:
-
-  - **Summary Metrics**: A side-by-side table with Kit and vLLM columns covering duration, completed/failed requests, total input/output tokens, request throughput (req/s), output throughput (tokens/s), total token throughput, mean/median TTFT, and mean/median ITL.
-  - **Latency Distribution**: p5/p50/p95 percentiles for TTFT (ms) and ITL (ms) for both backends.
-
-  ```
-  ================================================================================
-    BENCHMARK COMPARISON: <MODEL_NAME>
-  ================================================================================
-  --- Summary Metrics ---
-
-                           Metric      Kit     vLLM
-                     Duration (s)    33.97    32.80
-               Completed Requests       20       20
-                  Failed Requests        0        0
-               Total Input Tokens    83240    83240
-              Total Output Tokens    81920    81920
-        Request Throughput (req/s)   0.5887   0.6098
-       Output Throughput (tokens/s)  2411.36  2497.87
-  Total Token Throughput (tokens/s)  4861.58  5035.99
-                     Mean TTFT (ms) 23075.26 13473.10
-                   Median TTFT (ms) 26707.69 16297.31
-                    Mean ITL (ms)     0.01    39.99
-                  Median ITL (ms)     0.01    40.29 
-  --- Latency Distribution (p5 / p50 / p95) ---
-   Metric                                          Kit                                     vLLM
-   TTFT (ms) p5=16616.82 / p50=26707.69 / p95=33932.97 p5=6886.83 / p50=16297.31 / p95=25736.49
-   ITL (ms)             p5=0.01 / p50=0.01 / p95=0.01         p5=30.04 / p50=41.58 / p95=45.97
-
-  ================================================================================
-  ```
-
 - There's an additional notebook `notebooks/multiple-models-benchmark.ipynb` that will help users on running multiple benchmarks with different experts and gather performance results in one single table. A Bundle endpoint is meant to be used for this analysis.
 
 4. Customize synthetic prompts
@@ -542,27 +513,33 @@ Synthetic prompts for performance evaluation can be found [here](./prompts/). Yo
 
 _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-1. Open the file `run_real_workload_dataset.sh` and configure the following parameters:
-  - **model-names**: Model name(s) to be used. See section `1. Enter a model name and choose the right API type` in [Real Workload Evaluation](#real-workload-performance-evaluation) for more information about model name.
-  - **llm-api**: API type to be chosen. 
-  - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **qps**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits._Default_: 1
-  - **qps-distribution**: the type of wait time distribution in between requests. User can choose the values 'constant', 'uniform', 'exponential'. _Default_: constant
-  - **num-warmup-requests**: Number of throwaway warm-up requests sent before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: warm-up requests are fired together (not paced by **qps**) and share the same **timeout** budget as the measured run.
-  - **timeout**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
-  - **num-input-tokens**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
-  - **num-output-tokens**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
-  - **multimodal-image-size**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
-  - **num-requests**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
-  - **use-debugging-mode**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
+1. Set `--num-concurrent-requests` to a value **less than** `--num-requests` so the evaluator infers **real_workload** mode (equal values would infer synthetic mode instead; or pass `--mode real_workload` explicitly). Relevant flags:
+  - **`--model-names`**: Model name(s) to be used. See section `1. Enter a model name and choose the right API type` in [Real Workload Evaluation](#real-workload-performance-evaluation) for more information about model name.
+  - **`--llm-api`**: API type to be chosen.
+  - **`--results-dir`**: Path to the results directory. _Default_: "./data/results"
+  - **`--qps`**: the number of queries that will be sent to the endpoint per second. Values QPS<10 are recommended since user can hit rate limits. _Default_: 1
+  - **`--qps-distribution`**: the type of wait time distribution in between requests. User can choose the values 'constant', 'uniform', 'exponential'. _Default_: constant
+  - **`--num-warmup-requests`**: Number of throwaway warm-up requests sent before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: warm-up requests are fired together (not paced by **qps**) and share the same **timeout** budget as the measured run.
+  - **`--timeout`**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
+  - **`--num-input-tokens`**: Number of input tokens to include in the request prompts. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
+  - **`--num-output-tokens`**: Number of output tokens in the generation. It's recommended to choose no more than 2000 tokens to avoid long wait times. _Default_: 1000.
+  - **`--multimodal-image-size`**: Size of the pre-set image to be used with a **multimodal** model. There are three categories: small (500x500px), medium (1000x1000px) and large (2000x2000px). **Warning!** Multimodal models may activate their guardrails when running benchmarks. Changing the input or output number of tokens may help to solve the issue. If model is not multimodal, then leave the value to na. _Default:_ na.
+  - **`--num-requests`**: Number of requests sent. _Default_: 16. _Note_: the program can timeout before all requests are sent. Configure the **Timeout** parameter accordingly.
+  - **`--use-debugging-mode`**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
 
-   _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use.
-
-2. Run the script
-
-- Run the following command in your terminal:
+2. Run it — either edit [`quickstart_real_workload.sh`](./benchmarking_tools/kit/quickstart_real_workload.sh)'s variables and `sh quickstart_real_workload.sh`, or call the evaluator directly (note: real_workload has no `--num-concurrent-requests` flag at all — QPS pacing is open-loop, there's no concurrency cap to set):
 ```shell
-sh run_real_workload_dataset.sh
+python benchmarking_tools/kit/src/evaluator.py \
+  --mode real_workload \
+  --model-names Meta-Llama-3.3-70B-Instruct \
+  --results-dir ./data/results \
+  --llm-api sncloud \
+  --qps 1 \
+  --qps-distribution constant \
+  --num-requests 16 \
+  --num-input-tokens 1000 \
+  --num-output-tokens 1000 \
+  --multimodal-image-size na
 ```
 - The evaluation process will start and a progress bar will be shown until it's complete.
 
@@ -602,25 +579,28 @@ Synthetic prompts for performance evaluation can be found [here](./prompts/). Yo
 
 _Note: Currently we have specific prompting support for GPT, Llama, Gemma, Mistral, Deepseek, Qwen, Solar, and Eeve. Other instruction models can work, but number of tokens may not be close to the ones specified._
 
-1. Open the file `run_custom_dataset.sh` and configure the following parameters:
-  - **model-name**: Model name to be used. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
-  - **llm-api**: API type to be chosen.
-  - **results-dir**: Path to the results directory. _Default_: "./data/results/llmperf"
-  - **num-concurrent-requests**: Number of concurrent requests. _Default_: 1
-  - **num-warmup-requests**: Number of throwaway warm-up requests sent (at the concurrency above) before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: warm-up shares the same **timeout** budget as the measured run.
-  - **timeout**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
-  - **input-file-path**: The location of the custom dataset that you want to evaluate with. You can take as example the file [in here.](./prompts/custom_prompt_example.jsonl)
-  - **save-llm-responses**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
-  - **sampling-params**: Optional JSON string of sampling parameters sent with each request (e.g. `'{"max_tokens_to_generate": 256}'`). _Default_: `{}` (empty).
-  - **use-debugging-mode**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
+1. Passing `--input-file-path` is what makes the evaluator infer **custom** mode, taking priority over the synthetic/real_workload inference above (or pass `--mode custom` explicitly). Relevant flags:
+  - **`--model-names`**: Model name(s) to be used — space-separated for multiple models, each run sequentially. See section `1. Enter a model name and choose the right API type` in [Synthetic Performance Evaluation](#synthetic-performance-evaluation) for more information about model name.
+  - **`--llm-api`**: API type to be chosen.
+  - **`--results-dir`**: Path to the results directory. _Default_: "./data/results"
+  - **`--num-concurrent-requests`**: Number of concurrent requests. _Default_: 16
+  - **`--num-warmup-requests`**: Number of throwaway warm-up requests sent (at the concurrency above) before the measured run. Their results are discarded so server cold-start and batch ramp-up costs don't skew the reported metrics. _Default_: 0 (disabled). _Note_: warm-up shares the same **timeout** budget as the measured run.
+  - **`--timeout`**: Timeout in seconds. _Default_: 600. This is a single budget shared across the warm-up and measured phases — if it is reached during warm-up, the measured run is skipped.
+  - **`--input-file-path`**: The location of the custom dataset that you want to evaluate with. You can take as example the file [in here.](./prompts/custom_prompt_example.jsonl)
+  - **`--save-llm-responses`**: Whether to save the actual outputs of the LLM to an output file. The output file will contain the `response_texts` suffix.
+  - **`--sampling-params`**: JSON string of sampling parameters sent with each request. **Must include `max_tokens_to_generate`** for custom mode (e.g. `'{"max_tokens_to_generate": 256}'`) — unlike synthetic/real_workload, custom mode has no `--num-output-tokens` flag to derive a default from, so passing `'{}'` fails every request with a `KeyError`.
+  - **`--use-debugging-mode`**: Whether to use the debugging mode or not. WARNING: Debug mode will provide more detailed response at the cost of increased latency. _Default_: False
 
-  _Note_: You should leave the `--mode` parameter untouched - this indicates what dataset mode to use. 
-
-2. Run the script
-
-- Run the following command in your terminal:
+2. Run it — either edit [`quickstart_custom.sh`](./benchmarking_tools/kit/quickstart_custom.sh)'s variables and `sh quickstart_custom.sh`, or call the evaluator directly:
 ```shell
-sh run_custom_dataset.sh
+python benchmarking_tools/kit/src/evaluator.py \
+  --mode custom \
+  --model-names Meta-Llama-3.3-70B-Instruct \
+  --results-dir ./data/results \
+  --llm-api sncloud \
+  --num-concurrent-requests 16 \
+  --input-file-path ./prompts/custom_prompt_example.jsonl \
+  --sampling-params '{"max_tokens_to_generate": 256}'
 ```
 - The evaluation process will start and a progress bar will be shown until it's complete.
 
@@ -650,7 +630,11 @@ custom_<MODEL_NAME>_{FILE_NAME}_{NUM_CONCURRENT_REQUESTS}_{MODE}
 
 # Third-party tools and data sources 
 
-All the packages/tools are listed in the `requirements.txt` file in the project directory.
+All the packages/tools used by the Kit's own evaluator are listed in the `requirements.txt` file in the project directory.
+
+Two other benchmarking tools are run directly via their own native CLIs (not wrapped by this Kit):
+- **vLLM** (`vllm bench serve`) — see [`vllm/README.md`](./benchmarking_tools/vllm/README.md).
+- **aiperf** (NVIDIA's `aiperf`, including the AgentX MVP agentic-coding benchmark) — see [`aiperf/README.md`](./benchmarking_tools/aiperf/README.md).
 
 # TroubleShooting
 

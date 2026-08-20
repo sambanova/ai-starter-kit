@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from benchmarking.src.performance_evaluation import CustomPerformanceEvaluator
+from benchmarking.benchmarking_tools.kit.src.performance_evaluation import CustomPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     model_selector_widget,

@@ -9,8 +9,16 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from benchmarking.src.performance_evaluation import SyntheticPerformanceEvaluator
-from benchmarking.src.vllm_benchmark import VLLMBenchmarkExecutor
+from benchmarking.benchmarking_tools.kit.src.performance_evaluation import SyntheticPerformanceEvaluator
+
+try:
+    # vLLM is now driven via its own native CLI (see ../../benchmarking_tools/vllm/README.md) rather than a Python
+    # wrapper class. This import is kept only to preserve this page's existing "vLLM Only / Both"
+    # comparison UI for as long as possible; it will fail once VLLMBenchmarkExecutor is fully
+    # removed, at which point the radio options below are disabled instead of crashing the page.
+    from benchmarking.src.tools.vllm.vllm_benchmark import VLLMBenchmarkExecutor  # type: ignore[import-not-found]
+except ImportError:
+    VLLMBenchmarkExecutor = None
 from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     MULTIMODAL_IMAGE_SIZE_OPTIONS,
@@ -380,15 +388,28 @@ def main() -> None:
         st.title('Configuration')
         st.markdown('**Modify the following parameters before running the process**')
 
-        # Benchmarking mode selector
-        st.session_state.benchmark_mode = st.radio(
-            'Benchmarking Mode',
-            options=['kit', 'vllm', 'both'],
-            format_func=lambda x: {'kit': 'Kit Only', 'vllm': 'vLLM Only', 'both': 'Both (Side-by-Side Comparison)'}[x],
-            help='Select which benchmark to run: Kit (current implementation),\
-                vLLM (vLLM benchmark serve), or Both for comparison',
-            disabled=st.session_state.running or st.session_state.optional_download,
-        )
+        # Benchmarking mode selector — vLLM options only offered if the (deprecated) Python
+        # wrapper is still importable; see the try/except around VLLMBenchmarkExecutor above.
+        # vLLM is now driven via its own native CLI, see ../../benchmarking_tools/vllm/README.md.
+        if VLLMBenchmarkExecutor is not None:
+            st.session_state.benchmark_mode = st.radio(
+                'Benchmarking Mode',
+                options=['kit', 'vllm', 'both'],
+                format_func=lambda x: {
+                    'kit': 'Kit Only',
+                    'vllm': 'vLLM Only',
+                    'both': 'Both (Side-by-Side Comparison)',
+                }[x],
+                help='Select which benchmark to run: Kit (current implementation),\
+                    vLLM (vLLM benchmark serve), or Both for comparison',
+                disabled=st.session_state.running or st.session_state.optional_download,
+            )
+        else:
+            st.session_state.benchmark_mode = 'kit'
+            st.caption(
+                'vLLM comparison mode is temporarily unavailable here — run vLLM directly via '
+                '`benchmarking/benchmarking_tools/vllm/README.md` instead.'
+            )
 
         if st.session_state.benchmark_mode != st.session_state.previous_benchmark_mode:
             st.session_state.df_req_info = None

@@ -4,7 +4,6 @@ import re
 import sys
 import time
 from collections import Counter
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -29,24 +28,6 @@ DEFAULT_BATCH_SIZES: List[int] = [1, 2, 4, 8, 16, 32, 64, 128]
 
 
 # =========================================================
-#                   DATA CLASSES
-# =========================================================
-
-
-@dataclass
-class ModelConfigRow:
-    model_name: str
-    input_tokens: int
-    output_tokens: int
-    num_requests: int
-    num_warmup_requests: int = 0
-    concurrent_requests: Optional[int] = None
-    qps: Optional[float] = None
-    qps_distribution: str = 'constant'
-    multimodal_img_size: str = 'na'
-
-
-# =========================================================
 #                   CONFIG LOADER
 # =========================================================
 
@@ -60,7 +41,7 @@ class ConfigLoader:
         with open(self.config_path) as fh:
             cfg = yaml.load(fh, Loader=yaml.FullLoader)
         cfg['output_files_dir'] = os.path.expanduser(cfg.get('output_files_dir', '..'))
-        cfg['model_configs_path'] = os.path.expanduser(cfg.get('model_configs_path', ''))
+        cfg['jobs_path'] = os.path.expanduser(cfg.get('jobs_path', ''))
         cfg['batch_sizes'] = cfg.get('batch_sizes') or DEFAULT_BATCH_SIZES
         return cfg
 
@@ -78,33 +59,6 @@ class FileNameParser:
         if not match:
             raise ValueError(f'UUID not found in filename {file_name}')
         return match.group(0)
-
-    def extract_file_info(self, file_name: str) -> Tuple[str, int, int, Optional[int], Optional[float]]:
-        parts = file_name.split('_')
-        try:
-            if 'multimodal' in file_name:
-                model = parts[2]
-                in_tok = int(parts[5])
-                out_tok = int(parts[6])
-                con_type = parts[7]
-            else:
-                model = parts[2]
-                in_tok = int(parts[3])
-                out_tok = int(parts[4])
-                con_type = parts[5]
-        except Exception:
-            raise ValueError(f'Unexpected filename format: {file_name}')
-
-        if 'synthetic' in file_name:
-            con = int(con_type)
-            qps = None
-        elif 'realworkload' in file_name:
-            con = None
-            qps = float(con_type.replace('-', '.'))
-        else:
-            con, qps = None, None
-
-        return model, in_tok, out_tok, con, qps
 
 
 # =========================================================
@@ -133,6 +87,17 @@ class BatchAnalyzer:
 
     def get_grouping_and_batching_info(self, df: pd.DataFrame) -> Tuple[List[int], List[int], pd.DataFrame]:
         if df.empty:
+            return [], [], df
+
+        # `server_ttft_s` is only ever populated by the 'kit' tool (SambaNova server telemetry) —
+        # a tool without server-side access (e.g. vLLM) writes an all-null column. Since
+        # `NaN != NaN` evaluates True in pandas, the shift-based grouping below would otherwise
+        # treat every request as its own group, silently reporting batch_size=1 instead of "not
+        # applicable". Guard explicitly and leave batching columns null in that case.
+        if 'server_ttft_s' not in df.columns or df['server_ttft_s'].isna().all():
+            df = df.copy()
+            df['requests_grouping_per_request'] = pd.NA
+            df['requests_batching_per_request'] = pd.NA
             return [], [], df
 
         df = df.sort_values('end_time').reset_index(drop=True)
@@ -364,7 +329,6 @@ class ResultsConsolidator:
 
             try:
                 df_file = df_individual[df_individual['filename'] == filename].copy()
-                _, _, _, _, _ = self.file_parser.extract_file_info(filename)
                 grouping, batching, df_with_batching = self.batch_analyzer.get_grouping_and_batching_info(df_file)
                 dfs_with_batching.append(df_with_batching)
             except Exception as e:
@@ -495,86 +459,63 @@ class BenchmarkRunner:
     def __init__(
         self,
         config: Dict[str, Any],
-        evaluator_factories: Dict[str, Any],
         read_perf_eval_json_files_fn: Any,
         file_parser: FileNameParser,
         batch_analyzer: BatchAnalyzer,
         rep_finder: RepresentativeFinder,
     ) -> None:
         self.config = config
-        self.evaluator_factories = evaluator_factories
         self.read_perf_eval_json_files = read_perf_eval_json_files_fn
         self.file_parser = file_parser
         self.batch_analyzer = batch_analyzer
         self.rep_finder = rep_finder
 
-    def _run_single_row(self, row: pd.Series, output_files_dir: str) -> None:
-        from benchmarking.src.performance_evaluation import (
+    def _run_single_job(self, job: Dict[str, Any], output_files_dir: str) -> None:
+        # Imported here (not at module level) so a bundles-only invocation never needs the Kit's
+        # evaluator dependencies unless a job is actually run.
+        from benchmarking.benchmarking_tools.kit.src.job_kwargs import MODES, build_job_kwargs
+        from benchmarking.benchmarking_tools.kit.src.performance_evaluation import (
+            CustomPerformanceEvaluator,
             RealWorkLoadPerformanceEvaluator,
             SyntheticPerformanceEvaluator,
         )
 
-        model_name = row['model_name']
-        num_requests = int(row['num_requests'])
-        num_warmup_requests = int(row.get('num_warmup_requests', 0) or 0)
-        input_tokens = int(row['input_tokens'])
-        output_tokens = int(row['output_tokens'])
-        concurrent_requests = int(row.get('concurrent_requests', 0) or 0)
-        qps = float(row.get('qps', 0.0) or 0.0)
-        multimodal_img_size = row.get('multimodal_img_size') if pd.notna(row.get('multimodal_img_size')) else 'na'
+        executor_for_mode = {
+            'custom': CustomPerformanceEvaluator,
+            'synthetic': SyntheticPerformanceEvaluator,
+            'real_workload': RealWorkLoadPerformanceEvaluator,
+        }
 
-        evaluator = None
+        mode = job.get('mode')
+        if mode not in executor_for_mode:
+            logger.warning(f"Skipping job {job.get('model_name')}: unsupported mode '{mode}' (supported: {MODES})")
+            return
+
+        # Defaults inherited from config.yaml, overridable per job.
+        job = dict(job)
+        job.setdefault('results_dir', os.path.expanduser(output_files_dir))
+        job.setdefault('timeout', self.config['timeout'])
+        job.setdefault('llm_api', self.config['llm_api'])
+        job.setdefault('user_metadata', {'model_idx': 0})
+        if mode == 'synthetic':
+            job.setdefault('use_multiple_prompts', self.config['use_multiple_prompts'])
+
         try:
-            if concurrent_requests:
-                evaluator = SyntheticPerformanceEvaluator(
-                    multimodal_image_size=multimodal_img_size,
-                    model_name=model_name,
-                    results_dir=os.path.expanduser(output_files_dir),
-                    num_concurrent_requests=concurrent_requests,
-                    timeout=self.config['timeout'],
-                    user_metadata={'model_idx': 0},
-                    llm_api=self.config['llm_api'],
-                    use_multiple_prompts=self.config['use_multiple_prompts'],
-                    num_warmup_requests=num_warmup_requests,
-                )
-            elif qps:
-                evaluator = RealWorkLoadPerformanceEvaluator(
-                    multimodal_image_size=multimodal_img_size,
-                    model_name=model_name,
-                    results_dir=os.path.expanduser(output_files_dir),
-                    qps=qps,
-                    qps_distribution=row.get('qps_distribution', 'constant'),
-                    timeout=self.config['timeout'],
-                    user_metadata={'model_idx': 0},
-                    llm_api=self.config['llm_api'],
-                    num_warmup_requests=num_warmup_requests,
-                )
-            else:
-                logger.warning(f'Skipping {model_name}: missing concurrency or QPS.')
-                return
-
-            evaluator.run_benchmark(
-                num_input_tokens=input_tokens,
-                num_output_tokens=output_tokens,
-                num_requests=num_requests,
-                sampling_params={},
-            )
-
+            constructor_kwargs, run_kwargs = build_job_kwargs(job, mode)
+            executor_cls = executor_for_mode[mode]
+            executor = executor_cls(**constructor_kwargs)
+            executor.run_benchmark(**run_kwargs)
         except Exception as e:
-            logger.exception(f'Error running evaluator for model {model_name}: {e}')
+            logger.exception(f"Error running job for model {job.get('model_name')}: {e}")
 
         time.sleep(self.config.get('time_delay', 0))
 
     def run(self, run_name: Optional[str] = None) -> None:
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
-        model_configs_df = pd.read_csv(self.config['model_configs_path'])
-        int_columns = {'input_tokens': 'Int64', 'output_tokens': 'Int64', 'num_requests': 'Int64'}
-        # `num_warmup_requests` is an optional per-row column; only cast it when present so older
-        # CSVs without the column still load.
-        if 'num_warmup_requests' in model_configs_df.columns:
-            int_columns['num_warmup_requests'] = 'Int64'
-        model_configs_df = model_configs_df.astype(int_columns)
+        with open(self.config['jobs_path']) as fh:
+            jobs_config = yaml.safe_load(fh)
+        jobs: List[Dict[str, Any]] = (jobs_config or {}).get('jobs', [])
 
         run_time = datetime.now().strftime('%Y%m%d-%H%M%S.%f')
         if not run_name:
@@ -584,10 +525,7 @@ class BenchmarkRunner:
         if self.config['concurrency_enabled']:
             logger.info(f'🚀 Running benchmarks with row-level concurrency (max_workers={self.config["max_workers"]})')
             with ThreadPoolExecutor(max_workers=self.config['max_workers']) as executor:
-                futures = [
-                    executor.submit(self._run_single_row, row, output_files_dir)
-                    for _, row in model_configs_df.iterrows()
-                ]
+                futures = [executor.submit(self._run_single_job, job, output_files_dir) for job in jobs]
 
                 for future in as_completed(futures):
                     try:
@@ -596,8 +534,8 @@ class BenchmarkRunner:
                         logger.exception(f'Unhandled exception in concurrent run: {e}')
         else:
             logger.info('🐢 Running benchmarks sequentially')
-            for _, row in model_configs_df.iterrows():
-                self._run_single_row(row, output_files_dir)
+            for job in jobs:
+                self._run_single_job(job, output_files_dir)
 
         # Consolidation phase
         # For debugging, you can set a specific run_name here
@@ -667,7 +605,6 @@ def load_requests_with_switching(
 
         try:
             df_file = df_individual[df_individual['filename'] == filename].copy()
-            _, _, _, _, _ = file_parser.extract_file_info(filename)
 
             _, _, df_with_batching = batch_analyzer.get_grouping_and_batching_info(df_file)
 
@@ -704,7 +641,6 @@ def main() -> None:
 
     runner = BenchmarkRunner(
         config=config,
-        evaluator_factories={},
         read_perf_eval_json_files_fn=read_perf_eval_json_files_wrapper,
         file_parser=FileNameParser(),
         batch_analyzer=BatchAnalyzer(config.get('batch_sizes')),

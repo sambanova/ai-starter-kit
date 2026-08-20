@@ -11,10 +11,10 @@ import streamlit as st
 from plotly.graph_objs import Figure
 
 from benchmarking.benchmarking_utils import DEFAULT_MODEL
-from benchmarking.src.comparison_utils import (
+from benchmarking.benchmarking_tools.kit.src.comparison_utils import (
     calculate_kit_summary_metrics as calculate_kit_summary_metrics,
 )
-from benchmarking.src.comparison_utils import (
+from benchmarking.benchmarking_tools.kit.src.comparison_utils import (
     get_vllm_summary_metrics as get_vllm_summary_metrics,
 )
 from benchmarking.utils import SAMBANOVA_API_BASE

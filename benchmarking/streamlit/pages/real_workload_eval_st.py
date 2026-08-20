@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from benchmarking.src.performance_evaluation import RealWorkLoadPerformanceEvaluator
+from benchmarking.benchmarking_tools.kit.src.performance_evaluation import RealWorkLoadPerformanceEvaluator
 from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     MULTIMODAL_IMAGE_SIZE_OPTIONS,

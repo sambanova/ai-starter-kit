@@ -1,6 +1,8 @@
 # Benchmarking bundles
 
-This directory contains scripts to run **end-to-end benchmarking for model bundles**, supporting both **synthetic (concurrency-based)** and **real workload (QPS-based)** inference tests, with optional **row-level concurrency**. Results include automatic **batching** and **switching time** estimations.
+This directory contains scripts to run **end-to-end benchmarking for model bundles** using the Kit's own native evaluator, supporting both **synthetic (concurrency-based)** and **real workload (QPS-based)** inference tests, with optional **row-level concurrency**. Results include automatic **batching** and **switching time** estimations.
+
+Bundles run **Kit jobs only**. vLLM and aiperf are driven via their own native CLIs directly (no Python job runner) — see [`../benchmarking_tools/vllm/README.md`](../benchmarking_tools/vllm/README.md) and [`../benchmarking_tools/aiperf/README.md`](../benchmarking_tools/aiperf/README.md) if you want to sweep those tools across multiple configs; a plain shell loop over their quickstart scripts is the equivalent of a "bundle" for those tools.
 
 ---
 
@@ -18,8 +20,8 @@ Modify the following file:
 Example:
 
 ```yaml
-model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/model_configs_example.csv'
-llm_api: 'sncloud'  # only option currently
+jobs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/jobs_example.yaml'
+llm_api: 'sncloud'  # only option currently supported
 output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/output_files'
 consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/consolidated_results'
 timeout: 3600
@@ -34,83 +36,98 @@ batch_sizes: [1, 2, 4, 8, 16, 32, 64, 128]
 ```
 
 #### Key notes:
-- timeout: it's the maximum time in seconds that each model config row will take to process.
-- concurrency_enabled: If true, each model config row in the CSV is benchmarked concurrently using a thread pool.
+- timeout: it's the maximum time in seconds that each job will take to process (overridable per job — see below).
+- concurrency_enabled: If true, each job in the jobs file is benchmarked concurrently using a thread pool.
 - max_workers: Maximum number of parallel benchmark jobs.
-- time_delay: Optional sleep between runs (per row).
-- use_multiple_prompts: If true, multiple prompts in located in `<PATH TO AISK REPO>/benchmarking/prompts/user-prompt_template-text_instruct.yaml` will be used randomly.
+- time_delay: Optional sleep between runs (per job).
+- use_multiple_prompts: If true, multiple prompts located in `<PATH TO AISK REPO>/benchmarking/prompts/user-prompt_template-text_instruct.yaml` will be used randomly. Only applies to `kit`/`synthetic` jobs, and is overridable per job.
 - batch_sizes: The allowed batch sizes used to infer batching behavior for the switching-time calculation (see [Batching analysis](#batching-analysis)). Observed request groups are snapped **up** to the nearest value in this list. Defaults to powers of two up to 128 when omitted; add non-power-of-two sizes (e.g. `6`) only when your deployment actually serves those batch sizes.
 
-### 2. Model configuration file
+### 2. Jobs file
 
 Modify:
 
-`<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/model_configs_example.csv`
+`<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/jobs_example.yaml`
 
-Header:
+This is a YAML list of job dicts (not a CSV table) — one dict per benchmark job. Each job's keys are the Kit evaluator's own parameters for that `mode`, so a job's shape can vary per mode (e.g. a `real_workload` job's QPS params look nothing like a `synthetic` job's concurrency params) without forcing every mode into the same tabular columns.
 
-`model_name,input_tokens,output_tokens,num_requests,num_warmup_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size`
+```yaml
+jobs:
+  - mode: synthetic                            # workload shape: 'custom' | 'synthetic' | 'real_workload'
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 128
+    num_output_tokens: 128
+    num_requests: 8
+    num_concurrent_requests: 8
 
-Each row defines one benchmark job.
+  - mode: real_workload
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 550
+    num_output_tokens: 150
+    num_requests: 20
+    qps: 2.0
+    qps_distribution: constant
+```
 
 #### Configuration parameters
 
-The configuration table in `model_configs_example.csv` details each individual model of the composition that we would like to test.
+These key names match the Kit's CLI flags in `evaluator.py` one-to-one (e.g. `--num-input-tokens` → `num_input_tokens`), so anything that works on the CLI works here too.
 
-- `model_name`  
+- `mode`
+  `synthetic` (fixed token counts, closed-loop concurrency) or `real_workload` (fixed token counts, open-loop QPS pacing). `custom` (user-provided dataset via `input_file_path`) is also supported but isn't commonly used in bundles.
+
+- `model_name`
   Name of the model in the bundle.
 
-- `input_tokens`  
+- `num_input_tokens`
   Number of input tokens in the generated prompt.
 
-- `output_tokens`  
+- `num_output_tokens`
   Maximum number of output tokens generated by the model.
 
-- `num_requests`  
+- `num_requests`
   Total number of requests sent.
 
-- `num_warmup_requests`  
-  Number of throwaway warm-up requests sent **before** the measured run. Set per
-  row. To disable, leave the cell blank or `0`.
+- `num_warmup_requests`
+  Number of throwaway warm-up requests sent **before** the measured run. Omit or set to `0` to disable.
 
   Synthetic warm-ups match the test's concurrency level, while real-workload warm-ups ignore the pacing rate and just fire everything immediately.
 
-- `concurrent_requests`  
-  Enables **synthetic workload benchmarking**.
-  - If this value is set, `qps` is ignored
+- `num_concurrent_requests`
+  Required for `mode: synthetic`. Ignored for `mode: real_workload`.
 
-- `qps`  
-  Enables **real workload benchmarking** (queries per second).
-  - Recommended values `< 10`
-  - Ignored if `concurrent_requests` is set
+- `qps`
+  Required for `mode: real_workload` (queries per second). Recommended values `< 10`.
 
-- `qps_distribution`  
-  Wait-time distribution between requests.
+- `qps_distribution`
+  Wait-time distribution between requests for `mode: real_workload`.
   Supported values:
   - `constant` (default)
   - `uniform`
   - `exponential`
-  Ignored if concurrent_requests is set
 
-- `multimodal_img_size`  
+- `multimodal_image_size`
   Used only for multimodal models to include an image in the benchmark requests.
   Supported values:
   - `small` → 500×500 px
   - `medium` → 1000×1000 px
   - `large` → 2000×2000 px
-  For non-multimodal models, leave it empty.
+  Omit for non-multimodal models (defaults to `'na'`).
 
-> **Important:**  
-> The sum of `input_tokens` and `output_tokens` must not exceed the maximum sequence length supported by the model.
->  
-> Example: for a model with a 4096-token context window, you may set  
-> `input_tokens = 4000` and `output_tokens = 64`. However, consider  that models might have internal prompting tokens, so include them when calculating the full context tokens.
+- `results_dir`, `timeout`, `llm_api`, `user_metadata`
+  Optional per job — default from `output_files_dir`/`timeout`/`llm_api` in `config.yaml` (and `{'model_idx': 0}`) when omitted, so most jobs don't need to repeat them.
+
+> **Important:**
+> The sum of `num_input_tokens` and `num_output_tokens` must not exceed the maximum sequence length supported by the model.
+>
+> Example: for a model with a 4096-token context window, you may set
+> `num_input_tokens = 4000` and `num_output_tokens = 64`. However, consider that models might have internal prompting tokens, so include them when calculating the full context tokens.
 
 ### 3. Execution modes
 
 #### 3.1 Sequential execution
 
-If `concurrency_enabled: false` in `config.yaml`, models are benchmarked **row by row** in the order defined in `model_configs_example.csv`.
+If `concurrency_enabled: false` in `config.yaml`, jobs are benchmarked **in order** as defined in `jobs_example.yaml`.
 
 This mode is useful for:
 - Running on limited resources
@@ -119,10 +136,10 @@ This mode is useful for:
 
 #### 3.2 Concurrent execution
 
-If `concurrency_enabled: true`, each row in `model_configs_example.csv` is benchmarked **in parallel** using a `ThreadPoolExecutor`.
+If `concurrency_enabled: true`, every job in `jobs_example.yaml` is benchmarked **in parallel** using a `ThreadPoolExecutor`.
 
 Relevant configuration fields:
-- `concurrency_enabled`: Enables row-level parallelism
+- `concurrency_enabled`: Enables job-level parallelism
 - `max_workers`: Maximum number of benchmark jobs running concurrently
 
 This mode is useful when:
@@ -143,7 +160,7 @@ bash run_synthetic_perfomance_bundle_eval.sh
 
 Individual model config results are stored under: `output_files_dir` in `config.yaml`.
 
-For every model configuration (row in `model_configs_example.csv`), two result files are generated:
+For every job in `jobs_example.yaml`, two result files are generated:
 
 1. **Individual responses** (`*individual_responses.json`)  
    - One entry per request
@@ -166,10 +183,10 @@ If you'd like to know more details about these output files, please check the ki
 
 Consolidated results are written to: `consolidated_results_dir` in `config.yaml`, as a single `<run_name>.xlsx` workbook with two sheets:
 
-- **`per_model`** — one row per row in `model_configs_example.csv`, as described below.
+- **`per_model`** — one row per job in `jobs_example.yaml`, as described below.
 - **`bundle_summary`** — aggregated throughput across the whole bundle (see [Bundle-level summary](#53-bundle-level-summary) below).
 
-Each row in the `per_model` sheet corresponds to **one row in `model_configs_example.csv`**.
+Each row in the `per_model` sheet corresponds to **one job in `jobs_example.yaml`**.
 
 ##### Terminology
 
@@ -243,7 +260,7 @@ __Note__: Only requests at the **highest batching level** are considered.
 
 ##### Switching time important notes
 
-- It's recommended that the user include a warm up set of models, either in the same `model_configs_example.csv` or in a separate csv, so HBM could be set with the model configurations that will be tested. Right after the warm up models are procesed, proceed run the configs that would include the switching time. 
+- It's recommended that the user include a warm up set of models, either in the same jobs file or in a separate one, so HBM could be set with the model configurations that will be tested. Right after the warm up models are processed, proceed to run the jobs that should include the switching time.
 - Include multiple sequence lengths and batch sizes according to the node environment configuration.
 - Run multiple requests per model config row to obtain stable switching time estimates
 
@@ -253,7 +270,7 @@ While the `per_model` sheet reports throughput **per model config row** (one mod
 
 ##### Rows
 
-- **`ALL`** — grand total across every row in `model_configs_example.csv`.
+- **`ALL`** — grand total across every job in `jobs_example.yaml`.
 - **One row per model family** — rows are also grouped by model family (inferred from `model_name`, the same family detection used elsewhere in the benchmarking kit) so you can compare, e.g., the combined throughput of all `llama3` rows against all `qwen` rows in the same bundle.
 
 __Note__: a model name that isn't recognized by the family detector falls back to the `llama2` family bucket rather than an `unknown` one — if you see an unexpected model rolled up under `llama2`, check the model naming.
@@ -263,7 +280,7 @@ __Note__: a model name that isn't recognized by the family detector falls back t
 | Column | Meaning |
 |---|---|
 | `family` | `ALL` for the grand total, or the family name for that group's row |
-| `num_model_configs` | Number of `model_configs_example.csv` rows in this group |
+| `num_model_configs` | Number of jobs in this group |
 | `total_num_requests_started` | Requests attempted/dispatched across the group |
 | `total_errors` | Requests that failed |
 | `total_completed_requests` | Requests that completed successfully — the **numerator** of the throughput calculation |
