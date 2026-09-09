@@ -18,8 +18,6 @@ sys.path.append(repo_dir)
 
 
 import asyncio
-import io
-import re
 import sys
 
 import weave
@@ -170,6 +168,11 @@ def main() -> None:
         # Callout to get SambaNova API Key
         st.markdown('Get your SambaNova API key [here](https://cloud.sambanova.ai/apis)')
         st.markdown('Get your WANDB API key [here](https://wandb.ai/authorize)')
+        wandb_api_key = st.text_input(
+            'WANDB API KEY (optional)', value=os.environ.get('WANDB_API_KEY', ''), type='password'
+        )
+        if wandb_api_key:
+            os.environ['WANDB_API_KEY'] = wandb_api_key
 
         if not are_credentials_set(additional_env_vars):
             api_key, additional_vars = env_input_fields(additional_env_vars)
@@ -199,15 +202,9 @@ def main() -> None:
                     with st.spinner('Processing'):
                         st.session_state.project_name = project_name
                         try:
-                            url_pattern = r'https?://\S+'
-                            captured_output = io.StringIO()
-                            sys.stdout = captured_output
-                            weave.init(st.session_state.project_name)
-                            sys.stdout = sys.__stdout__
-                            captured_logs = captured_output.getvalue()
-                            url = re.search(url_pattern, captured_logs)
-                            if url is not None:
-                                st.session_state.url = url.group(0)
+                            client = weave.init(st.session_state.project_name)
+                            if client.entity and client.project:
+                                st.session_state.url = f'https://wandb.ai/{client.entity}/{client.project}/weave'
                         except Exception as e:
                             st.error(f'Error: {e}.')
                         st.success('Wandb project name saved successfully!')
