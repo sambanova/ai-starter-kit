@@ -201,9 +201,9 @@ class WeaveChatModel(Model):
 
             response = client.invoke(messages)
             completion = response.content.strip()
-            usage = response.response_metadata.get('usage', None)
+            usage = response.response_metadata.get('token_usage') or {}
             input_tokens, output_tokens = usage.get('prompt_tokens'), usage.get('completion_tokens')
-            if self.model_kwargs:
+            if self.model_kwargs and input_tokens is not None and output_tokens is not None:
                 input_token_cost, ouput_token_cost = (
                     self.model_kwargs.get('input_token_cost'),
                     self.model_kwargs.get('ouput_token_cost'),
