@@ -3,8 +3,9 @@ import os
 import shutil
 import sys
 import uuid
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
+import pandas
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
@@ -114,6 +115,25 @@ def initialize_base_evaluator(option: str) -> WeaveEvaluator:
 
 
 st_description = load_app_description()
+
+
+def summaries_to_frame(summaries: Dict[str, Any]) -> pandas.DataFrame:
+    """Flatten weave evaluation summaries into one row per evaluated model."""
+    rows = []
+    for run_name, summary in summaries.items():
+        row: Dict[str, Any] = {'model': run_name}
+        for scorer, metrics in (summary or {}).items():
+            if isinstance(metrics, dict):
+                for metric, value in metrics.items():
+                    if isinstance(value, dict):
+                        for stat, number in value.items():
+                            row[f'{metric} ({stat})'] = number
+                    else:
+                        row[f'{scorer} ({metric})'] = value
+            else:
+                row[scorer] = metrics
+        rows.append(row)
+    return pandas.DataFrame(rows)
 
 
 def main() -> None:
@@ -282,11 +302,14 @@ def main() -> None:
         st.toast("""Evaluation in progress. This could take a while depending on the dataset size""")
 
         with st.spinner('Processing'):
-            asyncio.run(
+            summaries = asyncio.run(
                 evaluator.evaluate(  # type: ignore
                     filepath=st.session_state.qna_file_path, use_concurrency=True
                 )
             )
+            if summaries:
+                st.markdown('**Results**')
+                st.dataframe(summaries_to_frame(summaries))
             if st.session_state.url is not None:
                 st.write(f"""Successfully submitted the evaluation. You can check the complete 
                     summary here: {st.session_state.url}""")
