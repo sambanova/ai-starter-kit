@@ -20,14 +20,24 @@ import json
 import os
 import sys
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
-repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
-sys.path.append(benchmarking_dir)
-sys.path.append(repo_dir)
+try:
+    # Prefer whatever sys.path the importing process already set up (e.g. Streamlit's app.py,
+    # or another module in this package) -- only fall back to appending paths ourselves when run
+    # as a standalone script (`python generate_dataset.py ...`, as the quickstart.sh scripts do),
+    # where nothing has configured them yet. Appending unconditionally here would add
+    # .../benchmarking to sys.path even when unneeded, which shadows the repo-root `utils/`
+    # namespace package used elsewhere (`benchmarking/utils.py` vs. top-level `utils/`).
+    from benchmarking.benchmarking_tools.kit.src.executor_base import str2bool
+    from benchmarking.benchmarking_tools.kit.src.performance_evaluation import SyntheticPerformanceEvaluator
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
+    repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
+    sys.path.append(benchmarking_dir)
+    sys.path.append(repo_dir)
 
-from benchmarking.benchmarking_tools.kit.src.executor_base import str2bool
-from benchmarking.benchmarking_tools.kit.src.performance_evaluation import SyntheticPerformanceEvaluator
+    from benchmarking.benchmarking_tools.kit.src.executor_base import str2bool
+    from benchmarking.benchmarking_tools.kit.src.performance_evaluation import SyntheticPerformanceEvaluator
 
 
 def generate_dataset(

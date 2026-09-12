@@ -1,8 +1,6 @@
 #!/bin/bash
-# quickstart_synthetic.sh
-# Synthetic Performance Evaluation: the Kit generates N synthetic prompts and fires them all as
-# a single concurrency-capped burst -- measures throughput/latency at a fixed batch size.
-# Always runs `--mode synthetic` explicitly. Edit the variables below, then run: sh quickstart_synthetic.sh
+# quickstart_synthetic.sh -- fires N synthetic prompts as one concurrency-capped burst
+# (--mode synthetic). Edit the variables below, then run: sh quickstart_synthetic.sh
 
 ulimit -n 4096  # raise open-file-descriptor limit for higher-concurrency runs
 
@@ -21,9 +19,11 @@ NUM_CONCURRENT_REQUESTS=10                 # Max requests in flight at once; = N
 NUM_INPUT_TOKENS=1000                      # Exact input token count per prompt (<=2000 recommended)
 NUM_OUTPUT_TOKENS=1000                     # Max output tokens per request (<=2000 recommended)
 MULTIMODAL_IMAGE_SIZE=na                   # 'na' | 'small' | 'medium' | 'large'; only for multimodal models
-USE_MULTIPLE_PROMPTS=True                 # True/False; cycle random prompt templates instead of one
-SAVE_LLM_RESPONSES=True                   # True/False; also save each response's text to a file
+USE_MULTIPLE_PROMPTS=True                  # True/False; cycle random prompt templates instead of one
+SAVE_LLM_RESPONSES=True                    # True/False; also save each response's text to a file
 
+# Need a flag not listed above? Add it directly to the command below --
+# `python src/evaluator.py --help` (or ../../README.md) has the full list.
 python src/evaluator.py \
     --mode synthetic \
     --model-names "$MODEL_NAMES" \

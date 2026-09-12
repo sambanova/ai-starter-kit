@@ -847,7 +847,14 @@ class CustomPromptSource(PromptSource):
         return request_configs
 
     def run_metadata(self, **kwargs: Any) -> Dict[str, Any]:
-        return {'request_count': len(self.dataset), 'sampling_params': kwargs.get('sampling_params', {})}
+        return {
+            'request_count': len(self.dataset),
+            'sampling_params': kwargs.get('sampling_params', {}),
+            # Optional cap (None if not set) -- same field name/meaning as synthetic/
+            # real_workload's own num_output_tokens, so it's not only visible indirectly via
+            # sampling_params_max_tokens_to_generate in the saved summary.
+            'num_output_tokens': kwargs.get('num_output_tokens'),
+        }
 
 
 class SyntheticPromptSource(PromptSource):
@@ -1145,14 +1152,12 @@ class QPSLoadPattern(LoadPattern):
         mean_wait = 1 / self.qps
         if self.qps_distribution == 'exponential':
             wait = random.expovariate(1 / mean_wait)
-        elif self.qps_distribution == 'uniform':
-            wait = random.uniform(0, 2 * mean_wait)
         elif self.qps_distribution == 'constant':
             wait = mean_wait
         else:
             raise ValueError(
                 f'Unknown distribution {self.qps_distribution}. \
-                Possible values: constant, uniform, exponential.'
+                Possible values: constant, exponential.'
             )
         return wait
 
@@ -1320,10 +1325,20 @@ class PerformanceEvaluator(BasePerformanceEvaluator):
             )
             filename_args: Tuple[Any, ...] = (num_input_tokens, num_output_tokens)
         else:
+            # Standardized with the fixed-token-count modes above: num_output_tokens (if passed)
+            # seeds sampling_params.max_tokens_to_generate as a default, same precedence as the
+            # fixed-token-count branch -- an explicit sampling_params.max_tokens_to_generate still
+            # wins, so existing callers using that directly keep working unchanged.
+            num_output_tokens = kwargs.get('num_output_tokens')
+            if num_output_tokens is not None:
+                sampling_params = {'max_tokens_to_generate': num_output_tokens, **sampling_params}
+
             dataset = getattr(self.prompt_source, 'dataset', [])
             self.cli_progress_bar = tqdm(total=len(dataset), desc='Running Requests')
 
-            summary, individual_responses = self.get_token_throughput_latencies(sampling_params=sampling_params)
+            summary, individual_responses = self.get_token_throughput_latencies(
+                sampling_params=sampling_params, num_output_tokens=num_output_tokens
+            )
             filename_args = ()
 
         if self.results_dir:
@@ -1359,7 +1374,12 @@ class PerformanceEvaluator(BasePerformanceEvaluator):
             )
         else:
             num_input_tokens = None
-            num_output_tokens = None
+            # Unlike num_input_tokens (genuinely absent -- the dataset sets input length), custom
+            # mode's num_output_tokens is a real, optional caller-supplied cap (see run_benchmark's
+            # sampling_params merge above) -- surface it here too so it lands in the saved
+            # metadata/summary the same way synthetic/real_workload's num_output_tokens does,
+            # instead of only being visible indirectly via sampling_params_max_tokens_to_generate.
+            num_output_tokens = kwargs.get('num_output_tokens')
             request_configs = self.build_request_configs(None, sampling_params)
             # Custom mode: the dataset (not a caller-supplied value) determines the request count.
             num_requests = len(request_configs)

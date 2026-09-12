@@ -44,7 +44,12 @@ def build_job_kwargs(job: Dict[str, Any], mode: str) -> Tuple[Dict[str, Any], Di
             'input_file_path': job['input_file_path'],
             'save_response_texts': job.get('save_llm_responses', False),
         }
-        run_kwargs = {'sampling_params': sampling_params}
+        # Same default (150) and field name as synthetic/real_workload's own num_output_tokens --
+        # NOT truly optional despite the name: the API requires a concrete max_tokens value on
+        # every request, so omitting this would otherwise only be caught deep in the HTTP client.
+        # An explicit sampling_params.max_tokens_to_generate still wins if both are given (see
+        # PerformanceEvaluator.run_benchmark).
+        run_kwargs = {'num_output_tokens': job.get('num_output_tokens', 150), 'sampling_params': sampling_params}
 
     elif mode == 'synthetic':
         constructor_kwargs = {
@@ -108,6 +113,16 @@ def register_cli_args(parser: argparse.ArgumentParser, mode: str) -> None:
             type=str,
             required=True,
             help='The absolute path to the dataset to be used for running the custom performance evaluation.',
+        )
+        parser.add_argument(
+            '--num-output-tokens',
+            type=int,
+            default=150,
+            help="""Caps generated tokens per request, same as synthetic/real_workload's own
+                --num-output-tokens (the API requires a concrete value, so this can't be left
+                uncapped). Set --sampling-params '{"max_tokens_to_generate": ...}' directly
+                instead if you need a different value (that value wins if both are given).
+                (default: %(default)s)""",
         )
         parser.add_argument(
             '--save-llm-responses',
@@ -184,7 +199,7 @@ def register_cli_args(parser: argparse.ArgumentParser, mode: str) -> None:
         )
         parser.add_argument(
             '--qps-distribution',
-            choices=['constant', 'uniform', 'exponential'],
+            choices=['constant', 'exponential'],
             default='constant',
             help="The name of the distribution to use for a real workload. (default: %(default)s)",
         )

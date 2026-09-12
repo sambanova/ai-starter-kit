@@ -16,21 +16,35 @@ Usage:
 
 import argparse
 import json
+import math
 import os
 import sys
 from typing import Any, Dict, List, Optional
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
-repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
-sys.path.append(benchmarking_dir)
-sys.path.append(repo_dir)
+try:
+    # Prefer whatever sys.path the importing process already set up -- only fall back to
+    # appending paths ourselves when run as a standalone script, where nothing has configured
+    # them yet. Appending unconditionally here would add .../benchmarking to sys.path even when
+    # unneeded, which shadows the repo-root `utils/` namespace package used elsewhere
+    # (`benchmarking/utils.py` vs. top-level `utils/`).
+    from benchmarking.benchmarking_tools.kit.src.schemas import (
+        BenchmarkSummary,
+        QuantileStats,
+        RequestMetric,
+        compute_quantile_stats,
+    )
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
+    repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
+    sys.path.append(benchmarking_dir)
+    sys.path.append(repo_dir)
 
-from benchmarking.benchmarking_tools.kit.src.schemas import (
-    BenchmarkSummary,
-    QuantileStats,
-    RequestMetric,
-    compute_quantile_stats,
+    from benchmarking.benchmarking_tools.kit.src.schemas import (
+        BenchmarkSummary,
+        QuantileStats,
+        RequestMetric,
+        compute_quantile_stats,
 )
 
 
@@ -83,12 +97,14 @@ def build_individual_responses(
             else 1
         )
         output_tokens_per_s = request_output_tokens / request_itl_sum if request_itl_sum > 0 else 0
-        if len(request_itls) > 1:
-            mean_itl = sum(request_itls[1:]) / len(request_itls[1:])
-        elif len(request_itls) == 1:
-            mean_itl = request_itls[0]
-        else:
-            mean_itl = None
+        # Mean ITL = (post-first-token decode time) / (output tokens after the first) -- NOT
+        # (chunk count - 1): confirmed live that vLLM's own itls list has one entry per streamed
+        # chunk, and this SambaNova endpoint batches several tokens per chunk (~3.6 tokens/chunk
+        # observed), so dividing by len(request_itls) systematically inflated this value by that
+        # same factor. Uses request_output_tokens (the real per-request token count) instead,
+        # matching the (e2e - ttft) / (osl - 1) formula aiperf's own native metric already uses --
+        # confirmed those two now agree closely on the same run.
+        mean_itl = (request_e2e_s - request_ttft_s) / (request_output_tokens - 1) if request_output_tokens > 1 else None
 
         responses.append(
             RequestMetric(
@@ -130,11 +146,15 @@ def build_summary(
     num_completed = raw.get('completed', 0)
     num_failed = raw.get('failed', 0)
 
+    # request_rate is "inf" for a closed-loop burst run (vLLM's own default) -- record that as no
+    # fixed rate (None) rather than a literal Infinity, which plain `json` writes as a bare,
+    # non-RFC-8259-compliant `Infinity` token that not every downstream JSON reader accepts.
     qps: Optional[float] = None
     request_rate = raw.get('request_rate')
     if request_rate is not None:
         try:
-            qps = float(request_rate)
+            parsed_rate = float(request_rate)
+            qps = parsed_rate if math.isfinite(parsed_rate) else None
         except (TypeError, ValueError):
             qps = None
 
@@ -152,6 +172,7 @@ def build_summary(
         num_completed_requests=num_completed,
         number_errors=num_failed,
         error_rate=(num_failed / num_prompts) if num_prompts else 0,
+        benchmark_duration_s=raw.get('duration'),
         request_throughput=raw.get('request_throughput'),
         client_total_output_throughput=raw.get('output_throughput'),
         # vLLM doesn't echo the served/API model name back into its own output (only the

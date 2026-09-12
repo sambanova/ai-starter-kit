@@ -189,13 +189,19 @@ class BaseAPIEndpoint(abc.ABC):
         # Store inter-token latencies
         metrics[common_metrics.INTER_TOKEN_LATENCY] = events_timings if len(events_timings) > 0 else None
 
-        # Calculate mean ITL for this request (exclude first chunk which includes TTFT)
-        if len(events_timings) > 1:
-            # Mean of ITLs after first token
-            metrics[common_metrics.MEAN_INTER_TOKEN_LATENCY] = sum(events_timings[1:]) / len(events_timings[1:])
-        elif len(events_timings) == 1:
-            # Single chunk case
-            metrics[common_metrics.MEAN_INTER_TOKEN_LATENCY] = events_timings[0]
+        # Mean ITL = (post-first-token decode time) / (output tokens after the first) -- NOT
+        # (streaming-event count - 1). The server can batch several tokens into one streamed
+        # chunk (confirmed live: ~3.7 tokens/chunk on this endpoint for a 200-token response), so
+        # dividing by len(events_timings) systematically inflated this value by that same factor
+        # -- e.g. reporting ~10.7ms/chunk when the true per-token rate was ~2.8ms/token. Uses
+        # metrics[NUM_OUTPUT_TOKENS] (the real, already-resolved -- server-reported when
+        # available -- output token count) instead, matching the same (e2e - ttft) / (osl - 1)
+        # formula this repo's aiperf/vLLM integrations use, so all three are directly comparable.
+        resolved_num_output_tokens = metrics[common_metrics.NUM_OUTPUT_TOKENS]
+        if resolved_num_output_tokens and resolved_num_output_tokens > 1 and len(events_timings) > 0:
+            metrics[common_metrics.MEAN_INTER_TOKEN_LATENCY] = (total_request_time - ttft) / (
+                resolved_num_output_tokens - 1
+            )
         else:
             metrics[common_metrics.MEAN_INTER_TOKEN_LATENCY] = None
 
@@ -314,7 +320,11 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         sampling_params = self.request_config.sampling_params
         assert isinstance(sampling_params, dict), f'sampling_params must be a dict. Got type {type(sampling_params)}'
         sampling_params['model'] = self.request_config.model
-        sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate')
+        # Every caller is expected to supply this (synthetic/real_workload always do; custom mode's
+        # job_kwargs.py defaults it to 150 the same way). This fallback is a last-resort safety net
+        # against a genuine KeyError crash for any caller that bypasses those defaults directly --
+        # not a documented "uncapped" option, since this API requires a concrete max_tokens value.
+        sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate', 150)
         sampling_params['ignore_eos'] = True
 
         if self.request_config.is_stream_mode:
@@ -427,6 +437,29 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         return metrics, generated_text
 
 
+def _api_error_message(response: requests.Response) -> str:
+    """Pulls the API's own error message out of a failed response body, confirmed live against
+    SambaNova's OpenAI-compatible endpoint: 4xx bodies are JSON shaped as
+    `{"error": {"message": "...", "type": "...", "code": "..."}}`. Falls back to the raw response
+    text (e.g. an HTML error page from an intermediate proxy on a 502/504, where the request never
+    reached the API layer at all) truncated to a reasonable length, and finally to the bare HTTP
+    reason phrase if the body is empty.
+    """
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+    if isinstance(body, dict):
+        error = body.get('error')
+        message = error.get('message') if isinstance(error, dict) else error
+        if message:
+            return str(message)
+    text = response.text.strip()
+    if text:
+        return text[:300]
+    return response.reason
+
+
 def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tuple[Dict[str, Any], str, RequestConfig]:
     """Makes a single completion request to a LLM API
 
@@ -457,12 +490,19 @@ def llm_request(request_config: RequestConfig, tokenizer: AutoTokenizer) -> Tupl
         return metrics, generated_text, request_config
 
     except Exception as e:
-        error_code = getattr(
-            e,
-            'code',
-            """Error while running LLM API requests. """
-            + """Check your model name, LLM API type, env variables and endpoint status.""",
-        )
+        # `requests.exceptions.HTTPError` (raised by `response.raise_for_status()` above) has no
+        # `.code` attribute, so `getattr(e, 'code', ...)` always missed and fell through to one
+        # fixed generic string for every failure -- 401s, 429s, 502s, timeouts, all identical --
+        # which made error_code_frequency (grouped by this field) useless for telling failure
+        # types apart. Use the real status code + the API's own error message straight from the
+        # response body when there is one (confirmed live: SambaNova returns
+        # {"error": {"message": "Incorrect API key provided: ...", ...}} on a 401, for example);
+        # otherwise fall back to the exception's own type name (e.g. "ConnectionError", "Timeout")
+        # rather than a placeholder.
+        if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
+            error_code = f'{e.response.status_code}: {_api_error_message(e.response)}'
+        else:
+            error_code = type(e).__name__
         error_message = str(e)
         metrics[common_metrics.ERROR_MSG] = error_message
         metrics[common_metrics.ERROR_CODE] = error_code

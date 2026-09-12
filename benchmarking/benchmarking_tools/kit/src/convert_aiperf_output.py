@@ -26,18 +26,31 @@ import os
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
-repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
-sys.path.append(benchmarking_dir)
-sys.path.append(repo_dir)
+try:
+    # Prefer whatever sys.path the importing process already set up -- only fall back to
+    # appending paths ourselves when run as a standalone script, where nothing has configured
+    # them yet. Appending unconditionally here would add .../benchmarking to sys.path even when
+    # unneeded, which shadows the repo-root `utils/` namespace package used elsewhere
+    # (`benchmarking/utils.py` vs. top-level `utils/`).
+    from benchmarking.benchmarking_tools.kit.src.schemas import (
+        BenchmarkSummary,
+        QuantileStats,
+        RequestMetric,
+        compute_quantile_stats,
+    )
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
+    repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
+    sys.path.append(benchmarking_dir)
+    sys.path.append(repo_dir)
 
-from benchmarking.benchmarking_tools.kit.src.schemas import (
-    BenchmarkSummary,
-    QuantileStats,
-    RequestMetric,
-    compute_quantile_stats,
-)
+    from benchmarking.benchmarking_tools.kit.src.schemas import (
+        BenchmarkSummary,
+        QuantileStats,
+        RequestMetric,
+        compute_quantile_stats,
+    )
 
 # aiperf per-request metric names (profile_export.jsonl `metrics.<name>.value`, ms/tokens) that
 # map onto RequestMetric's common vocabulary. Values are converted ms -> s where applicable.
@@ -51,6 +64,19 @@ _TOKEN_COUNT_FIELDS = {
     'output_sequence_length': 'number_output_tokens',
 }
 _QUANTILE_KEYS = ('p5', 'p25', 'p50', 'p75', 'p90', 'p95', 'p99')
+
+
+def _get_profiling_phase(aggregate: Dict[str, Any]) -> Dict[str, Any]:
+    """aiperf's aggregate records the exact configured `--concurrency`/`--request-rate` for the
+    run under `input_config.phases[]` (one entry per phase, e.g. warmup + profiling) -- confirmed
+    live: `rate` is `null` for `--request-rate inf` (a closed-loop burst) and the numeric target
+    otherwise. Prefer the 'profiling' phase (the measured one) over any warmup phase.
+    """
+    phases = aggregate.get('input_config', {}).get('phases', [])
+    for phase in phases:
+        if phase.get('kind') == 'profiling':
+            return dict(phase)
+    return dict(phases[0]) if phases else {}
 
 
 def find_output_files(artifact_dir: str, num_profile_runs: Optional[int] = None) -> Tuple[str, str]:
@@ -161,10 +187,25 @@ def build_summary(
     if request_throughput_entry is not None:
         request_throughput = request_throughput_entry.get('avg')
 
+    # aiperf's aggregate 'output_token_throughput' (tokens/sec, whole-run total) is the same
+    # quantity vLLM/Kit report as client_total_output_throughput -- confirmed live -- as opposed
+    # to 'output_token_throughput_per_user' (a per-request average, already captured separately).
+    client_total_output_throughput = None
+    output_token_throughput_entry = aggregate.get('output_token_throughput')
+    if output_token_throughput_entry is not None:
+        client_total_output_throughput = output_token_throughput_entry.get('avg')
+
     effective_concurrency = None
     concurrency_entry = aggregate.get('effective_concurrency')
     if concurrency_entry is not None:
         effective_concurrency = concurrency_entry.get('avg')
+
+    # An explicit --num-concurrent-requests/--qps (if the caller passed one) wins; otherwise fall
+    # back to the run's own recorded --concurrency/--request-rate configuration -- the actual
+    # values aiperf executed with, not just what the shell script intended to pass.
+    profiling_phase = _get_profiling_phase(aggregate)
+    configured_concurrency = profiling_phase.get('concurrency')
+    configured_rate = profiling_phase.get('rate')
 
     # aiperf's aggregate-level scalar metrics (benchmark_duration, request_throughput,
     # effective_concurrency, ...) are all {"unit": ..., "avg": ...} dicts, not bare numbers --
@@ -180,8 +221,9 @@ def build_summary(
         name=f'aiperf_{model_name}',
         model=model_name,
         num_concurrent_requests=num_concurrent_requests
+        or configured_concurrency
         or (round(effective_concurrency) if effective_concurrency is not None else None),
-        qps=qps,
+        qps=qps or configured_rate,
         num_input_tokens=num_input_tokens,
         num_output_tokens=num_output_tokens,
         num_requests=len(individual_responses),
@@ -191,6 +233,7 @@ def build_summary(
         number_errors=num_errors,
         error_rate=(num_errors / len(individual_responses)) if individual_responses else None,
         request_throughput=request_throughput,
+        client_total_output_throughput=client_total_output_throughput,
         extra={
             k: v
             for k, v in {

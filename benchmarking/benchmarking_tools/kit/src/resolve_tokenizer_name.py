@@ -11,13 +11,21 @@ import argparse
 import os
 import sys
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
-repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
-sys.path.append(benchmarking_dir)
-sys.path.append(repo_dir)
+try:
+    # Prefer whatever sys.path the importing process already set up -- only fall back to
+    # appending paths ourselves when run as a standalone script, where nothing has configured
+    # them yet. Appending unconditionally here would add .../benchmarking to sys.path even when
+    # unneeded, which shadows the repo-root `utils/` namespace package used elsewhere
+    # (`benchmarking/utils.py` vs. top-level `utils/`).
+    from benchmarking.benchmarking_utils import get_tokenizer_model_name
+except ImportError:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    benchmarking_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..'))
+    repo_dir = os.path.abspath(os.path.join(benchmarking_dir, '..'))
+    sys.path.append(benchmarking_dir)
+    sys.path.append(repo_dir)
 
-from benchmarking.benchmarking_utils import get_tokenizer_model_name
+    from benchmarking.benchmarking_utils import get_tokenizer_model_name
 
 
 def main() -> None:

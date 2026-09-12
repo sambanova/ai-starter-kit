@@ -1,9 +1,7 @@
 #!/bin/bash
-# quickstart_real_workload.sh
-# Real Workload Performance Evaluation: the Kit generates synthetic prompts and paces requests
-# over time at a target QPS instead of firing a concurrency-capped burst -- an open-loop
-# schedule, closer to real production traffic. Always runs `--mode real_workload` explicitly.
-# Edit the variables below, then run: sh quickstart_real_workload.sh
+# quickstart_real_workload.sh -- paces requests over time at a target QPS instead of a
+# concurrency-capped burst (--mode real_workload, open-loop). Edit the variables below,
+# then run: sh quickstart_real_workload.sh
 
 ulimit -n 4096  # raise open-file-descriptor limit for higher-concurrency runs
 
@@ -19,15 +17,16 @@ SAMPLING_PARAMS='{"temperature": 0.7}'                       # Extra sampling pa
 # --- Real-workload-mode parameters ---
 NUM_REQUESTS=16                            # Total number of requests to send over the run
 QPS=1                                      # Target queries per second (<10 recommended to avoid rate limits)
-QPS_DISTRIBUTION=constant                  # 'constant' | 'uniform' | 'exponential' (Poisson) inter-arrival pacing
+QPS_DISTRIBUTION=constant                  # 'constant' | 'exponential' (Poisson) inter-arrival pacing
 NUM_INPUT_TOKENS=2000                      # Exact input token count per prompt (<=2000 recommended)
 NUM_OUTPUT_TOKENS=1500                     # Max output tokens per request (<=2000 recommended)
 MULTIMODAL_IMAGE_SIZE=na                   # 'na' | 'small' | 'medium' | 'large'; required, only for multimodal models
 USE_MULTIPLE_PROMPTS=False                 # True/False; cycle random prompt templates instead of one
 SAVE_LLM_RESPONSES=False                   # True/False; also save each response's text to a file
 
-# Note: no NUM_CONCURRENT_REQUESTS here -- QPS pacing is open-loop, there's no concurrency cap to set.
-
+# No NUM_CONCURRENT_REQUESTS here -- QPS pacing is open-loop, there's no concurrency cap to set.
+# Need a flag not listed above? Add it directly to the command below --
+# `python src/evaluator.py --help` (or ../../README.md) has the full list.
 python src/evaluator.py \
     --mode real_workload \
     --model-names "$MODEL_NAMES" \
