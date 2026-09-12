@@ -1,3 +1,16 @@
+"""Runs a bundle (queue) of benchmark jobs and consolidates their results into one .xlsx.
+
+By design, this module drives the Kit's own evaluator ONLY (CustomPerformanceEvaluator/
+SyntheticPerformanceEvaluator/RealWorkLoadPerformanceEvaluator in ../benchmarking_tools/kit/src/
+performance_evaluation.py) -- vLLM and aiperf are deliberately not, and will not be, wired in here.
+Both are meant to be used via their own native CLIs directly (see
+../benchmarking_tools/vllm/README.md and ../benchmarking_tools/aiperf/README.md); a plain shell
+loop over their quickstart scripts is the equivalent of a "bundle" for those tools. This also means
+metrics that depend on the Kit's own server-side telemetry (`switching_time`,
+`request_batching_frequencies`, `representative_batch_size`, every `server_*`-prefixed column) are
+only ever populated here -- there is no other tool in this repo that could feed them.
+"""
+
 import logging
 import os
 import re
