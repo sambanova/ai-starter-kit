@@ -1,6 +1,7 @@
 import base64
+import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -11,12 +12,7 @@ import streamlit as st
 from plotly.graph_objs import Figure
 
 from benchmarking.benchmarking_utils import DEFAULT_MODEL
-from benchmarking.benchmarking_tools.kit.src.comparison_utils import (
-    calculate_kit_summary_metrics as calculate_kit_summary_metrics,
-)
-from benchmarking.benchmarking_tools.kit.src.comparison_utils import (
-    get_vllm_summary_metrics as get_vllm_summary_metrics,
-)
+from benchmarking.benchmarking_tools.kit.src.tool_runners import TOOL_RUNNERS, ToolRunResult
 from benchmarking.utils import SAMBANOVA_API_BASE
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 
@@ -26,7 +22,7 @@ repo_dir = os.path.abspath(os.path.join(kit_dir, '..'))
 
 LLM_API_OPTIONS = {'sncloud': 'SambaNova Cloud'}
 MULTIMODAL_IMAGE_SIZE_OPTIONS = {'na': 'N/A', 'small': 'Small', 'medium': 'Medium', 'large': 'Large'}
-QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'uniform': 'Uniform', 'exponential': 'Exponential'}
+QPS_DISTRIBUTION_OPTIONS = {'constant': 'Constant', 'exponential': 'Exponential'}
 APP_PAGES = {
     'synthetic_eval': {
         'file_path': 'pages/synthetic_performance_eval_st.py',
@@ -208,16 +204,48 @@ def find_pages_to_show() -> List[Any]:
     return pages_to_show
 
 
-def update_progress_bar(step: int, total_steps: int, phase: str = 'Running requests') -> None:
-    """Update the progress bar.
+def create_progress_callback(progress_bar: Any) -> Callable[[int, int, str], None]:
+    """Builds a `progress_cb` for `ToolRunner.run_*` bound to one specific `st.progress()` widget.
+
+    Each tool run should get its own progress bar (created inside its own `st.status()` block)
+    rather than all tools sharing/overwriting a single `st.session_state.progress_bar` -- that
+    previously meant one tool's progress bar reset/hid another's when running more than one tool
+    per pass.
 
     Args:
-        step: Number of completed steps.
-        total_steps: Total number of steps for the current phase.
-        phase: Label for the current phase (e.g. 'Warming up' or 'Running requests').
+        progress_bar: an `st.progress()` widget to update.
     """
-    fraction = step / total_steps if total_steps else 0
-    st.session_state.progress_bar.progress(value=fraction, text=f'{phase}: {step}/{total_steps}')
+
+    def _update(step: int, total_steps: int, phase: str = 'Running requests') -> None:
+        fraction = step / total_steps if total_steps else 0
+        progress_bar.progress(value=fraction, text=f'{phase}: {step}/{total_steps}')
+
+    return _update
+
+
+def create_log_callback(
+    placeholder: Any, log_lines: List[str], tool_display_name: str, max_lines: int = 200
+) -> Callable[[str], None]:
+    """Builds a `log_cb` for `ToolRunner.run_*` that streams a subprocess tool's (vLLM/aiperf)
+    raw stdout into a live-updating code block, so the user sees real progress even though these
+    tools don't expose the same granular, per-request progress bar Kit does.
+
+    Args:
+        placeholder: an `st.empty()` (or similar) container to re-render into on every line.
+        log_lines: shared, growing list of all lines seen so far this run (across every tool) --
+            passed in rather than created here so a whole run's log survives past any single
+            tool's call.
+        tool_display_name: prefixed onto each line so lines from different tools stay distinguishable
+            when more than one is selected.
+        max_lines: only the most recent lines are rendered, so a long-running benchmark doesn't
+            grow the DOM/log view unboundedly.
+    """
+
+    def _append(line: str) -> None:
+        log_lines.append(f'[{tool_display_name}] {line}')
+        placeholder.code('\n'.join(log_lines[-max_lines:]), language='bash')
+
+    return _append
 
 
 def set_api_variables() -> Dict[str, Any]:
@@ -493,290 +521,337 @@ def plot_requests_gantt_chart(df_user: pd.DataFrame) -> Figure:
     return fig
 
 
-def display_summary_metrics_comparison(kit_metrics: Dict[str, Any], vllm_metrics: Dict[str, Any]) -> None:
+def calculate_tool_summary_metrics(df_individual: pd.DataFrame, summary: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Display summary metrics comparison between Kit and vLLM in Streamlit.
+    Calculate summary metrics for one tool's run, combining its individual-responses DataFrame
+    with its already-standardized *_summary.json.
+
+    Request/token counts and TTFT/ITL stats are computed from df_individual -- tool-agnostic,
+    since every tool's *_individual_responses.json shares the same columns by construction (the
+    RequestMetric schema in kit/src/schemas.py). Duration and throughput are read from `summary`
+    instead: `start_time`/`end_time` per request are Kit-only fields (vLLM/aiperf's converters
+    never populate them), so deriving duration from individual-response timestamps silently gives
+    NaN/0 for vLLM/aiperf. Each tool's own *_summary.json already carries this correctly, just
+    under different field names depending on what that tool natively reports:
+      - benchmark_duration_s: set directly by aiperf/vLLM (from their own native duration/
+        benchmark_duration fields); Kit doesn't report a native duration, so it's derived from
+        Kit's own results_num_completed_requests_per_min instead (same derivation
+        benchmarking_bundles/synthetic_performance_eval_script.py's BundleSummaryCalculator uses).
+      - request_throughput: natively reported by vLLM/aiperf; Kit has no equivalent field, so it's
+        derived from results_num_completed_requests_per_min (Kit's own native rate) instead.
+      - client_total_output_throughput: populated by all three (Kit natively; vLLM/aiperf's
+        converters map their own output-throughput field onto it) -- read directly, though note
+        it's flattened as `results_client_total_output_throughput` (grouped with the other
+        `results_*` scalar fields), not a bare top-level key.
 
     Args:
-        kit_metrics (Dict[str, Any]): Summary metrics from Kit benchmark.
-        vllm_metrics (Dict[str, Any]): Summary metrics from vLLM benchmark.
+        df_individual: DataFrame loaded from this tool's *_individual_responses.json.
+        summary: Dict loaded from this tool's *_summary.json (the flattened on-disk shape).
+
+    Returns:
+        Dictionary of summary metrics, comparable across tools.
+    """
+    valid_df = df_individual[df_individual['error_code'].isnull()]
+
+    completed = len(valid_df)
+    failed = len(df_individual) - completed
+
+    total_input_tokens = valid_df['number_input_tokens'].sum()
+    total_output_tokens = valid_df['number_output_tokens'].sum()
+
+    completed_per_min = summary.get('results_num_completed_requests_per_min')
+
+    duration = summary.get('benchmark_duration_s')
+    if duration is None and completed_per_min:
+        duration = completed / (completed_per_min / 60.0)
+
+    request_throughput = summary.get('request_throughput')
+    if request_throughput is None and completed_per_min:
+        request_throughput = completed_per_min / 60.0
+    if request_throughput is None and duration:
+        request_throughput = completed / duration
+
+    # client_total_output_throughput is flattened with a `results_` prefix by
+    # BenchmarkSummary.to_legacy_flat_dict() (grouped with num_completed_requests_per_min et al.),
+    # not as a bare top-level key -- confirmed live against a real vLLM-converted summary.
+    output_throughput = summary.get('results_client_total_output_throughput')
+    if output_throughput is None and duration:
+        output_throughput = total_output_tokens / duration
+
+    total_token_throughput = (total_input_tokens + total_output_tokens) / duration if duration else None
+
+    mean_ttft_ms = valid_df['client_ttft_s'].mean() * 1000
+    median_ttft_ms = valid_df['client_ttft_s'].median() * 1000
+
+    if 'client_mean_inter_token_latency_s' in valid_df.columns:
+        mean_itl_ms: Optional[float] = valid_df['client_mean_inter_token_latency_s'].mean() * 1000
+        median_itl_ms: Optional[float] = valid_df['client_mean_inter_token_latency_s'].median() * 1000
+    else:
+        mean_itl_ms = None
+        median_itl_ms = None
+
+    return {
+        'duration': duration,
+        'completed_requests': completed,
+        'failed_requests': failed,
+        'total_input_tokens': int(total_input_tokens),
+        'total_output_tokens': int(total_output_tokens),
+        'request_throughput': request_throughput,
+        'output_throughput': output_throughput,
+        'total_token_throughput': total_token_throughput,
+        'mean_ttft_ms': mean_ttft_ms,
+        'median_ttft_ms': median_ttft_ms,
+        'mean_itl_ms': mean_itl_ms,
+        'median_itl_ms': median_itl_ms,
+    }
+
+
+def display_summary_metrics_comparison(tool_metrics: Dict[str, Dict[str, Any]]) -> None:
+    """
+    Display an N-way summary metrics comparison table in Streamlit, one column per tool.
+
+    Args:
+        tool_metrics: Mapping of tool display name -> calculate_tool_summary_metrics(...) output.
     """
     st.markdown('### Summary Metrics Comparison')
 
-    # Create comparison DataFrame
-    comparison_data = {
-        'Metric': [
-            'Duration (s)',
-            'Completed Requests',
-            'Failed Requests',
-            'Total Input Tokens',
-            'Total Output Tokens',
-            'Request Throughput (req/s)',
-            'Output Throughput (tokens/s)',
-            'Total Token Throughput (tokens/s)',
-            'Mean TTFT (ms)',
-            'Median TTFT (ms)',
-            'Mean ITL (ms)',
-            'Median ITL (ms)',
-        ],
-        'Kit': [
-            f'{kit_metrics["duration"]:.2f}',
-            str(kit_metrics['completed_requests']),
-            str(kit_metrics['failed_requests']),
-            str(kit_metrics['total_input_tokens']),
-            str(kit_metrics['total_output_tokens']),
-            f'{kit_metrics["request_throughput"]:.4f}',
-            f'{kit_metrics["output_throughput"]:.2f}',
-            f'{kit_metrics["total_token_throughput"]:.2f}',
-            f'{kit_metrics["mean_ttft_ms"]:.2f}',
-            f'{kit_metrics["median_ttft_ms"]:.2f}',
-            f'{kit_metrics["mean_itl_ms"]:.2f}' if kit_metrics['mean_itl_ms'] is not None else 'N/A',
-            f'{kit_metrics["median_itl_ms"]:.2f}' if kit_metrics['median_itl_ms'] is not None else 'N/A',
-        ],
-        'vLLM': [
-            f'{vllm_metrics["duration"]:.2f}',
-            str(vllm_metrics['completed_requests']),
-            str(vllm_metrics['failed_requests']),
-            str(vllm_metrics['total_input_tokens']),
-            str(vllm_metrics['total_output_tokens']),
-            f'{vllm_metrics["request_throughput"]:.4f}',
-            f'{vllm_metrics["output_throughput"]:.2f}',
-            f'{vllm_metrics["total_token_throughput"]:.2f}',
-            f'{vllm_metrics["mean_ttft_ms"]:.2f}',
-            f'{vllm_metrics["median_ttft_ms"]:.2f}',
-            f'{vllm_metrics["mean_itl_ms"]:.2f}',
-            f'{vllm_metrics["median_itl_ms"]:.2f}',
-        ],
-    }
+    rows = [
+        ('Duration (s)', 'duration', '{:.2f}'),
+        ('Completed Requests', 'completed_requests', '{}'),
+        ('Failed Requests', 'failed_requests', '{}'),
+        ('Total Input Tokens', 'total_input_tokens', '{}'),
+        ('Total Output Tokens', 'total_output_tokens', '{}'),
+        ('Request Throughput (req/s)', 'request_throughput', '{:.4f}'),
+        ('Output Throughput (tokens/s)', 'output_throughput', '{:.2f}'),
+        ('Total Token Throughput (tokens/s)', 'total_token_throughput', '{:.2f}'),
+        ('Mean TTFT (ms)', 'mean_ttft_ms', '{:.2f}'),
+        ('Median TTFT (ms)', 'median_ttft_ms', '{:.2f}'),
+        ('Mean ITL (ms)', 'mean_itl_ms', '{:.2f}'),
+        ('Median ITL (ms)', 'median_itl_ms', '{:.2f}'),
+    ]
 
-    df_comparison = pd.DataFrame(comparison_data)
+    comparison_data: Dict[str, List[Any]] = {'Metric': [label for label, _, _ in rows]}
+    for tool_display_name, metrics in tool_metrics.items():
+        column = []
+        for _, key, fmt in rows:
+            value = metrics.get(key)
+            column.append(fmt.format(value) if value is not None else 'N/A')
+        comparison_data[tool_display_name] = column
 
-    # Display the comparison table
-    st.dataframe(
-        df_comparison,
+    st.dataframe(pd.DataFrame(comparison_data), width='stretch', hide_index=True)
+
+
+def display_single_tool_results(
+    df_req_info: pd.DataFrame,
+    batching_exposed: bool,
+    expected_output_tokens: int,
+    tool_display_name: str,
+    show_server_metrics: bool,
+) -> None:
+    """Display benchmark results plots for a single tool's run.
+
+    Args:
+        df_req_info: DataFrame with request information (valid rows only).
+        batching_exposed: Whether batching info is available for this run.
+        expected_output_tokens: Expected number of output tokens.
+        tool_display_name: Label for the benchmark (e.g. 'Kit', 'vLLM', 'aiperf').
+        show_server_metrics: Whether to show server-side metrics (kit-only) alongside client ones.
+    """
+    st.markdown('**Performance metrics plots**')
+
+    if df_req_info.empty:
+        st.warning('No successful requests to display. All requests failed.')
+        return
+
+    unique_vals = df_req_info.server_number_output_tokens.dropna().unique() if show_server_metrics else []
+    if len(unique_vals) > 0 and not pd.isnull(unique_vals[0]):
+        generated_output_tokens = unique_vals[0]
+        st.markdown(
+            f"""Difference between expected output tokens ({expected_output_tokens}) and generated output
+            tokens ({generated_output_tokens}) is {abs(expected_output_tokens - generated_output_tokens)}
+                token(s)"""
+        )
+
+    by_batch_size_suffix = ' by batch size' if batching_exposed else ''
+
+    if not show_server_metrics:
+        metrics_ttft = ['client_ttft_s']
+        labels_ttft = ['Client']
+    else:
+        metrics_ttft = ['server_ttft_s', 'client_ttft_s']
+        labels_ttft = ['Server', 'Client']
+        metrics_latency = ['server_end_to_end_latency_s', 'client_end_to_end_latency_s']
+        labels_latency = ['Server', 'Client']
+        metrics_throughput = ['server_output_token_per_s_per_request', 'client_output_token_per_s_per_request']
+        labels_throughput = ['Server', 'Client']
+
+    st.plotly_chart(
+        plot_client_vs_server_barplots(
+            df_req_info,
+            'batch_size_used',
+            metrics_ttft,
+            labels_ttft,
+            f'{tool_display_name}: Distribution of Time to First Token (TTFT)' + by_batch_size_suffix,
+            'TTFT (s), per request',
+            'Batch size',
+            batching_exposed,
+            colors=['#ee7625'] if not show_server_metrics else None,
+        ),
         width='stretch',
-        hide_index=True,
     )
-
-
-def calculate_sum_itl_per_request(df: pd.DataFrame, itl_column: str) -> pd.Series:
-    """
-    Calculate sum of all ITLs for each request.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing the metrics
-        itl_column (str): Column name containing inter-token latencies list
-
-    Returns:
-        pd.Series: Sum of ITLs in seconds per request
-    """
-
-    def calc_sum_itl(row: pd.Series) -> Any:
-        itls = row[itl_column]
-        if itls is None or not isinstance(itls, list) or len(itls) == 0:
-            return None
-        return sum(itls)
-
-    return df.apply(calc_sum_itl, axis=1)
-
-
-def calculate_tpot_per_request(df: pd.DataFrame, itl_column: str, output_tokens_column: str) -> pd.Series:
-    """
-    Calculate Time Per Output Token (TPOT) for each request using ITLs and output tokens.
-
-    TPOT is calculated as: sum(ITLs[1:]) / (output_tokens - 1)
-    This excludes the first ITL which typically includes TTFT overhead.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing the metrics
-        itl_column (str): Column name containing inter-token latencies list
-        output_tokens_column (str): Column name containing output token counts
-
-    Returns:
-        pd.Series: TPOT values in seconds per token
-    """
-
-    def calc_tpot(row: pd.Series) -> Any:
-        itls = row[itl_column]
-        output_tokens = row[output_tokens_column]
-
-        # Handle cases where ITL data might be missing or invalid
-        if itls is None or not isinstance(itls, list) or len(itls) == 0:
-            return None
-        if output_tokens is None or output_tokens <= 1:
-            return None
-
-        # Calculate TPOT: sum of ITLs (after first) divided by number of tokens (after first)
-        if len(itls) > 1:
-            # Exclude first ITL chunk which includes TTFT, divide by actual tokens generated
-            tpot = sum(itls[1:]) / (output_tokens - 1)
-        else:
-            # Single chunk case - divide by output tokens
-            tpot = itls[0] / output_tokens if output_tokens > 0 else None
-
-        return tpot
-
-    return df.apply(calc_tpot, axis=1)
-
-
-def plot_per_request_comparison(
-    kit_df: pd.DataFrame,
-    vllm_df: pd.DataFrame,
-    kit_metric_column: str,
-    vllm_metric_column: str,
-    metric_name: str,
-    y_axis_label: str,
-    title: str,
-) -> Figure:
-    """
-    Create a per-request comparison plot between Kit and vLLM for a given metric.
-
-    Args:
-        kit_df (pd.DataFrame): Kit benchmark results DataFrame
-        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
-        kit_metric_column (str): Column name in Kit DataFrame
-        vllm_metric_column (str): Column name in vLLM DataFrame
-        metric_name (str): Display name for the metric
-        y_axis_label (str): Y-axis label
-        title (str): Plot title
-
-    Returns:
-        Figure: Plotly figure object
-    """
-    # Filter valid data (non-null, non-error)
-    kit_valid = kit_df[kit_df['error_code'].isna()].copy()
-    vllm_valid = vllm_df[vllm_df['error_code'].isna()].copy()
-
-    # Get metric values
-    kit_values = kit_valid[kit_metric_column].dropna()
-    vllm_values = vllm_valid[vllm_metric_column].dropna()
-
-    # Create request indices
-    kit_requests = list(range(1, len(kit_values) + 1))
-    vllm_requests = list(range(1, len(vllm_values) + 1))
-
-    # Create figure
-    fig = go.Figure()
-
-    # Add Kit trace
-    fig.add_trace(
-        go.Scatter(
-            x=kit_requests,
-            y=kit_values,
-            mode='lines+markers',
-            name='Kit',
-            line=dict(color='#1f77b4', width=2),
-            marker=dict(size=6),
+    if show_server_metrics:
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                df_req_info,
+                'batch_size_used',
+                metrics_latency,
+                labels_latency,
+                f'{tool_display_name}: Distribution of end-to-end latency' + by_batch_size_suffix,
+                'Latency (s), per request',
+                'Batch size',
+                batching_exposed,
+            ),
+            width='stretch',
         )
-    )
-
-    # Add vLLM trace
-    fig.add_trace(
-        go.Scatter(
-            x=vllm_requests,
-            y=vllm_values,
-            mode='lines+markers',
-            name='vLLM',
-            line=dict(color='#ff7f0e', width=2),
-            marker=dict(size=6),
+        st.plotly_chart(
+            plot_client_vs_server_barplots(
+                df_req_info,
+                'batch_size_used',
+                metrics_throughput,
+                labels_throughput,
+                f'{tool_display_name}: Distribution of output throughput' + by_batch_size_suffix,
+                'Tokens per second, per request',
+                'Batch size',
+                batching_exposed,
+            ),
+            width='stretch',
         )
+    df_itl = df_req_info[['batch_size_used', 'client_mean_inter_token_latency_s']].copy()
+    df_itl['client_mean_inter_token_latency_ms'] = df_itl['client_mean_inter_token_latency_s'] * 1000
+    st.plotly_chart(
+        plot_client_vs_server_barplots(
+            df_itl,
+            'batch_size_used',
+            ['client_mean_inter_token_latency_ms'],
+            ['Client'],
+            f'{tool_display_name}: Distribution of Mean Inter-Token Latency (ITL)' + by_batch_size_suffix,
+            'Mean ITL (ms), per request',
+            'Batch size',
+            batching_exposed,
+            colors=['#ee7625'],
+        ),
+        width='stretch',
     )
-
-    # Update layout
-    fig.update_layout(
-        title=title,
-        xaxis_title='Request Number',
-        yaxis_title=y_axis_label,
-        hovermode='x unified',
-        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-        template='plotly_white',
-    )
-
-    return fig
+    if batching_exposed:
+        st.plotly_chart(plot_dataframe_summary(df_req_info), width='stretch')
+    if show_server_metrics:
+        st.plotly_chart(plot_requests_gantt_chart(df_req_info), width='stretch')
 
 
-def plot_ttft_per_request_comparison(kit_df: pd.DataFrame, vllm_df: pd.DataFrame) -> Figure:
-    """
-    Create a per-request TTFT comparison plot between Kit and vLLM.
+def render_tool_logs(results: Dict[str, ToolRunResult], tool_logs: Optional[Dict[str, List[str]]]) -> None:
+    """Renders each tool's captured subprocess log (vLLM/aiperf -- Kit has none) as its own
+    collapsed expander, so the live logs shown while a run is in progress remain available (but
+    out of the way) once results are displayed -- for both a single-tool run and a side-by-side
+    comparison alike.
 
     Args:
-        kit_df (pd.DataFrame): Kit benchmark results DataFrame
-        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
-
-    Returns:
-        Figure: Plotly figure object
+        results: Mapping of tool key -> that tool's ToolRunResult, used only to decide which
+            tools' logs to show and in what order.
+        tool_logs: Mapping of tool key -> that tool's captured log lines (persisted in
+            `st.session_state` across the rerun that follows a run's completion, since the live
+            `st.status`/log widgets themselves only exist while `st.session_state.running` is
+            True). Tools with no captured lines (Kit, or a tool that produced no output before
+            failing) are skipped.
     """
-    return plot_per_request_comparison(
-        kit_df=kit_df,
-        vllm_df=vllm_df,
-        kit_metric_column='client_ttft_s',
-        vllm_metric_column='client_ttft_s',  # vLLM now uses same column name
-        metric_name='TTFT',
-        y_axis_label='Time to First Token (seconds)',
-        title='TTFT Comparison: Kit vs vLLM (Per Request)',
-    )
+    if not tool_logs:
+        return
+    for tool_name in results:
+        lines = tool_logs.get(tool_name)
+        if not lines:
+            continue
+        with st.expander(f'{TOOL_RUNNERS[tool_name].display_name} log', expanded=False):
+            st.code('\n'.join(lines), language='bash')
 
 
-def plot_itl_per_request_comparison(kit_df: pd.DataFrame, vllm_df: pd.DataFrame) -> Figure:
-    """
-    Create a per-request sum ITL comparison plot between Kit and vLLM.
+def render_multi_tool_results(
+    results: Dict[str, ToolRunResult],
+    expected_output_tokens: int,
+    tool_logs: Optional[Dict[str, List[str]]] = None,
+) -> None:
+    """Render this run's results. A single tool gets the full detailed view (as always); running
+    more than one tool shows ONLY the summary comparison table and a TTFT distribution comparison
+    -- nothing else -- to keep the multi-tool view simple. Shared by the synthetic, custom, and
+    real-workload Streamlit pages.
 
     Args:
-        kit_df (pd.DataFrame): Kit benchmark results DataFrame
-        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
-
-    Returns:
-        Figure: Plotly figure object
+        results: Mapping of tool key ('kit'/'vllm'/'aiperf') -> that tool's ToolRunResult.
+        expected_output_tokens: Expected number of output tokens (for the token-count sanity note).
+        tool_logs: Mapping of tool key -> that tool's captured log lines, shown as collapsed
+            per-tool expanders above the results (see `render_tool_logs`). Omitted entirely if
+            not passed (e.g. no run happened this session, only a stale `tool_results` reload).
     """
-    # Calculate sum of ITLs for both Kit and vLLM
-    kit_df_copy = kit_df.copy()
-    vllm_df_copy = vllm_df.copy()
+    render_tool_logs(results, tool_logs)
 
-    kit_df_copy['sum_itl_s'] = calculate_sum_itl_per_request(kit_df_copy, 'client_inter_token_latencies_s')
-    vllm_df_copy['sum_itl_s'] = calculate_sum_itl_per_request(vllm_df_copy, 'client_inter_token_latencies_s')
+    valid_dfs: Dict[str, pd.DataFrame] = {}
+    summaries: Dict[str, Dict[str, Any]] = {}
+    for tool_name, result in results.items():
+        df = pd.read_json(result.individual_responses_file_path)
+        valid_dfs[tool_name] = df[df['error_code'].isnull()]
+        with open(result.summary_file_path) as f:
+            summaries[tool_name] = json.load(f)
 
-    return plot_per_request_comparison(
-        kit_df=kit_df_copy,
-        vllm_df=vllm_df_copy,
-        kit_metric_column='sum_itl_s',
-        vllm_metric_column='sum_itl_s',
-        metric_name='Sum ITL',
-        y_axis_label='Sum of Inter-Token Latencies (seconds)',
-        title='Sum ITL Comparison: Kit vs vLLM (Per Request)',
-    )
+    if len(results) == 1:
+        tool_name = next(iter(results))
+        runner = TOOL_RUNNERS[tool_name]
+        valid_df = valid_dfs[tool_name]
+        st.subheader(f'{runner.display_name} Benchmark Results')
+        batching_exposed = (
+            runner.supports_batching_info
+            and not valid_df.empty
+            and not valid_df['batch_size_used'].isnull().all()
+        )
+        display_single_tool_results(
+            valid_df, batching_exposed, expected_output_tokens, runner.display_name, runner.supports_server_metrics
+        )
+        return
 
+    st.header('Side-by-Side Comparison')
 
-def plot_tpot_per_request_comparison(kit_df: pd.DataFrame, vllm_df: pd.DataFrame) -> Figure:
-    """
-    Create a per-request TPOT comparison plot between Kit and vLLM.
-    TPOT is calculated from ITLs and output tokens for each request.
+    tool_metrics = {
+        TOOL_RUNNERS[t].display_name: calculate_tool_summary_metrics(valid_dfs[t], summaries[t])
+        for t in results
+        if not valid_dfs[t].empty
+    }
+    if tool_metrics:
+        display_summary_metrics_comparison(tool_metrics)
 
-    Args:
-        kit_df (pd.DataFrame): Kit benchmark results DataFrame
-        vllm_df (pd.DataFrame): vLLM benchmark results DataFrame
-
-    Returns:
-        Figure: Plotly figure object
-    """
-    # Calculate TPOT for both Kit and vLLM
-    kit_df_copy = kit_df.copy()
-    vllm_df_copy = vllm_df.copy()
-
-    kit_df_copy['tpot_s'] = calculate_tpot_per_request(
-        kit_df_copy, 'client_inter_token_latencies_s', 'number_output_tokens'
-    )
-    vllm_df_copy['tpot_s'] = calculate_tpot_per_request(
-        vllm_df_copy,
-        'client_inter_token_latencies_s',
-        'number_output_tokens',  # vLLM now uses same column names
-    )
-
-    return plot_per_request_comparison(
-        kit_df=kit_df_copy,
-        vllm_df=vllm_df_copy,
-        kit_metric_column='tpot_s',
-        vllm_metric_column='tpot_s',
-        metric_name='TPOT',
-        y_axis_label='Time Per Output Token (seconds)',
-        title='TPOT Comparison: Kit vs vLLM (Per Request)',
-    )
+    st.markdown('### TTFT Distribution Comparison')
+    cols = st.columns(len(results))
+    for col, tool_name in zip(cols, results.keys()):
+        runner = TOOL_RUNNERS[tool_name]
+        valid_df = valid_dfs[tool_name]
+        with col:
+            if valid_df.empty:
+                st.warning(f'No successful {runner.display_name} requests to display.')
+                continue
+            if runner.supports_server_metrics:
+                metrics_ttft = ['server_ttft_s', 'client_ttft_s']
+                labels_ttft = ['Server', 'Client']
+            else:
+                metrics_ttft = ['client_ttft_s']
+                labels_ttft = ['Client']
+            batching_exposed = runner.supports_batching_info and not valid_df['batch_size_used'].isnull().all()
+            st.plotly_chart(
+                plot_client_vs_server_barplots(
+                    valid_df,
+                    'batch_size_used',
+                    metrics_ttft,
+                    labels_ttft,
+                    f'{runner.display_name}: Distribution of TTFT',
+                    'TTFT (s), per request',
+                    'Batch size',
+                    batching_exposed,
+                    colors=None if runner.supports_server_metrics else ['#ee7625'],
+                ),
+                width='stretch',
+            )
