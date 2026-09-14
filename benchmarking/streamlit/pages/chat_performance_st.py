@@ -9,9 +9,9 @@ sys.path.append('../')
 import warnings
 from typing import Any, Dict
 
-from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.benchmarking_tools.kit.src.chat_performance_evaluation import ChatPerformanceEvaluator
 from benchmarking.benchmarking_tools.kit.src.llmperf import common_metrics
+from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     render_logo,

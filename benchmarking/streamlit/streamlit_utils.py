@@ -11,8 +11,8 @@ import requests
 import streamlit as st
 from plotly.graph_objs import Figure
 
-from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.benchmarking_tools.kit.src.tool_runners import TOOL_RUNNERS, ToolRunResult
+from benchmarking.benchmarking_utils import DEFAULT_MODEL
 from benchmarking.utils import SAMBANOVA_API_BASE
 from utils.visual.env_utils import are_credentials_set, env_input_fields, initialize_env_variables, save_credentials
 

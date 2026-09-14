@@ -26,13 +26,13 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx
 from tqdm import tqdm
 
 import benchmarking.benchmarking_tools.kit.src.llmperf.llmperf_utils as llmperf_utils
-from benchmarking.benchmarking_utils import get_tokenizer
+from benchmarking.benchmarking_tools.kit.src.executor_base import BaseExecutorMixin
 from benchmarking.benchmarking_tools.kit.src.llmperf import common_metrics
 from benchmarking.benchmarking_tools.kit.src.llmperf.llmperf_utils import flatten
 from benchmarking.benchmarking_tools.kit.src.llmperf.models import LLMResponse, RequestConfig
 from benchmarking.benchmarking_tools.kit.src.llmperf.sambanova_client import llm_request
-from benchmarking.benchmarking_tools.kit.src.executor_base import BaseExecutorMixin
 from benchmarking.benchmarking_tools.kit.src.schemas import BenchmarkSummary, QuantileStats, RequestMetric
+from benchmarking.benchmarking_utils import get_tokenizer
 from benchmarking.utils import CONFIG_PATH
 
 logging.basicConfig(

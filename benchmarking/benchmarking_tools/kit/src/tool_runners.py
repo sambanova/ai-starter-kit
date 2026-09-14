@@ -23,7 +23,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterator, List, Optional, Protocol, cast
 
-from benchmarking.benchmarking_utils import get_tokenizer_model_name
 from benchmarking.benchmarking_tools.kit.src.convert_aiperf_output import convert as convert_aiperf
 from benchmarking.benchmarking_tools.kit.src.convert_vllm_output import convert as convert_vllm
 from benchmarking.benchmarking_tools.kit.src.generate_dataset import generate_dataset
@@ -32,6 +31,7 @@ from benchmarking.benchmarking_tools.kit.src.performance_evaluation import (
     RealWorkLoadPerformanceEvaluator,
     SyntheticPerformanceEvaluator,
 )
+from benchmarking.benchmarking_utils import get_tokenizer_model_name
 
 ProgressCallback = Callable[[int, int, str], None]
 # Called once per line of raw subprocess output (vLLM/aiperf only -- Kit runs in-process and

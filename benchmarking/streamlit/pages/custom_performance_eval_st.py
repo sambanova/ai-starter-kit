@@ -8,20 +8,20 @@ import streamlit as st
 import yaml
 
 from benchmarking.benchmarking_tools.kit.src.tool_runners import TOOL_RUNNERS, ToolRunResult
-from benchmarking.utils import SAMBANOVA_API_BASE
 from benchmarking.streamlit.streamlit_utils import (
     LLM_API_OPTIONS,
     create_log_callback,
     create_progress_callback,
     model_selector_widget,
-    render_multi_tool_results,
     render_logo,
+    render_multi_tool_results,
     render_title_icon,
     save_uploaded_file,
     set_api_variables,
     set_font,
     setup_credentials,
 )
+from benchmarking.utils import SAMBANOVA_API_BASE
 
 warnings.filterwarnings('ignore')
 
