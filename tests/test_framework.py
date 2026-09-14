@@ -51,10 +51,10 @@ STARTER_KITS: List[str] = [
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
     'benchmarking': (
-        'python src/evaluator.py '
+        'python benchmarking_tools/kit/src/evaluator.py '
         '--mode synthetic '
         "--model-names 'Meta-Llama-3.3-70B-Instruct' "
-        "--results-dir './data/results/llmperf' "
+        "--results-dir './data/results' "
         '--num-concurrent-requests 1 '
         '--timeout 600 '
         '--num-input-tokens 1000 '
