@@ -1,0 +1,81 @@
+# Job queue for the benchmarking bundles runner -- Kit only (vLLM/aiperf sweep via their own
+# native CLIs; see ../benchmarking_tools/vllm/ and ../benchmarking_tools/aiperf/). Each job is a
+# dict with a `mode` (custom/synthetic/real_workload) plus that mode's own params -- full key list
+# in ../benchmarking_tools/kit/src/job_kwargs.py's build_job_kwargs (mirrors evaluator.py's CLI
+# flags, e.g. --num-input-tokens -> num_input_tokens). results_dir/timeout/llm_api/user_metadata
+# are optional per job, defaulting from this bundle's config.yaml when omitted.
+
+jobs:
+  # --- MiniMax-M3: synthetic concurrency ramp + a real_workload (QPS-based) example ---
+  - mode: synthetic
+    model_name: MiniMax-M3
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 1
+    num_concurrent_requests: 1
+
+  - mode: synthetic
+    model_name: MiniMax-M3
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 8
+    num_concurrent_requests: 8
+
+  - mode: real_workload
+    model_name: MiniMax-M3
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 20
+    qps: 4.0
+    qps_distribution: constant
+
+  # --- gemma-4-31B-it: multimodal_image_size adds an image to each request
+  # (small/medium/large = 500x500 / 1000x1000 / 2000x2000 px) ---
+  - mode: synthetic
+    model_name: gemma-4-31B-it
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 1
+    num_concurrent_requests: 1
+    multimodal_image_size: small
+
+  - mode: synthetic
+    model_name: gemma-4-31B-it
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 4
+    num_concurrent_requests: 4
+    multimodal_image_size: medium
+
+  - mode: synthetic
+    model_name: gemma-4-31B-it
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 8
+    num_concurrent_requests: 8
+    multimodal_image_size: large
+
+  # --- Meta-Llama-3.3-70B-Instruct: synthetic concurrency ramp + a custom-dataset example ---
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 1
+    num_concurrent_requests: 1
+
+  - mode: synthetic
+    model_name: Meta-Llama-3.3-70B-Instruct
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 8
+    num_concurrent_requests: 8
+
+  # input_file_path is relative to the runner's own CWD (its directory, per
+  # run_synthetic_perfomance_bundle_eval.sh). num_input_tokens is ignored for mode: custom (the
+  # dataset sets input length); num_output_tokens works the same as it does for synthetic/
+  # real_workload, capping generated tokens per request.
+  - mode: custom
+    model_name: Meta-Llama-3.3-70B-Instruct
+    input_file_path: ../prompts/custom_prompt_example.jsonl
+    num_concurrent_requests: 32
+    num_output_tokens: 1000

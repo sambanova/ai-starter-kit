@@ -1,25 +1,20 @@
 # Benchmarking bundles
 
-This directory contains scripts to run **end-to-end benchmarking for model bundles**, supporting both **synthetic (concurrency-based)** and **real workload (QPS-based)** inference tests, with optional **row-level concurrency**. Results include automatic **batching** and **switching time** estimations.
+This directory runs **end-to-end benchmarking for model bundles** using the Kit's own native evaluator — **synthetic** (concurrency-based), **real workload** (QPS-based), and **custom** (your own dataset) inference tests, with optional **row-level concurrency**. Results include automatic **batching** and **switching time** estimations.
+
+Bundles run **Kit jobs only**. vLLM and aiperf are driven via their own native CLIs directly (no Python job runner) — see [`../benchmarking_tools/vllm/README.md`](../benchmarking_tools/vllm/README.md) and [`../benchmarking_tools/aiperf/README.md`](../benchmarking_tools/aiperf/README.md) if you want to sweep those tools across configs; a plain shell loop over their quickstart scripts is the equivalent of a "bundle" for those tools.
 
 ---
 
 ## Required steps
 
-The required steps for Bundle benchmarking are the following:
-
-
 ### 1. Configuration file
 
-Modify the following file:
-
-- `<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/config.yaml`
-
-Example:
+Modify `<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/config.yaml`:
 
 ```yaml
-model_configs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/model_configs_example.csv'
-llm_api: 'sncloud'  # only option currently
+jobs_path: '<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/jobs_example.yaml'
+llm_api: 'sncloud'  # only option currently supported
 output_files_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/output_files'
 consolidated_results_dir: '<PATH TO AISK REPO HERE>/benchmarking/data/bundle_tests/consolidated_results'
 timeout: 3600
@@ -34,104 +29,83 @@ batch_sizes: [1, 2, 4, 8, 16, 32, 64, 128]
 ```
 
 #### Key notes:
-- timeout: it's the maximum time in seconds that each model config row will take to process.
-- concurrency_enabled: If true, each model config row in the CSV is benchmarked concurrently using a thread pool.
-- max_workers: Maximum number of parallel benchmark jobs.
-- time_delay: Optional sleep between runs (per row).
-- use_multiple_prompts: If true, multiple prompts in located in `<PATH TO AISK REPO>/benchmarking/prompts/user-prompt_template-text_instruct.yaml` will be used randomly.
-- batch_sizes: The allowed batch sizes used to infer batching behavior for the switching-time calculation (see [Batching analysis](#batching-analysis)). Observed request groups are snapped **up** to the nearest value in this list. Defaults to powers of two up to 128 when omitted; add non-power-of-two sizes (e.g. `6`) only when your deployment actually serves those batch sizes.
+- `timeout`: max seconds per job (overridable per job — see below).
+- `concurrency_enabled`: if true, jobs run concurrently via a thread pool.
+- `max_workers`: max parallel jobs.
+- `time_delay`: optional sleep between runs (per job).
+- `use_multiple_prompts`: if true, randomly uses prompts from `<PATH TO AISK REPO>/benchmarking/prompts/user-prompt_template-text_instruct.yaml`. Only applies to synthetic jobs; overridable per job.
+- `batch_sizes`: allowed batch sizes for the switching-time calculation (see [Batching analysis](#batching-analysis)) — observed request groups snap **up** to the nearest value. Defaults to powers of two up to 128; add non-power-of-two sizes (e.g. `6`) only if your deployment actually serves them.
 
-### 2. Model configuration file
+### 2. Jobs file
 
-Modify:
+Modify `<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/jobs_example.yaml` — a YAML list of job dicts (not a CSV table), one per benchmark job. Each job's keys are the Kit evaluator's own parameters for that `mode`, so shape varies per mode without forcing everything into the same tabular columns.
 
-`<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/model_configs_example.csv`
+```yaml
+jobs:
+  - mode: synthetic                            # workload shape: 'custom' | 'synthetic' | 'real_workload'
+    model_name: MiniMax-M3
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 8
+    num_concurrent_requests: 8
 
-Header:
+  - mode: real_workload
+    model_name: MiniMax-M3
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 20
+    qps: 4.0
+    qps_distribution: constant
 
-`model_name,input_tokens,output_tokens,num_requests,num_warmup_requests,concurrent_requests,qps,qps_distribution,multimodal_img_size`
+  - mode: synthetic                            # multimodal_image_size includes an image in the request
+    model_name: gemma-4-31B-it
+    num_input_tokens: 1000
+    num_output_tokens: 1000
+    num_requests: 8
+    num_concurrent_requests: 8
+    multimodal_image_size: large
 
-Each row defines one benchmark job.
+  - mode: custom
+    model_name: DeepSeek-V3.2
+    input_file_path: ../prompts/custom_prompt_example.jsonl
+    num_concurrent_requests: 8
+    num_output_tokens: 1000
+```
+
+See `jobs_example.yaml` itself for the full set (3 example jobs per model, mixing modes so each mode has a worked example).
 
 #### Configuration parameters
 
-The configuration table in `model_configs_example.csv` details each individual model of the composition that we would like to test.
+Key names match the Kit's CLI flags in `evaluator.py` one-to-one (e.g. `--num-input-tokens` → `num_input_tokens`), so anything that works on the CLI works here too.
 
-- `model_name`  
-  Name of the model in the bundle.
+- `mode` — `synthetic` (fixed tokens, closed-loop concurrency), `real_workload` (fixed tokens, open-loop QPS pacing), or `custom` (dataset via `input_file_path`) — see `jobs_example.yaml` for a worked example of each.
+- `model_name` — model in the bundle.
+- `num_input_tokens` — input tokens in the generated prompt.
+- `num_output_tokens` — max output tokens. Same field for `mode: custom` (defaults to `150` there, since the API requires a concrete value).
+- `num_requests` — total requests sent.
+- `num_warmup_requests` — throwaway requests before the measured run (`0`/omit disables). Synthetic warm-ups match the test's concurrency; real-workload warm-ups fire immediately, ignoring the pacing rate.
+- `num_concurrent_requests` — required for `synthetic`; optional for `custom` (default `10`); ignored for `real_workload`.
+- `input_file_path` — required for `custom`: path (relative to the runner's CWD) to a `{"prompt": "..."}` JSONL dataset. `num_input_tokens`/`num_requests` are ignored (the dataset determines both); `num_output_tokens` still caps generation, unless overridden by an explicit `sampling_params: {max_tokens_to_generate: <n>}`.
+- `qps` — required for `real_workload`; recommended `< 10`.
+- `qps_distribution` — wait-time distribution for `real_workload`: `constant` (default) or `exponential`.
+- `multimodal_image_size` — for multimodal models only: `small` (500×500px), `medium` (1000×1000px), `large` (2000×2000px); omit otherwise (defaults to `'na'`).
+- `results_dir`, `timeout`, `llm_api`, `user_metadata` — optional per job, defaulting from `config.yaml` (and `{'model_idx': 0}`) when omitted.
 
-- `input_tokens`  
-  Number of input tokens in the generated prompt.
-
-- `output_tokens`  
-  Maximum number of output tokens generated by the model.
-
-- `num_requests`  
-  Total number of requests sent.
-
-- `num_warmup_requests`  
-  Number of throwaway warm-up requests sent **before** the measured run. Set per
-  row. To disable, leave the cell blank or `0`.
-
-  Synthetic warm-ups match the test's concurrency level, while real-workload warm-ups ignore the pacing rate and just fire everything immediately.
-
-- `concurrent_requests`  
-  Enables **synthetic workload benchmarking**.
-  - If this value is set, `qps` is ignored
-
-- `qps`  
-  Enables **real workload benchmarking** (queries per second).
-  - Recommended values `< 10`
-  - Ignored if `concurrent_requests` is set
-
-- `qps_distribution`  
-  Wait-time distribution between requests.
-  Supported values:
-  - `constant` (default)
-  - `uniform`
-  - `exponential`
-  Ignored if concurrent_requests is set
-
-- `multimodal_img_size`  
-  Used only for multimodal models to include an image in the benchmark requests.
-  Supported values:
-  - `small` → 500×500 px
-  - `medium` → 1000×1000 px
-  - `large` → 2000×2000 px
-  For non-multimodal models, leave it empty.
-
-> **Important:**  
-> The sum of `input_tokens` and `output_tokens` must not exceed the maximum sequence length supported by the model.
->  
-> Example: for a model with a 4096-token context window, you may set  
-> `input_tokens = 4000` and `output_tokens = 64`. However, consider  that models might have internal prompting tokens, so include them when calculating the full context tokens.
+> **Important:** `num_input_tokens + num_output_tokens` must not exceed the model's max sequence length (e.g. a 4096-token model could use `4000`/`64`) — and remember models may add their own internal prompting tokens on top.
 
 ### 3. Execution modes
 
 #### 3.1 Sequential execution
 
-If `concurrency_enabled: false` in `config.yaml`, models are benchmarked **row by row** in the order defined in `model_configs_example.csv`.
-
-This mode is useful for:
-- Running on limited resources
-- Exposing switching-time effects
-- Debugging
+If `concurrency_enabled: false`, jobs run **in order**. Useful for limited resources, exposing switching-time effects, and debugging.
 
 #### 3.2 Concurrent execution
 
-If `concurrency_enabled: true`, each row in `model_configs_example.csv` is benchmarked **in parallel** using a `ThreadPoolExecutor`.
-
-Relevant configuration fields:
-- `concurrency_enabled`: Enables row-level parallelism
-- `max_workers`: Maximum number of benchmark jobs running concurrently
-
-This mode is useful when:
-- A more real approach needs to be tested
-- Faster turnaround or switching is needed for large bundles
+If `concurrency_enabled: true`, every job runs **in parallel** via a `ThreadPoolExecutor` (`max_workers` caps concurrency). Useful for more realistic load, or faster turnaround on large bundles.
 
 ### 4. Run the benchmark
 
-Once the configuration files are set up, run the benchmark from the **root of the benchmarking_bundles module**:
+From the **root of the benchmarking_bundles module**:
 
 ```bash
 bash run_synthetic_perfomance_bundle_eval.sh
@@ -141,147 +115,81 @@ bash run_synthetic_perfomance_bundle_eval.sh
 
 #### 5.1 Results per model config
 
-Individual model config results are stored under: `output_files_dir` in `config.yaml`.
+Stored under `output_files_dir`. Two files per job:
 
-For every model configuration (row in `model_configs_example.csv`), two result files are generated:
+1. **Individual responses** (`*individual_responses.json`) — one entry per request: TTFT, end-to-end latency, output throughput.
+2. **Summary** (`*summary.json`) — aggregated min/max/mean/median(p50)/stddev across those requests.
 
-1. **Individual responses** (`*individual_responses.json`)  
-   - One entry per request
-   - Contains per-request metrics such as:
-     - Time to First Token (TTFT)
-     - End-to-end latency
-     - Output throughput
-
-2. **Summary files** (`*summary.json`)  
-   - Aggregated statistics computed from individual responses:
-     - Minimum
-     - Maximum
-     - Mean
-     - Median (p50)
-     - Standard deviation
-
-If you'd like to know more details about these output files, please check the kit's CLI version in the main [README](../README.md).
+See the kit's CLI docs in the main [README](../README.md) for more detail on these files.
 
 #### 5.2 Consolidated results
 
-Consolidated results are written to: `consolidated_results_dir` in `config.yaml`, as a single `<run_name>.xlsx` workbook with two sheets:
-
-- **`per_model`** — one row per row in `model_configs_example.csv`, as described below.
-- **`bundle_summary`** — aggregated throughput across the whole bundle (see [Bundle-level summary](#53-bundle-level-summary) below).
-
-Each row in the `per_model` sheet corresponds to **one row in `model_configs_example.csv`**.
+Written to `consolidated_results_dir` as one `<run_name>.xlsx` workbook:
+- **`per_model`** — one row per job in `jobs_example.yaml`.
+- **`bundle_summary`** — aggregated throughput for the bundle as a whole (see [Bundle-level summary](#53-bundle-level-summary)).
 
 ##### Terminology
 
-- **Server metrics**  
-  Performance metrics returned by the inference server API.  
-  Metric names are prefixed with `server_`.
-
-- **Client metrics**  
-  Performance metrics computed on the client side or machine sending the API requests.  
-  Metric names are prefixed with `client_`.
-
-- **Suffixes**
-  - `min`, `max`, `p50`, `mean`
-  - `s` indicates that the value is in seconds
+- **Server metrics** (`server_` prefix) — from the inference server API.
+- **Client metrics** (`client_` prefix) — computed on the client/sending machine.
+- **Suffixes** — `min`/`max`/`p50`/`mean`; `s` = seconds.
 
 ##### Main consolidated metrics
 
-- **TTFT (Time to First Token)**  
-  TTFT typically shows higher variance due to request queueing, especially when concurrency is enabled. Client-side TTFT could be influenced by the networking time.
-
-- **End-to-end latency**  
-  Includes queueing time and TTFT. Client-side latency could be influenced by the networking time.
-
-- **Output tokens per second**  
-  Output throughput per request. For batching-enabled endpoints, throughput per request may decrease as batch size increases, but the overall throughput will increase.
-
-- **Acceptance rate**  
-  Acceptance rate for speculative decoding pairs.
+- **TTFT** — typically higher variance under concurrency (request queueing); client-side also picks up network time.
+- **End-to-end latency** — includes queueing + TTFT; client-side also picks up network time.
+- **Output tokens/sec** — per-request throughput; may drop per-request as batch size grows even as overall throughput rises.
+- **Acceptance rate** — for speculative decoding pairs.
 
 ##### Batching analysis
 
-The benchmarking pipeline automatically estimates **batching behavior** by analyzing request timing patterns.
+Batching is estimated automatically from request timing: requests with identical `server_ttft` are grouped, and the group size is snapped **up** to the nearest value in `batch_sizes` (defaults to powers of two up to 128).
 
-- Requests with identical `server_ttft` are grouped together
-- Batch size is inferred by snapping the group size **up** to the nearest value in the `batch_sizes` list configured in `config.yaml` (defaults to powers of two up to 128)
+Reported fields:
+- `request_batching_frequencies` — frequency of observed batch sizes.
+- `representative_batch_size` — the batch size accounting for >50% of requests.
 
-Reported batching fields
-
-- `request_batching_frequencies`  
-  Frequency of observed batch sizes within a run.
-
-- `representative_batch_size`  
-  Median-dominant batch size that accounts for more than 50% of requests.
-
-__Note__: this is just an estimation based on close server TTFTs and may not be accurate to the actual batch size value. So, using a dedicated environment is recommended.
+__Note__: this is an estimate from close server TTFTs, not a guaranteed true batch size — a dedicated environment gives more reliable results.
 
 ##### Switching time
 
-Switching time represents the overhead incurred when loading a new model or configuration into HBM memory during inference.
+The overhead of loading a new model/config into HBM, triggered by changes in model name, sequence length, or batch size.
 
-A switch can be triggered by changes in:
-- Model name
-- Sequence length
-- Batch size
+**How it's estimated**, per benchmark run (by UUID): find the largest estimated batch size, then `switching_time = max(server_ttft_s) - min(server_ttft_s)` across requests **at that batch level only**.
 
-##### How switching time is estimated:
+**Where to find it**: column `switching_time`, derived from the first requests in `individual_responses.json`.
 
-For each benchmark run (identified by a UUID):
-
-1. Identify the largest estimated batch size.
-2. Compute the maximum and minimum server-side TTFT within that batch.
-3. Switching time is calculated as the **variation in server-side Time To First Token (TTFT) in seconds**:
-`switching_time = max(server_ttft_s) - min(server_ttft_s)`
-
-__Note__: Only requests at the **highest batching level** are considered.
-
-##### Where to find it
-
-- Column: `switching_time`
-- Derived from the first requests in `individual_responses.json`
-
-##### Switching time important notes
-
-- It's recommended that the user include a warm up set of models, either in the same `model_configs_example.csv` or in a separate csv, so HBM could be set with the model configurations that will be tested. Right after the warm up models are procesed, proceed run the configs that would include the switching time. 
-- Include multiple sequence lengths and batch sizes according to the node environment configuration.
-- Run multiple requests per model config row to obtain stable switching time estimates
+**Notes**: include a warm-up set of models first (same or separate jobs file) so HBM already holds the configs you're testing, then run the jobs you want switching time for; include multiple sequence lengths/batch sizes matching your deployment; run multiple requests per row for stable estimates.
 
 #### 5.3 Bundle-level summary
 
-While the `per_model` sheet reports throughput **per model config row** (one model, one batch size/QPS, one context length), the `bundle_summary` sheet reports throughput **for the bundle as a whole** — i.e. how many requests per second/minute the entire set of model configs served, combined.
+`per_model` reports throughput **per job** (one model, one batch size/QPS, one context length); `bundle_summary` reports throughput **for the bundle as a whole**.
 
 ##### Rows
 
-- **`ALL`** — grand total across every row in `model_configs_example.csv`.
-- **One row per model family** — rows are also grouped by model family (inferred from `model_name`, the same family detection used elsewhere in the benchmarking kit) so you can compare, e.g., the combined throughput of all `llama3` rows against all `qwen` rows in the same bundle.
+- **`ALL`** — grand total across every job.
+- **One row per model family** (inferred from `model_name`, same family detection used elsewhere in the kit) — e.g. compare all `llama3` rows against all `qwen` rows.
 
-__Note__: a model name that isn't recognized by the family detector falls back to the `llama2` family bucket rather than an `unknown` one — if you see an unexpected model rolled up under `llama2`, check the model naming.
+__Note__: an unrecognized model name falls back to the `llama2` family bucket rather than `unknown` — check naming if a model rolls up unexpectedly.
 
 ##### Columns
 
 | Column | Meaning |
 |---|---|
-| `family` | `ALL` for the grand total, or the family name for that group's row |
-| `num_model_configs` | Number of `model_configs_example.csv` rows in this group |
-| `total_num_requests_started` | Requests attempted/dispatched across the group |
+| `family` | `ALL` or the family name |
+| `num_model_configs` | Jobs in this group |
+| `total_num_requests_started` | Requests attempted/dispatched |
 | `total_errors` | Requests that failed |
-| `total_completed_requests` | Requests that completed successfully — the **numerator** of the throughput calculation |
-| `total_duration_s` | Raw wall-clock time from the group's first row starting to its last row finishing |
-| `delay_time_s` | Portion of `total_duration_s` attributable to the configured `time_delay` (see below) |
-| `total_effective_duration_s` | `total_duration_s - delay_time_s` — the **denominator** of the throughput calculation |
+| `total_completed_requests` | Requests completed — throughput numerator |
+| `total_duration_s` | Wall-clock time, first row start to last row finish |
+| `delay_time_s` | Portion of `total_duration_s` from the configured `time_delay` |
+| `total_effective_duration_s` | `total_duration_s - delay_time_s` — throughput denominator |
 | `bundle_rps` | `total_completed_requests / total_effective_duration_s` |
 | `bundle_rpm` | `bundle_rps * 60` |
-| `concurrency_enabled` | Whether this run used row-level concurrency (copied from `config.yaml`) |
-
-So, for any row: `bundle_rps = total_completed_requests / total_effective_duration_s`, and `bundle_rpm = bundle_rps * 60`.
+| `concurrency_enabled` | Whether this run used row-level concurrency |
 
 ##### How it's calculated
 
-Per-row start/end timestamps aren't stored in the summary JSON files, so each row's wall-clock window is estimated from data that **is** already stored: its `num_completed_requests`, `num_completed_requests_per_min`, and the completion `timestamp`. `total_duration_s` for a group is then the span from the earliest estimated start to the latest estimated end across its rows — this correctly avoids double-counting overlapping time when `concurrency_enabled: true`.
+Per-row timestamps aren't stored directly, so each row's window is estimated from its `num_completed_requests`, `num_completed_requests_per_min`, and completion `timestamp`. A group's `total_duration_s` spans its earliest estimated start to latest estimated end — avoiding double-counting overlapping time under `concurrency_enabled: true`.
 
-`delay_time_s` accounts for the `time_delay` sleep the runner inserts after each row:
-- **Sequential mode** (`concurrency_enabled: false`): `delay_time_s = time_delay * (num_model_configs - 1)`, since a delay occurs between every pair of consecutive rows but not after the last one.
-- **Concurrent mode** (`concurrency_enabled: true`) or a single-row group: `delay_time_s = 0`, since row-level sleeps don't chain into a shared timeline the same way.
-
-This keeps `bundle_rps`/`bundle_rpm` from being artificially deflated by dead time that's just an artifact of the benchmark configuration rather than actual request-serving time.
+`delay_time_s` accounts for the `time_delay` sleep after each row: in sequential mode, `time_delay * (num_model_configs - 1)` (a delay between every pair of rows, not after the last); in concurrent mode (or a single-row group), `0` (row-level sleeps don't chain into a shared timeline). This keeps `bundle_rps`/`bundle_rpm` from being deflated by dead time that's just a configuration artifact.
