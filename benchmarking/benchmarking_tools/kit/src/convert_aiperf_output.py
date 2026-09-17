@@ -123,7 +123,7 @@ def parse_individual_record(raw_record: Dict[str, Any]) -> RequestMetric:
     # latency metrics" only if there's no explicit error object either.
     error = raw_record.get('error')
     if error is not None:
-        kwargs['error_code'] = str(error.get('code', error.get('type', 'AIPERF_ERROR')))
+        kwargs['error_code'] = str(error.get('code') or error.get('type') or 'AIPERF_ERROR')
         kwargs['error_msg'] = error.get('message', '')
     elif 'client_ttft_s' not in kwargs and 'client_end_to_end_latency_s' not in kwargs:
         kwargs['error_code'] = 'AIPERF_MISSING_METRICS'

@@ -9,7 +9,7 @@ ulimit -n 4096  # raise open-file-descriptor limit for higher-concurrency runs
 MODEL_NAMES="Meta-Llama-3.3-70B-Instruct"  # Model name(s), space-separated for multiple
 RESULTS_DIR="./data/results"               # Where result files get written
 LLM_API=sncloud                            # API type (only 'sncloud' supported)
-TIMEOUT=3                                # Seconds before the run times out
+TIMEOUT=600                                # Seconds before the run times out
 NUM_WARMUP_REQUESTS=5                      # Throwaway requests before the measured run (fired together, not QPS-paced); 0 disables
 USE_DEBUGGING_MODE=False                   # True/False; more detail per request, adds latency
 SAMPLING_PARAMS='{"temperature": 0.7}'                       # Extra sampling params JSON, e.g. '{"temperature": 0.7}'

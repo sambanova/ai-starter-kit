@@ -87,6 +87,8 @@ def _initialize_session_variables() -> None:
         st.session_state.tool_results = None
     if 'tool_logs' not in st.session_state:
         st.session_state.tool_logs = {}
+    if 'failed_tools' not in st.session_state:
+        st.session_state.failed_tools = []
     if 'setup_complete' not in st.session_state:
         st.session_state.setup_complete = None
     if 'mp_events' not in st.session_state:
@@ -305,6 +307,7 @@ def main() -> None:
                 )
                 api_key = api_variables.get('SAMBANOVA_API_KEY') or os.environ.get('SAMBANOVA_API_KEY', '')
                 results: Dict[str, ToolRunResult] = {}
+                failed_tools: List[str] = []
                 st.session_state.tool_logs = {}
                 for tool_name in st.session_state.selected_tools:
                     runner = TOOL_RUNNERS[tool_name]
@@ -338,12 +341,14 @@ def main() -> None:
                         except Exception as e:
                             status.update(label=f'{runner.display_name}: failed', state='error', expanded=True)
                             st.error(f'{runner.display_name} failed: {e}')
+                            failed_tools.append(tool_name)
                         finally:
                             st.session_state.tool_logs[tool_name] = log_lines
 
                 # Committed once the benchmark runs themselves succeed -- a failure building the
                 # download zip below must not blank out already-successful results.
                 st.session_state.tool_results = results
+                st.session_state.failed_tools = failed_tools
                 st.session_state.running = False
 
                 try:
@@ -362,7 +367,10 @@ def main() -> None:
 
     if st.session_state.tool_results:
         render_multi_tool_results(
-            st.session_state.tool_results, st.session_state.output_tokens, st.session_state.tool_logs
+            st.session_state.tool_results,
+            st.session_state.output_tokens,
+            st.session_state.tool_logs,
+            st.session_state.failed_tools,
         )
 
 

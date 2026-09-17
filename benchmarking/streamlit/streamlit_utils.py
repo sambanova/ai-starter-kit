@@ -777,6 +777,7 @@ def render_multi_tool_results(
     results: Dict[str, ToolRunResult],
     expected_output_tokens: int,
     tool_logs: Optional[Dict[str, List[str]]] = None,
+    failed_tools: Optional[List[str]] = None,
 ) -> None:
     """Render this run's results. A single tool gets the full detailed view (as always); running
     more than one tool shows ONLY the summary comparison table and a TTFT distribution comparison
@@ -789,14 +790,27 @@ def render_multi_tool_results(
         tool_logs: Mapping of tool key -> that tool's captured log lines, shown as collapsed
             per-tool expanders above the results (see `render_tool_logs`). Omitted entirely if
             not passed (e.g. no run happened this session, only a stale `tool_results` reload).
+        failed_tools: Tool keys that were selected for this run but raised before producing a
+            result (so they're absent from `results`) -- surfaced as a warning here since
+            `results` alone can't distinguish "failed" from "never selected".
     """
+    if failed_tools:
+        failed_names = ', '.join(TOOL_RUNNERS[t].display_name for t in failed_tools)
+        st.warning(f'{failed_names} failed and {"is" if len(failed_tools) == 1 else "are"} excluded below.')
+
     render_tool_logs(results, tool_logs)
 
     valid_dfs: Dict[str, pd.DataFrame] = {}
     summaries: Dict[str, Dict[str, Any]] = {}
     for tool_name, result in results.items():
         df = pd.read_json(result.individual_responses_file_path)
-        valid_dfs[tool_name] = df[df['error_code'].isnull()]
+        # An empty individual-responses file (e.g. a degenerate zero-request run) loads as a
+        # no-column DataFrame -- treat it as an all-failed tool instead of indexing blindly into
+        # a column that doesn't exist.
+        if df.empty or 'error_code' not in df.columns:
+            valid_dfs[tool_name] = df.iloc[0:0]
+        else:
+            valid_dfs[tool_name] = df[df['error_code'].isnull()]
         with open(result.summary_file_path) as f:
             summaries[tool_name] = json.load(f)
 

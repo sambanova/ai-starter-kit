@@ -66,7 +66,6 @@ def build_individual_responses(
     itls = raw.get('itls', [])
     errors_raw = raw.get('errors')
     num_prompts = raw.get('num_prompts', len(ttfts))
-    num_completed = raw.get('completed', 0)
     mean_ttft_s = raw.get('mean_ttft_ms', 0) / 1000
 
     responses: List[RequestMetric] = []
@@ -89,13 +88,10 @@ def build_individual_responses(
         request_input_tokens = input_lens[i] if i < len(input_lens) else num_input_tokens
         request_itls = itls[i] if i < len(itls) and itls[i] else []
         request_itl_sum = sum(request_itls) if request_itls else 0
-        request_e2e_s = (
-            request_ttft_s + request_itl_sum
-            if request_itls
-            else raw.get('duration', 1) / num_completed
-            if num_completed > 0
-            else 1
-        )
+        # No ITLs means either a 1-token output (no inter-token gaps to record) or a non-streamed
+        # response -- in both cases the request's own TTFT is its true end-to-end latency, unlike
+        # the run-wide average this used to fall back to.
+        request_e2e_s = request_ttft_s + request_itl_sum if request_itls else request_ttft_s
         output_tokens_per_s = request_output_tokens / request_itl_sum if request_itl_sum > 0 else 0
         # Mean ITL = (post-first-token decode time) / (output tokens after the first) -- NOT
         # (chunk count - 1): confirmed live that vLLM's own itls list has one entry per streamed
