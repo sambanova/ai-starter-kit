@@ -224,6 +224,9 @@ function_calling/data/tmp*
 =======
 # benchmarking data
 benchmarking/data
+benchmarking/benchmarking_tools/kit/data
+benchmarking/benchmarking_tools/vllm/data
+benchmarking/benchmarking_tools/aiperf/data
 benchmarking/debug
 
 logs/

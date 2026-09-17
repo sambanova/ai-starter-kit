@@ -5,8 +5,8 @@ from typing import Any, Dict, Optional, Tuple
 from dotenv import load_dotenv
 
 import benchmarking.benchmarking_utils as benchmarking_utils
-from benchmarking.src.llmperf.models import RequestConfig
-from benchmarking.src.llmperf.sambanova_client import llm_request
+from benchmarking.benchmarking_tools.kit.src.llmperf.models import RequestConfig
+from benchmarking.benchmarking_tools.kit.src.llmperf.sambanova_client import llm_request
 from benchmarking.streamlit.streamlit_utils import set_api_variables
 
 
@@ -67,8 +67,10 @@ class ChatPerformanceEvaluator:
 
 
 if __name__ == '__main__':
-    # load env variables
-    load_dotenv('../.env', override=True)
+    # load env variables (file-relative, not cwd-relative -- see performance_evaluation.py's
+    # load_dotenv call for why)
+    _repo_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../../')
+    load_dotenv(os.path.join(_repo_dir, '.env'), override=True)
     env_vars = dict(os.environ)
 
     model_name = benchmarking_utils.DEFAULT_MODEL

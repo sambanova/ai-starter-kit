@@ -27,7 +27,11 @@ transformers==4.57.1
 joblib==1.4.2
 openpyxl==3.1.5
 streamlit==1.51.0
-# vLLM — used only for the optional vLLM speed-benchmark comparison (benchmark-mode vllm/both).
+# vLLM — used only for the optional vLLM speed-benchmark comparison in the Streamlit app/bundles.
 # For API benchmarking it drives a remote endpoint, so no local GPU is required.
 # Native install is best supported on Linux; on other platforms it may require extra steps.
 vllm>=0.6.0
+# aiperf — NVIDIA's benchmarking CLI, used the same way as vLLM above: the optional aiperf
+# comparison tool in the Streamlit app (AIPerfToolRunner) and aiperf/quickstart.sh /
+# agentx_quickstart.sh both shell out to the `aiperf` command installed by this package.
+aiperf>=0.12.0
