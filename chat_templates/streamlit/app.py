@@ -121,7 +121,10 @@ def initialize_manager() -> ChatTemplateManager:
 
 # Sidebar Setup
 def sidebar_setup(
-    prod_mode: bool, additional_env_vars: dict[str, Optional[str]], app_description: dict[str, Optional[str]]
+    prod_mode: bool,
+    additional_env_vars: dict[str, Optional[str]],
+    app_description: dict[str, Optional[str]],
+    allow_custom_parser_code: bool = False,
 ) -> None:
     with st.sidebar:
         logo_path = os.path.join(repo_dir, 'images', 'dark-logo.png')
@@ -324,7 +327,12 @@ def sidebar_setup(
                     into a structured **assistant message object** with tool calls or plain text content.  
                     You can pick a predefined parser or define your own custom parsing logic in Python.""",
                 )
-                if 'custom defined' in parser_source.lower():
+                if 'custom defined' in parser_source.lower() and not allow_custom_parser_code:
+                    st.info(
+                        'Registering a custom parser runs user-provided Python code and is disabled by default. '
+                        'Set `enable_custom_parser_code: True` in the configuration to enable this feature.'
+                    )
+                elif 'custom defined' in parser_source.lower():
                     custom_parser_name = st.text_input(
                         'Custom parser name',
                         placeholder='Custom JSON parser (llama)',
@@ -343,7 +351,9 @@ def sidebar_setup(
                         if custom_parser_name and parser_code:
                             try:
                                 with st.spinner(f"Registering parser '{custom_parser_name}'..."):
-                                    st.session_state.manager.add_custom_tool_parser(custom_parser_name, parser_code)
+                                    st.session_state.manager.add_custom_tool_parser(
+                                        custom_parser_name, parser_code, allow_code_execution=allow_custom_parser_code
+                                    )
                                 st.session_state.parser_name = custom_parser_name
                                 st.toast(f'✅ Custom parser: `{custom_parser_name}` registered')
                                 with st.popover(f'**{custom_parser_name}** `src`'):
@@ -589,7 +599,8 @@ def main() -> None:
     if 'parsed_output' not in st.session_state:
         st.session_state.parsed_output = {}
 
-    sidebar_setup(prod_mode, additional_env_vars, app_description)
+    allow_custom_parser_code = config.get('enable_custom_parser_code', False)
+    sidebar_setup(prod_mode, additional_env_vars, app_description, allow_custom_parser_code)
 
     if st.session_state.manager is not None:
         main_interaction_area(app_description)

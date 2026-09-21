@@ -386,6 +386,13 @@ def interrogate_table(db_path: str, table: str, user_query: str) -> Any:
     Returns:
         The answer to the user query.
     """
+    # This path runs model-generated Python code and is opt-in via configuration.
+    if not ENABLE_PANDASAI_CODE_EXECUTION:
+        raise ValueError(
+            'The PandasAI query method is disabled. '
+            'Set `enable_pandasai_code_execution: True` in the configuration to use it.'
+        )
+
     # Instantiate the connector to the SQL database
     connector = SqliteConnector(
         config={

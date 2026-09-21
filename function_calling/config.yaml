@@ -52,9 +52,11 @@ st_tools:
   "query_db":
     "enabled": True
     "default": True
+  # The Python REPL tool runs model-generated Python code. It is disabled by
+  # default; set enabled to True only in trusted, local environments.
   "python_repl":
-    "enabled": True
-    "default": True
+    "enabled": False
+    "default": False
   "calculator":
     "enabled": True
     "default": False

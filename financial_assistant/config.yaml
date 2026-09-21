@@ -13,3 +13,6 @@ rag:
     "k_retrieved_documents": 5
 
 prod_mode: False
+# Allow the PandasAI query method, which runs model-generated Python code.
+# Disabled by default; enable only in trusted, local environments.
+enable_pandasai_code_execution: False

@@ -1,1 +1,4 @@
 prod_mode: False
+# Enable registering custom parsers from user-provided Python code.
+# This compiles and runs that code, so it is disabled by default.
+enable_custom_parser_code: False

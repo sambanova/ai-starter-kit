@@ -359,7 +359,9 @@ class QueryDb(ToolClass):
             db_path = self.kwargs.get('session_temp_db')
         else:
             db_path = os.path.join(kit_dir, query_db_info['db']['path'])
-        db_uri = f'sqlite:///{db_path}'
+        # Open the database read-only so generated SQL can only read data
+        # (no INSERT/UPDATE/DELETE/DDL or ATTACH-based file writes).
+        db_uri = f'sqlite:///file:{db_path}?mode=ro&uri=true'
         db = SQLDatabase.from_uri(db_uri)
 
         prompt = load_chat_prompt(QUERY_DB_PROMPT)

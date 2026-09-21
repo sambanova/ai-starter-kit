@@ -22,6 +22,9 @@ with open(CONFIG_PATH, 'r') as yaml_file:
 # Get the llm information
 prod_mode = config['prod_mode']
 
+# Whether the PandasAI query method (which runs model-generated Python) is allowed
+ENABLE_PANDASAI_CODE_EXECUTION = config.get('enable_pandasai_code_execution', False)
+
 # Initialize SEC EDGAR credentials
 if prod_mode or os.getenv('SEC_API_ORGANIZATION') is None or os.getenv('SEC_API_EMAIL') is None:
     os.environ['SEC_API_ORGANIZATION'] = 'SambaNova'

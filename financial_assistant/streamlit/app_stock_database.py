@@ -45,9 +45,13 @@ def get_stock_database() -> None:
         'text-to-SQL will generate SQL queries,'
         '\nwhereas PandasAI-SqliteConnector will use pandasai to query the database.'
     )
+    # The PandasAI method runs model-generated Python code; only offer it when enabled.
+    query_method_options = ['text-to-SQL']
+    if ENABLE_PANDASAI_CODE_EXECUTION:
+        query_method_options.append('PandasAI-SqliteConnector')
     query_method = streamlit.selectbox(
         'Select method (for best results, try both):',
-        ['text-to-SQL', 'PandasAI-SqliteConnector'],
+        query_method_options,
         index=0,
         help=help_query_method,
     )
