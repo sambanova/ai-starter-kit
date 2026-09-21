@@ -107,7 +107,7 @@ rapidfuzz==3.6.1
 rarfile==4.1
 ruff==0.6.9
 scikit-image==0.22.0
-scikit-learn==1.4.0 
+scikit-learn==1.8.0 
 scipy==1.11.4
 sentence_transformers==3.3.1 
 sentencepiece==0.1.99 
