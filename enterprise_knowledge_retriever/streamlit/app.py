@@ -1,6 +1,8 @@
 import base64
+import html
 import logging
 import os
+import re
 import shutil
 import sys
 import time
@@ -78,6 +80,22 @@ def schedule_temp_dir_deletion(temp_dir: str, delay_minutes: int) -> None:
     Thread(target=run_scheduler, daemon=True).start()
 
 
+def sanitize_filename(name: str) -> str:
+    """Return a normalized, portable filename derived from an uploaded name.
+
+    Reduces the name to its final component and restricts it to a conservative
+    character set, so files are stored reliably regardless of how the original
+    upload was named.
+    """
+    # Use only the final path component (handles both '/' and '\\' separators).
+    base = os.path.basename(name.replace('\\', '/'))
+    # Keep only a portable subset of characters; replace anything else with '_'.
+    base = re.sub(r'[^A-Za-z0-9._-]', '_', base)
+    # Avoid empty names or names that are only leading dots.
+    base = base.lstrip('.') or 'file'
+    return base
+
+
 def save_files_user(docs: List[UploadedFile], schedule_deletion: bool = True) -> str:
     """
     Save all user uploaded files in Streamlit to the tmp dir with their file names
@@ -111,7 +129,10 @@ def save_files_user(docs: List[UploadedFile], schedule_deletion: bool = True) ->
     for doc in docs:
         assert hasattr(doc, 'name'), 'doc has no attribute name.'
         assert callable(doc.getvalue), 'doc has no method getvalue.'
-        temp_file = os.path.join(temp_folder, doc.name)
+        # Normalize the uploaded filename so it is stored as a single, portable
+        # file inside temp_folder regardless of the original name.
+        safe_name = sanitize_filename(doc.name)
+        temp_file = os.path.join(temp_folder, safe_name)
         with open(temp_file, 'wb') as f:
             f.write(doc.getvalue())
 
@@ -136,7 +157,9 @@ def handle_userinput(user_question: Optional[str]) -> None:
             sources = set([f'{sd.metadata["filename"]}' for sd in response['source_documents']])
             sources_text = ''
             for index, source in enumerate(sources, start=1):
-                source_link = source
+                # Escape the filename before embedding it in HTML (rendered with
+                # unsafe_allow_html=True) so special characters display correctly.
+                source_link = html.escape(source)
                 sources_text += f'<font size="2" color="grey">{index}. {source_link}</font>  \n'
             st.session_state.sources_history.append(sources_text)
         except Exception as e:

@@ -18,7 +18,7 @@ pydantic_core==2.41.4
 python-dotenv==1.2.1
 sambanova>=1.2.0
 streamlit-extras==0.6.0
-streamlit==1.51.0
+streamlit>=1.44.0,<2.0.0  # 1.44.0+ validates uploaded file names server-side
 st-pages==1.0.1
 torch==2.9.0
 
