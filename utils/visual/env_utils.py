@@ -43,16 +43,13 @@ def initialize_env_variables(
 
 
 def set_env_variables(api_key: str, additional_vars: Optional[Dict[str, Any]] = None, prod_mode: bool = False) -> None:
+    # Keep user-provided credentials in per-session state only. The process
+    # environment is shared across all Streamlit sessions in the same process,
+    # so it is not used to hold per-user values.
     st.session_state.SAMBANOVA_API_KEY = api_key
     if additional_vars:
         for key, value in additional_vars.items():
             st.session_state[key] = value
-    if not prod_mode:
-        # In non-prod mode, also set environment variables
-        os.environ['SAMBANOVA_API_KEY'] = api_key
-        if additional_vars:
-            for key, value in additional_vars.items():
-                os.environ[key] = value
 
 
 def env_input_fields(additional_env_vars: Union[List[str], Dict[str, Any]] = None) -> Tuple[str, Dict[str, Any]]:

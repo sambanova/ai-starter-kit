@@ -45,6 +45,27 @@ NORMALIZE_EMBEDDINGS = True
 VECTORDB_LOG_FILE_NAME = 'vector_db.log'
 
 
+def _faiss_deserialization_allowed() -> bool:
+    """Whether loading FAISS indexes (which deserialize a pickle file) is allowed."""
+    return os.getenv('ALLOW_FAISS_DESERIALIZATION', 'false').strip().lower() in ('1', 'true', 'yes')
+
+
+def _load_faiss_index(path: Any, embeddings: Any) -> 'FAISS':
+    """Load a FAISS index.
+
+    Loading a FAISS index reads and unpickles a file on disk. This is opt-in via
+    the ALLOW_FAISS_DESERIALIZATION environment variable and should only be used
+    with index files created by this application (a trusted source).
+    """
+    if not _faiss_deserialization_allowed():
+        raise ValueError(
+            'Loading a FAISS index is disabled because it deserializes a pickle file. '
+            'Set ALLOW_FAISS_DESERIALIZATION=true to enable it for trusted index files, '
+            'or use the default (chroma) database type.'
+        )
+    return FAISS.load_local(path, embeddings, allow_dangerous_deserialization=True)
+
+
 def load_embedding_model(
     embedding_model_info: Dict[str, Any],
     api_key: Optional[Any] = None,
@@ -292,7 +313,7 @@ class VectorDb:
     ) -> Any:
         vector_store: FAISS | Qdrant | Chroma | Milvus
         if db_type == 'faiss':
-            vector_store = FAISS.load_local(persist_directory, embedding_model, allow_dangerous_deserialization=True)  # type: ignore
+            vector_store = _load_faiss_index(persist_directory, embedding_model)  # type: ignore
         elif db_type == 'chroma':
             if collection_name:
                 vector_store = Chroma(
@@ -337,7 +358,7 @@ class VectorDb:
         output_db: Optional[str] = None,
     ) -> Any:
         if db_type == 'faiss':
-            vector_store = FAISS.load_local(input_db, embeddings, allow_dangerous_deserialization=True)  # type: ignore
+            vector_store = _load_faiss_index(input_db, embeddings)  # type: ignore
             new_vector_store = self.create_vector_store(chunks, embeddings, db_type, None)
             vector_store.merge_from(new_vector_store)
             if output_db:
