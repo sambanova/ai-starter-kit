@@ -95,7 +95,7 @@ def parse(response: str):
         "function": {"name": "dummy", "arguments": '{"key": "value"}'}
     }]
 """
-        self.manager.add_custom_tool_parser('custom', code)
+        self.manager.add_custom_tool_parser('custom', code, allow_code_execution=True)
         msg = self.manager.parse_to_message('irrelevant text', 'custom')
         self.assertIsNone(msg['content'])
         self.assertEqual(msg['tool_calls'][0]['function']['name'], 'dummy')

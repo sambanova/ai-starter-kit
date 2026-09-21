@@ -13,7 +13,8 @@ from json import JSONDecodeError
 from typing import Any, Callable, Optional
 
 from dotenv import load_dotenv
-from jinja2 import Environment, Template, TemplateSyntaxError
+from jinja2 import TemplateSyntaxError
+from jinja2.sandbox import SandboxedEnvironment
 from pydantic import BaseModel
 from sambanova import SambaNova
 from transformers import AutoTokenizer
@@ -121,7 +122,7 @@ class ChatTemplateManager:
             True if template is syntactically valid.
         """
         try:
-            env = Environment()
+            env = SandboxedEnvironment()
             env.parse(template)
             return True
         except TemplateSyntaxError as e:
@@ -197,7 +198,10 @@ class ChatTemplateManager:
             context.update(extra_context)
 
         try:
-            template = Template(str(template_str))
+            # Render the template within a sandboxed environment, which limits
+            # attribute and builtin access available to the template.
+            env = SandboxedEnvironment()
+            template = env.from_string(str(template_str))
             rendered = template.render(**context)
             return rendered.strip()
         except Exception as e:
@@ -300,7 +304,7 @@ class ChatTemplateManager:
             calls.append(self.instantiate_function_calling_model(fc['name'], fc['parameters']))
         return calls
 
-    def add_custom_tool_parser(self, name: str, code_str: str) -> None:
+    def add_custom_tool_parser(self, name: str, code_str: str, allow_code_execution: bool = False) -> None:
         """
         Dynamically register a parser from user code.
 
@@ -318,6 +322,14 @@ class ChatTemplateManager:
         Sample Dummy custom parser
             return [{"id": "call_custom", "type": "function", "function": {"name": "hello", "arguments": "{}"}}]
         """
+
+        # Registering a custom parser compiles and runs the provided Python code.
+        # It is opt-in and disabled by default.
+        if not allow_code_execution:
+            raise ValueError(
+                'Custom parser code execution is disabled. '
+                'Enable it explicitly in the configuration to register a custom parser.'
+            )
 
         local_env: dict[str, Any] = {}
         try:
