@@ -12,7 +12,7 @@ sys.path.append(repo_dir)
 import asyncio
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import weave
 import yaml
@@ -32,7 +32,7 @@ class WeaveEvaluator(ABC):
     @abstractmethod
     def evaluate(
         self, name: Optional[str] = None, filepath: Optional[str] = None, use_concurrency: bool = False
-    ) -> None:
+    ) -> Dict[str, Any]:
         pass
 
 
@@ -59,7 +59,7 @@ class BaseWeaveEvaluator(WeaveEvaluator):
 
     async def evaluate(
         self, name: Optional[str] = None, filepath: Optional[str] = None, use_concurrency: bool = False
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Evaluate a list of data using multiple LLM configurations.
 
@@ -93,11 +93,10 @@ class BaseWeaveEvaluator(WeaveEvaluator):
         llm_info = self.config_info['llms']
 
         if use_concurrency:
-            await self._run_concurrently_with_threads(llm_info, data)
-        else:
-            await self._run_sequentially(llm_info, data)
+            return await self._run_concurrently_with_threads(llm_info, data)
+        return await self._run_sequentially(llm_info, data)
 
-    async def _run_sequentially(self, params: List[Dict[str, Any]], data: Dataset) -> None:
+    async def _run_sequentially(self, params: List[Dict[str, Any]], data: Dataset) -> Dict[str, Any]:
         """
         Run evaluations of models sequentially for a list of parameters.
         This method creates a `WeaveChatModel` for each parameter set, constructs an evaluation object,
@@ -108,6 +107,7 @@ class BaseWeaveEvaluator(WeaveEvaluator):
             data (Dataset): The dataset to be used for evaluation.
         """
 
+        summaries: Dict[str, Any] = {}
         for param in params:
             test_model = (
                 WeaveChatModel(
@@ -120,9 +120,10 @@ class BaseWeaveEvaluator(WeaveEvaluator):
                 name=' '.join(str(value) for value in param.values()), dataset=data, scorers=[self.judge]
             )
             with weave.attributes(param):
-                await evaluation.evaluate(test_model)
+                summaries[evaluation.name] = await evaluation.evaluate(test_model)
+        return summaries
 
-    async def _run_concurrently_with_threads(self, params: List[Dict[str, Any]], data: Dataset) -> None:
+    async def _run_concurrently_with_threads(self, params: List[Dict[str, Any]], data: Dataset) -> Dict[str, Any]:
         """
         Run evaluations of models concurrently using threads for a list of parameters.
         This method utilizes a thread pool to run model evaluations concurrently.
@@ -139,9 +140,10 @@ class BaseWeaveEvaluator(WeaveEvaluator):
                 for param in params
             ]
 
-            await asyncio.gather(*evaluation_tasks)
+            results = await asyncio.gather(*evaluation_tasks)
+        return dict(results)
 
-    def _evaluate_model(self, params: Dict[str, Any], data: Dataset) -> None:
+    def _evaluate_model(self, params: Dict[str, Any], data: Dataset) -> Tuple[str, Dict[str, Any]]:
         """
         Evaluate a model using the provided parameters in a separate thread.
         This method runs in a thread pool. It creates a `WeaveChatModel` using the
@@ -163,7 +165,8 @@ class BaseWeaveEvaluator(WeaveEvaluator):
         )
 
         with weave.attributes(params):
-            asyncio.run(evaluation.evaluate(test_model))
+            summary = asyncio.run(evaluation.evaluate(test_model))
+        return str(evaluation.name), summary
 
     def _get_config_info(self, config_path: str) -> Any:
         """
@@ -286,7 +289,7 @@ class BaseWeaveRAGEvaluator(BaseWeaveEvaluator):
             name=' '.join(str(value) for value in self.rag_info.values()), dataset=weave_data, scorers=[self.judge]
         )
 
-        await evaluation.evaluate(self.rag_chain)
+        return {str(evaluation.name): await evaluation.evaluate(self.rag_chain)}
 
     def _init_chain(self) -> RAGChain:
         """
