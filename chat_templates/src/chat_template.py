@@ -9,11 +9,13 @@ import logging
 import os
 import re
 import uuid
+from datetime import datetime
 from json import JSONDecodeError
 from typing import Any, Callable, Optional
 
 from dotenv import load_dotenv
-from jinja2 import Environment, Template, TemplateSyntaxError
+from jinja2 import TemplateError, TemplateSyntaxError
+from jinja2.sandbox import ImmutableSandboxedEnvironment
 from pydantic import BaseModel
 from sambanova import SambaNova
 from transformers import AutoTokenizer
@@ -29,6 +31,25 @@ logger = logging.getLogger(__name__)
 
 CACHE_DIR = 'data'
 BASE_URL = 'https://api.sambanova.ai/v1'
+
+
+def _build_chat_template_env() -> ImmutableSandboxedEnvironment:
+    """Build a Jinja environment matching the one transformers uses for chat templates."""
+
+    def raise_exception(message: str) -> None:
+        raise TemplateError(message)
+
+    def strftime_now(fmt: str) -> str:
+        return datetime.now().strftime(fmt)
+
+    def tojson(obj: Any, indent: int | None = None) -> str:
+        return json.dumps(obj, ensure_ascii=False, indent=indent)
+
+    env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+    env.globals['raise_exception'] = raise_exception
+    env.globals['strftime_now'] = strftime_now
+    env.filters['tojson'] = tojson
+    return env
 
 
 class ToolCallModel(BaseModel):
@@ -121,7 +142,7 @@ class ChatTemplateManager:
             True if template is syntactically valid.
         """
         try:
-            env = Environment()
+            env = _build_chat_template_env()
             env.parse(template)
             return True
         except TemplateSyntaxError as e:
@@ -197,7 +218,7 @@ class ChatTemplateManager:
             context.update(extra_context)
 
         try:
-            template = Template(str(template_str))
+            template = _build_chat_template_env().from_string(str(template_str))
             rendered = template.render(**context)
             return rendered.strip()
         except Exception as e:
