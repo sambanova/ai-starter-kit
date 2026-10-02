@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import shlex
 import shutil
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -52,10 +53,14 @@ class SambaParse:
         # Create the output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
 
-        # Delete contents of the output directory using shell command
-        del_command = f'rm -rf {output_dir}/*'
+        # Clear the output directory using Python file operations instead of a shell command
         logger.info(f'Deleting contents of output directory: {output_dir}')
-        subprocess.run(del_command, shell=True, check=True)
+        for entry in os.listdir(output_dir):
+            entry_path = os.path.join(output_dir, entry)
+            if os.path.isfile(entry_path) or os.path.islink(entry_path):
+                os.unlink(entry_path)
+            elif os.path.isdir(entry_path):
+                shutil.rmtree(entry_path)
 
         command = [
             'unstructured-ingest',
@@ -101,7 +106,7 @@ class SambaParse:
         if source_type == 'local':
             if input_path is None:
                 raise ValueError('Input path is required for local source type.')
-            command.extend(['--input-path', f'"{input_path}"'])
+            command.extend(['--input-path', input_path])
 
             if self.config['sources']['local']['recursive']:
                 command.append('--recursive')
@@ -232,11 +237,12 @@ class SambaParse:
             else:
                 raise ValueError(f'Unsupported destination connector type: {destination_type}')
 
-        command_str = ' '.join(command)
-        logger.info(f'Running command: {command_str}')
+        logger.info(f'Running command: {shlex.join(command)}')
         logger.info('This may take some time depending on the size of your data. Please be patient...')
 
-        subprocess.run(command_str, shell=True, check=True)
+        # Pass the command as an argument list instead of a joined shell string, so that
+        # arguments containing spaces or other special characters are handled correctly.
+        subprocess.run(command, shell=False, check=True)
 
         logger.info('Ingest process completed successfully!')
 
