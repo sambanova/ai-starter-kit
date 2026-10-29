@@ -1,3 +1,6 @@
 [submodule "utils/dedicated_env/generative_data_prep"]
 	path = utils/dedicated_env/generative_data_prep
 	url = https://github.com/sambanova/generative_data_prep
+[submodule "benchmarking/athena_data_prep"]
+	path = benchmarking/athena_data_prep
+	url = https://github.com/snova-jorgep/athena_data_prep
