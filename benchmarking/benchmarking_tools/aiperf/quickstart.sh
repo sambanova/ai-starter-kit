@@ -29,6 +29,10 @@ DATASET_PATH="$ARTIFACT_DIR/aiperf_synthetic_dataset.jsonl"   # Generated datase
 # {"text": "..."} .jsonl file (this repo's other tools use {"prompt": ...} -- convert first, e.g.:
 #   jq -c '{text: .prompt}' ../../prompts/custom_prompt_example.jsonl > aiperf_dataset.jsonl
 
+# --- Athena / Grafana ---
+UPLOAD_TO_ATHENA=False            # True/False; upload the run summary to Athena so it shows in Grafana
+ATHENA_PROVIDER=""                # Optional provider label; default: detected from the endpoint URL
+
 # ================================================================================================
 # Everything below runs automatically -- no need to edit
 # ================================================================================================
@@ -86,6 +90,8 @@ python ../kit/src/convert_aiperf_output.py \
     --artifact-dir "$ARTIFACT_DIR" \
     --model-name "$MODEL_NAME" \
     --num-input-tokens "$NUM_INPUT_TOKENS" \
-    --num-output-tokens "$NUM_OUTPUT_TOKENS"
+    --num-output-tokens "$NUM_OUTPUT_TOKENS" \
+    --upload-to-athena "$UPLOAD_TO_ATHENA" \
+    ${ATHENA_PROVIDER:+--athena-provider "$ATHENA_PROVIDER"}
 
 echo "Done. aiperf artifacts (profile_export.jsonl, profile_export_aiperf.json) are under $ARTIFACT_DIR"

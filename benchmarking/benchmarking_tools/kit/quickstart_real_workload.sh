@@ -25,6 +25,10 @@ USE_MULTIPLE_PROMPTS=False                 # True/False; cycle random prompt tem
 SAVE_LLM_RESPONSES=False                   # True/False; also save each response's text to a file
 
 # No NUM_CONCURRENT_REQUESTS here -- QPS pacing is open-loop, there's no concurrency cap to set.
+# --- Athena / Grafana ---
+UPLOAD_TO_ATHENA=False                     # True/False; upload the run summary to Athena so it shows in Grafana
+ATHENA_PROVIDER=""                         # Optional provider label; default: detected from the endpoint URL
+
 # Need a flag not listed above? Add it directly to the command below --
 # `python src/evaluator.py --help` (or ../../README.md) has the full list.
 python src/evaluator.py \
@@ -43,4 +47,6 @@ python src/evaluator.py \
     --num-output-tokens "$NUM_OUTPUT_TOKENS" \
     --multimodal-image-size "$MULTIMODAL_IMAGE_SIZE" \
     --use-multiple-prompts "$USE_MULTIPLE_PROMPTS" \
-    --save-llm-responses "$SAVE_LLM_RESPONSES"
+    --save-llm-responses "$SAVE_LLM_RESPONSES" \
+    --upload-to-athena "$UPLOAD_TO_ATHENA" \
+    ${ATHENA_PROVIDER:+--athena-provider "$ATHENA_PROVIDER"}

@@ -201,6 +201,100 @@ def s3_key(row: Dict[str, Any]) -> str:
     return f'benchmarking_kit/perf_runs/run_date={row["_run_date"]}/{row["run_id"]}/summary.jsonl'
 
 
+def upload_summary_files(
+    paths: Iterable[str],
+    provider: Optional[str] = None,
+    config_env: Optional[str] = None,
+    dry_run: bool = False,
+    local_out: Optional[str] = None,
+) -> List[str]:
+    """Uploads the given *_summary.json files (or directories of them). Returns the S3 keys."""
+    load_dotenv(REPO_ROOT / '.env')
+    columns = load_columns()
+    uploaded_at = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S')
+    files = find_summary_files(paths)
+    if not files:
+        raise FileNotFoundError('no *_summary.json files found')
+
+    rows = [build_row(f, columns, provider, config_env, uploaded_at) for f in files]
+
+    s3 = None
+    settings = load_settings()
+    if not dry_run:
+        import boto3
+
+        s3 = boto3.client('s3', region_name=settings['region'])
+
+    keys = []
+    for row in rows:
+        key = s3_key(row)
+        body = json.dumps({k: v for k, v in row.items() if not k.startswith('_')}) + '\n'
+        if local_out:
+            local = Path(local_out) / key
+            local.parent.mkdir(parents=True, exist_ok=True)
+            local.write_text(body)
+        if s3 is not None:
+            s3.put_object(Bucket=settings['bucket'], Key=key, Body=body.encode(), ContentType='application/x-ndjson')
+            print(f'uploaded s3://{settings["bucket"]}/{key}  ({row["tool"]} {row["model"]})')
+        else:
+            print(f'[dry-run] s3://{settings["bucket"]}/{key}  ({row["tool"]} {row["model"]})')
+        keys.append(key)
+    return keys
+
+
+# --- Opt-in upload from the benchmark CLIs (Kit evaluator, vLLM/aiperf converters) ---------
+
+
+def _str2bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    if value.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def add_upload_args(parser: argparse.ArgumentParser) -> None:
+    """Adds --upload-to-athena and its options to a benchmark CLI."""
+    parser.add_argument(
+        '--upload-to-athena',
+        type=_str2bool,
+        default=False,
+        help='Upload the run summary to Athena (table bkit_perf_runs) so it shows in the Grafana dashboard. '
+        'Needs AWS credentials in the repo .env. (default: %(default)s)',
+    )
+    parser.add_argument(
+        '--athena-provider',
+        type=str,
+        default=None,
+        help='Provider name stored with the uploaded run. Default: detected from the endpoint URL.',
+    )
+    parser.add_argument(
+        '--athena-config-env',
+        type=str,
+        default=None,
+        help='Deployment label stored with the uploaded run, e.g. prod or staging.',
+    )
+
+
+def upload_after_run(summary_paths: List[Optional[str]], provider: Optional[str], config_env: Optional[str]) -> None:
+    """Uploads freshly written summaries. A failed upload is reported, not raised: the results
+    are already saved locally and can be uploaded later with this script."""
+    paths = [os.path.abspath(p) for p in summary_paths if p]
+    if not paths:
+        print('[athena] no summary file was written, nothing to upload', file=sys.stderr)
+        return
+    try:
+        upload_summary_files(paths, provider=provider, config_env=config_env)
+    except Exception as e:
+        print(
+            f'[athena] upload failed ({type(e).__name__}: {e}). Results are saved locally; retry with:\n'
+            f'  python {os.path.abspath(__file__)} {" ".join(paths)}',
+            file=sys.stderr,
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('paths', nargs='+', help='*_summary.json files, or directories searched recursively.')
@@ -210,34 +304,10 @@ def main() -> None:
     parser.add_argument('--local-out', help='Also write each row under this directory, mirroring the S3 keys.')
     args = parser.parse_args()
 
-    load_dotenv(REPO_ROOT / '.env')
-    columns = load_columns()
-    uploaded_at = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S')
-    files = find_summary_files(args.paths)
-    if not files:
-        sys.exit('no *_summary.json files found')
-
-    rows = [build_row(f, columns, args.provider, args.config_env, uploaded_at) for f in files]
-
-    s3 = None
-    settings = load_settings()
-    if not args.dry_run:
-        import boto3
-
-        s3 = boto3.client('s3', region_name=settings['region'])
-
-    for row in rows:
-        key = s3_key(row)
-        body = json.dumps({k: v for k, v in row.items() if not k.startswith('_')}) + '\n'
-        if args.local_out:
-            local = Path(args.local_out) / key
-            local.parent.mkdir(parents=True, exist_ok=True)
-            local.write_text(body)
-        if s3 is not None:
-            s3.put_object(Bucket=settings['bucket'], Key=key, Body=body.encode(), ContentType='application/x-ndjson')
-            print(f'uploaded s3://{settings["bucket"]}/{key}  ({row["tool"]} {row["model"]})')
-        else:
-            print(f'[dry-run] s3://{settings["bucket"]}/{key}  ({row["tool"]} {row["model"]})')
+    try:
+        upload_summary_files(args.paths, args.provider, args.config_env, args.dry_run, args.local_out)
+    except FileNotFoundError as e:
+        sys.exit(str(e))
 
 
 if __name__ == '__main__':

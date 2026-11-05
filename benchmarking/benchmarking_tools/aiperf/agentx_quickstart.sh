@@ -23,6 +23,10 @@ BENCHMARK_DURATION=1800
 
 ARTIFACT_DIR="./data/aiperf_agentx_results"  # Where aiperf writes everything, including the standardized output
 
+# --- Athena / Grafana ---
+UPLOAD_TO_ATHENA=False            # True/False; upload the run summary to Athena so it shows in Grafana
+ATHENA_PROVIDER=""                # Optional provider label; default: detected from the endpoint URL
+
 # ================================================================================================
 # Everything below runs automatically -- no need to edit
 # ================================================================================================
@@ -71,7 +75,9 @@ python ../kit/src/convert_aiperf_output.py \
     --artifact-dir "$ARTIFACT_DIR" \
     --model-name "$MODEL_NAME" \
     --workload-mode agentic_coding \
-    --num-concurrent-requests "$NUM_CONCURRENT_REQUESTS"
+    --num-concurrent-requests "$NUM_CONCURRENT_REQUESTS" \
+    --upload-to-athena "$UPLOAD_TO_ATHENA" \
+    ${ATHENA_PROVIDER:+--athena-provider "$ATHENA_PROVIDER"}
 
 echo "Done. aiperf artifacts (profile_export.jsonl, profile_export_aiperf.json) are under $ARTIFACT_DIR"
 echo "(or under $ARTIFACT_DIR/aggregate/ if --num-profile-runs > 1 was passed)"

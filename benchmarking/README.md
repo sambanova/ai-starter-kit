@@ -21,6 +21,7 @@ Benchmarking
         - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
         - [Full Walkthrough](#full-walkthrough)
     - [CLI Option](#cli-option)
+- [Publishing results to Grafana](#publishing-results-to-grafana)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 - [TroubleShooting](#troubleshooting)
 
@@ -252,6 +253,7 @@ Edit the variables at the top of whichever matches your use case, then `cd bench
   - **`--use-multiple-prompts`** (_default_: False): random prompt selection instead of one fixed prompt (text-instruct models only — [customize here](./prompts/user-prompt_template-text_instruct.yaml)).
   - **`--save-llm-responses`** (_default_: False): saves response texts to a `response_texts`-suffixed file.
   - **`--use-debugging-mode`** (_default_: False): more detail per request, higher latency.
+  - **`--upload-to-athena`** (_default_: False): publish the run to the shared Grafana dashboard — see [Publishing results to Grafana](#publishing-results-to-grafana). Works the same in every mode.
 
    To run vLLM instead of (or alongside) Kit, see [`vllm/README.md`](./benchmarking_tools/vllm/README.md).
 
@@ -352,6 +354,24 @@ python benchmarking_tools/kit/src/evaluator.py \
    ![summary_output_image](./imgs/custom_summary_ouput.png)
 
 </details>
+
+# Publishing results to Grafana
+
+Runs stay local unless you opt in. With the flag on, each run's summary is uploaded to the Athena table `bkit_perf_runs`, which feeds the **Benchmarking Kit - Speed Results** Grafana dashboard. The same flags exist for every tool:
+
+| Tool | How to turn it on |
+| --- | --- |
+| Kit (`evaluator.py`, any `--mode`) | `--upload-to-athena True`, or `UPLOAD_TO_ATHENA=True` in `kit/quickstart_*.sh` |
+| vLLM | `UPLOAD_TO_ATHENA=True` in [`vllm/quickstart.sh`](./benchmarking_tools/vllm/quickstart.sh), or `--upload-to-athena True` on `convert_vllm_output.py` |
+| aiperf | `UPLOAD_TO_ATHENA=True` in [`aiperf/quickstart.sh`](./benchmarking_tools/aiperf/quickstart.sh) / [`agentx_quickstart.sh`](./benchmarking_tools/aiperf/agentx_quickstart.sh), or `--upload-to-athena True` on `convert_aiperf_output.py` |
+
+Optional flags, same names everywhere:
+- **`--athena-provider`** (`ATHENA_PROVIDER` in the scripts): provider label stored with the run. _Default_: detected from the endpoint URL (SambaNova, Fireworks, Groq, Cerebras, Together, Novita, OpenAI), otherwise `unknown`.
+- **`--athena-config-env`**: deployment label, e.g. `prod` or `staging`.
+
+Requirements: AWS credentials (`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) in the repo-root `.env`, and `boto3` in the Python environment that runs the tool (it's in `requirements.txt`; install it yourself if you run vLLM/aiperf from a separate environment).
+
+If the upload fails, the run still completes and its results stay saved locally; the error message prints the command to retry. Results from earlier runs can be uploaded any time with [`athena_export/upload_perf_results.py`](./athena_export/README.md). Uploading the same run again replaces it, so retries never duplicate data.
 
 # Third-party tools and data sources
 

@@ -50,6 +50,7 @@ The [AgentX MVP scenario](#agentx-mvp-agentic-coding-benchmark) is **partially v
    - `QPS`: `"inf"` (default) fires a closed-loop burst; a number paces as a Poisson process — see [Real workload](#real-workload).
    - `NUM_INPUT_TOKENS`, `NUM_OUTPUT_TOKENS`: prompt/generation length.
    - `ARTIFACT_DIR`: where aiperf, the generated dataset, and the standardized output all get written (`DATASET_PATH` derives from it by default).
+   - `UPLOAD_TO_ATHENA` (_default_: `False`): `True` publishes the run to the shared Grafana dashboard after conversion; `ATHENA_PROVIDER` optionally sets its provider label. Same in `agentx_quickstart.sh`. See [Publishing results to Grafana](../../README.md#publishing-results-to-grafana).
 
    Everything below that (`.env` loading, `TOKENIZER_MODEL_NAME` auto-resolution via [`../kit/src/resolve_tokenizer_name.py`](../kit/src/resolve_tokenizer_name.py)) runs automatically — override `TOKENIZER_MODEL_NAME` yourself only if you need a different tokenizer.
 

@@ -10,6 +10,11 @@ submodule out first: `git submodule update --init benchmarking/athena_data_prep`
 
 ## Upload results
 
+To upload automatically at the end of a run, pass `--upload-to-athena True` to any tool (or set
+`UPLOAD_TO_ATHENA=True` in its quickstart script); see
+[Publishing results to Grafana](../README.md#publishing-results-to-grafana). This script uploads results
+after the fact, e.g. older runs or a retry after a failed upload.
+
 Needs `AWS_REGION`, `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in the repo-root `.env`.
 
 ```bash

@@ -13,6 +13,7 @@ sys.path.append(repo_dir)
 
 from dotenv import load_dotenv
 
+from benchmarking.athena_export.upload_perf_results import add_upload_args, upload_after_run
 from benchmarking.benchmarking_tools.kit.src.executor_base import str2bool
 from benchmarking.benchmarking_tools.kit.src.job_kwargs import (
     MODES,
@@ -100,6 +101,8 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
             ramp-up costs so they do not skew the reported metrics. 0 disables warm-up. (default: %(default)s)',
     )
 
+    add_upload_args(parser)
+
 
 def _run_job(mode: str, job: Dict[str, Any]) -> Any:
     """Dispatches a single job (one model/config combo): builds constructor/run kwargs via
@@ -108,7 +111,10 @@ def _run_job(mode: str, job: Dict[str, Any]) -> Any:
     constructor_kwargs, run_kwargs = build_job_kwargs(job, mode)
     executor_cls = EXECUTOR_FOR_MODE[mode]
     executor = executor_cls(**constructor_kwargs)
-    return executor.run_benchmark(**run_kwargs)
+    result = executor.run_benchmark(**run_kwargs)
+    if job.get('upload_to_athena'):
+        upload_after_run([executor.summary_file_path], job.get('athena_provider'), job.get('athena_config_env'))
+    return result
 
 
 def main() -> None:

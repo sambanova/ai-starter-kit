@@ -29,6 +29,10 @@ DATASET_PATH="$RESULT_DIR/vllm_synthetic_dataset.jsonl"     # Generated dataset,
 # {"prompt": "..."} .jsonl file instead, e.g.:
 #   DATASET_PATH="../../prompts/custom_prompt_example.jsonl"
 
+# --- Athena / Grafana ---
+UPLOAD_TO_ATHENA=False            # True/False; upload the run summary to Athena so it shows in Grafana
+ATHENA_PROVIDER=""                # Optional provider label; default: detected from the endpoint URL
+
 # ================================================================================================
 # Everything below runs automatically -- no need to edit
 # ================================================================================================
@@ -97,7 +101,9 @@ if [ -n "$RAW_RESULT_PATH" ]; then
         --model-name "$MODEL_NAME" \
         --num-input-tokens "$NUM_INPUT_TOKENS" \
         --num-output-tokens "$NUM_OUTPUT_TOKENS" \
-        --base-url "$SAMBANOVA_API_BASE"
+        --base-url "$SAMBANOVA_API_BASE" \
+        --upload-to-athena "$UPLOAD_TO_ATHENA" \
+        ${ATHENA_PROVIDER:+--athena-provider "$ATHENA_PROVIDER"}
 else
     echo "Warning: could not locate vLLM's native result JSON in $RESULT_DIR to standardize." >&2
 fi

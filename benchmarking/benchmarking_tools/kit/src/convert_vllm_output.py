@@ -47,6 +47,8 @@ except ImportError:
         compute_quantile_stats,
 )
 
+from benchmarking.athena_export.upload_perf_results import add_upload_args, upload_after_run
+
 
 def _get_error(errors_raw: Optional[List[Any]], ttfts: List[float], output_lens: List[int], i: int) -> Optional[str]:
     if errors_raw is not None and i < len(errors_raw) and errors_raw[i]:
@@ -192,7 +194,8 @@ def convert(
     num_output_tokens: int,
     workload_mode: str,
     api_base_url: Optional[str] = None,
-) -> None:
+) -> str:
+    """Writes the two standardized files next to the raw result. Returns the summary path."""
     with open(raw_result_path) as f:
         raw: Dict[str, Any] = json.load(f)
 
@@ -212,6 +215,7 @@ def convert(
 
     print(f'Wrote {individual_path}')
     print(f'Wrote {summary_path}')
+    return summary_path
 
 
 def main() -> None:
@@ -239,8 +243,9 @@ def main() -> None:
     parser.add_argument(
         '--base-url', type=str, default=None, help='API base URL the run benchmarked, recorded in the summary.'
     )
+    add_upload_args(parser)
     args = parser.parse_args()
-    convert(
+    summary_path = convert(
         args.raw_result_path,
         args.model_name,
         args.num_input_tokens,
@@ -248,6 +253,8 @@ def main() -> None:
         args.workload_mode,
         args.base_url,
     )
+    if args.upload_to_athena:
+        upload_after_run([summary_path], args.athena_provider, args.athena_config_env)
 
 
 if __name__ == '__main__':

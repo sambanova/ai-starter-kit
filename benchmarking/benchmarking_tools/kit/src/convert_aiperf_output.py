@@ -53,6 +53,8 @@ except ImportError:
         compute_quantile_stats,
     )
 
+from benchmarking.athena_export.upload_perf_results import add_upload_args, upload_after_run
+
 # aiperf per-request metric names (profile_export.jsonl `metrics.<name>.value`, ms/tokens) that
 # map onto RequestMetric's common vocabulary. Values are converted ms -> s where applicable.
 _MS_TO_S_FIELDS = {
@@ -278,7 +280,8 @@ def convert(
     num_input_tokens: Optional[int],
     num_output_tokens: Optional[int],
     num_profile_runs: Optional[int],
-) -> None:
+) -> str:
+    """Writes the two standardized files into the artifact dir. Returns the summary path."""
     aggregate_path, individual_path = find_output_files(artifact_dir, num_profile_runs)
 
     with open(aggregate_path) as f:
@@ -313,6 +316,7 @@ def convert(
 
     print(f'Wrote {individual_out_path}')
     print(f'Wrote {summary_out_path}')
+    return summary_out_path
 
 
 def main() -> None:
@@ -337,8 +341,9 @@ def main() -> None:
     parser.add_argument(
         '--num-profile-runs', type=int, default=None, help='--num-profile-runs used for the run, if set.'
     )
+    add_upload_args(parser)
     args = parser.parse_args()
-    convert(
+    summary_path = convert(
         args.artifact_dir,
         args.model_name,
         args.workload_mode,
@@ -348,6 +353,8 @@ def main() -> None:
         args.num_output_tokens,
         args.num_profile_runs,
     )
+    if args.upload_to_athena:
+        upload_after_run([summary_path], args.athena_provider, args.athena_config_env)
 
 
 if __name__ == '__main__':

@@ -27,6 +27,7 @@ Complements the Kit's own native evaluator in [`../kit/`](../kit/) — see [`../
    - `QPS`: `"inf"` (default) fires a closed-loop burst; a number paces open-loop as a Poisson process — see [Real workload](#real-workload-rate-paced).
    - `NUM_INPUT_TOKENS`, `NUM_OUTPUT_TOKENS`: prompt/generation length.
    - `RESULT_DIR`: where vLLM, the generated dataset, and the standardized output all get written (`DATASET_PATH` derives from it by default).
+   - `UPLOAD_TO_ATHENA` (_default_: `False`): `True` publishes the run to the shared Grafana dashboard after conversion; `ATHENA_PROVIDER` optionally sets its provider label. See [Publishing results to Grafana](../../README.md#publishing-results-to-grafana).
 
    Everything below (`.env` loading, the trailing-slash fix, `TOKENIZER_MODEL_NAME` auto-resolution via [`../kit/src/resolve_tokenizer_name.py`](../kit/src/resolve_tokenizer_name.py)) runs automatically.
 
