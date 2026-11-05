@@ -336,7 +336,10 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
         # against a genuine KeyError crash for any caller that bypasses those defaults directly --
         # not a documented "uncapped" option, since this API requires a concrete max_tokens value.
         sampling_params['max_tokens'] = sampling_params.pop('max_tokens_to_generate', 150)
-        sampling_params['ignore_eos'] = True
+        # Benchmarks force full-length outputs by default so every request generates the requested
+        # number of tokens. Pass `"ignore_eos": false` in --sampling-params to let replies end
+        # naturally (e.g. when comparing endpoints that don't all honour ignore_eos).
+        sampling_params.setdefault('ignore_eos', True)
 
         if self.request_config.is_stream_mode:
             sampling_params['stream'] = True
