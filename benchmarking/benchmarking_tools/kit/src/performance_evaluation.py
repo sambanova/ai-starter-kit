@@ -33,7 +33,7 @@ from benchmarking.benchmarking_tools.kit.src.llmperf.models import LLMResponse, 
 from benchmarking.benchmarking_tools.kit.src.llmperf.sambanova_client import llm_request
 from benchmarking.benchmarking_tools.kit.src.schemas import BenchmarkSummary, QuantileStats, RequestMetric
 from benchmarking.benchmarking_utils import get_tokenizer
-from benchmarking.utils import CONFIG_PATH
+from benchmarking.utils import CONFIG_PATH, SAMBANOVA_API_BASE
 
 logging.basicConfig(
     level=logging.INFO,
@@ -650,6 +650,14 @@ class BasePerformanceEvaluator(BaseExecutorMixin, abc.ABC):
         for key, value in summary.items():
             if key not in known_top_level_keys:
                 extra[key] = value
+        # Same base-url resolution as SambaNovaCloudAPI.__init__, recorded so results can be
+        # attributed to the endpoint/provider that was benchmarked.
+        extra['llm_api'] = self.llm_api
+        extra['api_base_url'] = (
+            self.api_variables.get('SAMBANOVA_API_BASE')
+            if self.api_variables
+            else os.environ.get('SAMBANOVA_API_BASE')
+        ) or SAMBANOVA_API_BASE
         extra.update(self.user_metadata)
 
         return BenchmarkSummary(

@@ -542,7 +542,7 @@ class VLLMToolRunner:
             raise RuntimeError(f"Could not locate vLLM's native result JSON in {results_dir}.")
         raw_result_path = next(iter(new_files))
 
-        convert_vllm(raw_result_path, model_name, num_input_tokens, num_output_tokens, workload_mode)
+        convert_vllm(raw_result_path, model_name, num_input_tokens, num_output_tokens, workload_mode, api_base)
         base = raw_result_path[: -len('.json')]
         return ToolRunResult(
             tool='vllm',

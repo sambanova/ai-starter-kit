@@ -1,0 +1,3 @@
+project: benchmarking_kit
+env_files:
+  - .env

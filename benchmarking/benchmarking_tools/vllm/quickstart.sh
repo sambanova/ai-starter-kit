@@ -96,7 +96,8 @@ if [ -n "$RAW_RESULT_PATH" ]; then
         --raw-result-path "$RAW_RESULT_PATH" \
         --model-name "$MODEL_NAME" \
         --num-input-tokens "$NUM_INPUT_TOKENS" \
-        --num-output-tokens "$NUM_OUTPUT_TOKENS"
+        --num-output-tokens "$NUM_OUTPUT_TOKENS" \
+        --base-url "$SAMBANOVA_API_BASE"
 else
     echo "Warning: could not locate vLLM's native result JSON in $RESULT_DIR to standardize." >&2
 fi

@@ -123,6 +123,7 @@ def build_summary(
     workload_mode: str,
     num_input_tokens: int,
     num_output_tokens: int,
+    api_base_url: Optional[str] = None,
 ) -> BenchmarkSummary:
     successful = [r for r in individual_responses if r.error_code is None]
     results: Dict[str, QuantileStats] = {}
@@ -178,18 +179,27 @@ def build_summary(
             'tokenizer_id': raw.get('tokenizer_id'),
             'burstiness': raw.get('burstiness'),
             'backend': raw.get('backend'),
+            # vLLM doesn't record the endpoint it benchmarked either, so the caller passes it in.
+            'api_base_url': api_base_url,
         },
     )
 
 
 def convert(
-    raw_result_path: str, model_name: str, num_input_tokens: int, num_output_tokens: int, workload_mode: str
+    raw_result_path: str,
+    model_name: str,
+    num_input_tokens: int,
+    num_output_tokens: int,
+    workload_mode: str,
+    api_base_url: Optional[str] = None,
 ) -> None:
     with open(raw_result_path) as f:
         raw: Dict[str, Any] = json.load(f)
 
     individual_responses = build_individual_responses(raw, num_input_tokens, num_output_tokens)
-    summary = build_summary(raw, individual_responses, model_name, workload_mode, num_input_tokens, num_output_tokens)
+    summary = build_summary(
+        raw, individual_responses, model_name, workload_mode, num_input_tokens, num_output_tokens, api_base_url
+    )
 
     base = raw_result_path[: -len('.json')] if raw_result_path.endswith('.json') else raw_result_path
     individual_path = f'{base}_individual_responses.json'
@@ -226,8 +236,18 @@ def main() -> None:
         help="Kit-style workload label to record ('synthetic', 'real_workload', 'custom', ...). "
         '(default: %(default)s)',
     )
+    parser.add_argument(
+        '--base-url', type=str, default=None, help='API base URL the run benchmarked, recorded in the summary.'
+    )
     args = parser.parse_args()
-    convert(args.raw_result_path, args.model_name, args.num_input_tokens, args.num_output_tokens, args.workload_mode)
+    convert(
+        args.raw_result_path,
+        args.model_name,
+        args.num_input_tokens,
+        args.num_output_tokens,
+        args.workload_mode,
+        args.base_url,
+    )
 
 
 if __name__ == '__main__':

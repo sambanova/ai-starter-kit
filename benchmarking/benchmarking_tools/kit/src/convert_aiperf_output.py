@@ -24,6 +24,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
@@ -62,6 +63,11 @@ _MS_TO_S_FIELDS = {
 _TOKEN_COUNT_FIELDS = {
     'input_sequence_length': 'number_input_tokens',
     'output_sequence_length': 'number_output_tokens',
+}
+# Rate metrics, already in their final unit. aiperf's per-user output throughput is (osl - 1) / (e2e - ttft),
+# the same decode-speed quantity Kit reports as client_output_token_per_s_per_request.
+_RATE_FIELDS = {
+    'output_token_throughput_per_user': 'client_output_token_per_s_per_request',
 }
 _QUANTILE_KEYS = ('p5', 'p25', 'p50', 'p75', 'p90', 'p95', 'p99')
 
@@ -110,7 +116,7 @@ def parse_individual_record(raw_record: Dict[str, Any]) -> RequestMetric:
         entry = metrics.get(aiperf_name)
         if entry is not None and entry.get('value') is not None:
             kwargs[field_name] = entry['value'] / 1000.0
-    for aiperf_name, field_name in _TOKEN_COUNT_FIELDS.items():
+    for aiperf_name, field_name in {**_TOKEN_COUNT_FIELDS, **_RATE_FIELDS}.items():
         entry = metrics.get(aiperf_name)
         if entry is not None and entry.get('value') is not None:
             kwargs[field_name] = entry['value']
@@ -156,7 +162,7 @@ def build_summary(
     # metric -- read it directly rather than recomputing, only falling back to computing our own
     # stats from individual_responses for a metric the aggregate happens to omit.
     results: Dict[str, QuantileStats] = {}
-    for aiperf_name, field_name in {**_MS_TO_S_FIELDS, **_TOKEN_COUNT_FIELDS}.items():
+    for aiperf_name, field_name in {**_MS_TO_S_FIELDS, **_TOKEN_COUNT_FIELDS, **_RATE_FIELDS}.items():
         entry = aggregate.get(aiperf_name)
         if not entry:
             continue
@@ -179,8 +185,12 @@ def build_summary(
             if stats is not None:
                 results[field_name] = stats
 
-    num_completed = sum(1 for r in individual_responses if r.error_code is None)
-    num_errors = len(individual_responses) - num_completed
+    # aiperf's aggregate stats already exclude warmup requests (it reports them separately under
+    # 'warmup_metrics'), so the request counts here must exclude them too -- otherwise warmup
+    # errors inflate error_rate (confirmed live: 10 warmup records turned a 0.6% error rate into 3.3%).
+    measured_responses = [r for r in individual_responses if r.extra.get('benchmark_phase') != 'warmup']
+    num_completed = sum(1 for r in measured_responses if r.error_code is None)
+    num_errors = len(measured_responses) - num_completed
 
     request_throughput = None
     request_throughput_entry = aggregate.get('request_throughput')
@@ -215,23 +225,33 @@ def build_summary(
     if benchmark_duration_entry is not None:
         benchmark_duration_s = benchmark_duration_entry.get('avg')
 
+    # aiperf writes start_time as a naive ISO timestamp in the host's local time.
+    timestamp = None
+    if aggregate.get('start_time'):
+        timestamp = int(datetime.fromisoformat(aggregate['start_time']).timestamp())
+
+    endpoint = aggregate.get('input_config', {}).get('endpoint', {})
+    api_base_url = (endpoint.get('urls') or [None])[0]
+
     return BenchmarkSummary(
         tool='aiperf',
         workload_mode=workload_mode,
         name=f'aiperf_{model_name}',
+        timestamp=timestamp,
         model=model_name,
+        run_uuid=aggregate.get('benchmark_id'),
         num_concurrent_requests=num_concurrent_requests
         or configured_concurrency
         or (round(effective_concurrency) if effective_concurrency is not None else None),
         qps=qps or configured_rate,
         num_input_tokens=num_input_tokens,
         num_output_tokens=num_output_tokens,
-        num_requests=len(individual_responses),
+        num_requests=len(measured_responses),
         benchmark_duration_s=benchmark_duration_s,
         results=results,
         num_completed_requests=num_completed,
         number_errors=num_errors,
-        error_rate=(num_errors / len(individual_responses)) if individual_responses else None,
+        error_rate=(num_errors / len(measured_responses)) if measured_responses else None,
         request_throughput=request_throughput,
         client_total_output_throughput=client_total_output_throughput,
         extra={
@@ -240,6 +260,9 @@ def build_summary(
                 'schema_version': aggregate.get('schema_version'),
                 'aiperf_version': aggregate.get('aiperf_version'),
                 'benchmark_id': aggregate.get('benchmark_id'),
+                'api_base_url': api_base_url,
+                'scenario': aggregate.get('input_config', {}).get('scenario'),
+                'end_time': aggregate.get('end_time'),
             }.items()
             if v is not None
         },

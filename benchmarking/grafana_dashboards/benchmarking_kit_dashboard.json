@@ -1,0 +1,2879 @@
+{
+  "uid": "benchmarking-kit-speed",
+  "title": "Benchmarking Kit - Speed Results",
+  "tags": [
+    "athena",
+    "benchmarking-kit",
+    "performance"
+  ],
+  "schemaVersion": 38,
+  "editable": true,
+  "time": {
+    "from": "now-180d",
+    "to": "now"
+  },
+  "timezone": "utc",
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Data source",
+        "query": "grafana-athena-datasource"
+      },
+      {
+        "type": "query",
+        "name": "provider",
+        "label": "Provider",
+        "datasource": {
+          "type": "grafana-athena-datasource",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "rawSQL": "SELECT DISTINCT provider FROM bkit_perf_runs ORDER BY 1"
+        },
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 1,
+        "sort": 1
+      },
+      {
+        "type": "query",
+        "name": "model",
+        "label": "Model",
+        "datasource": {
+          "type": "grafana-athena-datasource",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "rawSQL": "SELECT DISTINCT COALESCE(mn.normalized_model, r.model) FROM bkit_perf_runs r LEFT JOIN model_normalization mn ON r.model = mn.raw_model ORDER BY 1"
+        },
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 1,
+        "sort": 1
+      },
+      {
+        "type": "query",
+        "name": "tool",
+        "label": "Tool",
+        "datasource": {
+          "type": "grafana-athena-datasource",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "rawSQL": "SELECT DISTINCT tool FROM bkit_perf_runs ORDER BY 1"
+        },
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 1,
+        "sort": 1
+      },
+      {
+        "type": "query",
+        "name": "workload_mode",
+        "label": "Workload",
+        "datasource": {
+          "type": "grafana-athena-datasource",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "rawSQL": "SELECT DISTINCT workload_mode FROM bkit_perf_runs ORDER BY 1"
+        },
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 1,
+        "sort": 1
+      },
+      {
+        "type": "textbox",
+        "name": "end_date",
+        "label": "End date (latest as of)",
+        "query": "2099-12-31 23:59:59",
+        "current": {
+          "text": "2099-12-31 23:59:59",
+          "value": "2099-12-31 23:59:59"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "id": 100,
+      "title": "All tools, per model",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "id": 101,
+      "title": "Latest results per model (all tools)",
+      "description": "Latest run per model, provider and tool at or before the End date variable.",
+      "datasource": {
+        "type": "grafana-athena-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "error_pct"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "run_ts"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "footer": {
+          "show": false
+        }
+      },
+      "targets": [
+        {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "format": 1,
+          "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n)\nSELECT\n    model_name AS model,\n    provider,\n    tool,\n    workload_mode,\n    num_concurrent_requests AS concurrency,\n    run_time AS run_ts,\n    ROUND(client_ttft_s_p50, 3) AS ttft_p50_s,\n    ROUND(client_ttft_s_p90, 3) AS ttft_p90_s,\n    ROUND(client_output_token_per_s_per_request_p50, 1) AS tok_s_per_req_p50,\n    ROUND(client_end_to_end_latency_s_p50, 2) AS e2e_p50_s,\n    ROUND(client_total_output_throughput, 1) AS total_tok_s,\n    ROUND(error_rate * 100, 2) AS error_pct,\n    num_requests AS requests,\n    run_id\nFROM latest\nWHERE rn = 1\nORDER BY model, provider, tool",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "id": 110,
+      "title": "TTFT p50",
+      "datasource": {
+        "type": "grafana-athena-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          },
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "auto",
+        "groupWidth": 0.7,
+        "barWidth": 0.8,
+        "xTickLabelRotation": -45,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "series",
+            "rowField": "model",
+            "valueField": "value"
+          }
+        }
+      ],
+      "targets": [
+        {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "format": 1,
+          "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n)\nSELECT model_name AS model, tool || ' \u00b7 ' || provider AS series, ROUND(client_ttft_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_ttft_s_p50 IS NOT NULL\nORDER BY model, series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "id": 111,
+      "title": "Output tok/s per request p50",
+      "datasource": {
+        "type": "grafana-athena-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "auto",
+        "groupWidth": 0.7,
+        "barWidth": 0.8,
+        "xTickLabelRotation": -45,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "series",
+            "rowField": "model",
+            "valueField": "value"
+          }
+        }
+      ],
+      "targets": [
+        {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "format": 1,
+          "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n)\nSELECT model_name AS model, tool || ' \u00b7 ' || provider AS series, ROUND(client_output_token_per_s_per_request_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_output_token_per_s_per_request_p50 IS NOT NULL\nORDER BY model, series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "id": 112,
+      "title": "End-to-end latency p50",
+      "datasource": {
+        "type": "grafana-athena-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          },
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "auto",
+        "groupWidth": 0.7,
+        "barWidth": 0.8,
+        "xTickLabelRotation": -45,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "series",
+            "rowField": "model",
+            "valueField": "value"
+          }
+        }
+      ],
+      "targets": [
+        {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "format": 1,
+          "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n)\nSELECT model_name AS model, tool || ' \u00b7 ' || provider AS series, ROUND(client_end_to_end_latency_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_end_to_end_latency_s_p50 IS NOT NULL\nORDER BY model, series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "id": 113,
+      "title": "Total output throughput (tok/s)",
+      "datasource": {
+        "type": "grafana-athena-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "axisPlacement": "auto"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "auto",
+        "groupWidth": 0.7,
+        "barWidth": 0.8,
+        "xTickLabelRotation": -45,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "series",
+            "rowField": "model",
+            "valueField": "value"
+          }
+        }
+      ],
+      "targets": [
+        {
+          "connectionArgs": {
+            "catalog": "AwsDataCatalog",
+            "database": "starterkits_db",
+            "region": "us-west-1"
+          },
+          "format": 1,
+          "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n)\nSELECT model_name AS model, tool || ' \u00b7 ' || provider AS series, ROUND(client_total_output_throughput, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_total_output_throughput IS NOT NULL\nORDER BY model, series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 1000,
+      "title": "Kit, per model",
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "panels": [
+        {
+          "type": "table",
+          "id": 1001,
+          "title": "Latest results per model (Kit)",
+          "description": "Latest run per model, provider and tool at or before the End date variable.",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 27
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                }
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error_pct"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 1
+                        },
+                        {
+                          "color": "red",
+                          "value": 5
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "run_ts"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 180
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "cellHeight": "sm",
+            "showHeader": true,
+            "footer": {
+              "show": false
+            }
+          },
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'kit'\n)\nSELECT\n    model_name AS model,\n    provider,\n    tool,\n    workload_mode,\n    num_concurrent_requests AS concurrency,\n    run_time AS run_ts,\n    ROUND(client_ttft_s_p50, 3) AS ttft_p50_s,\n    ROUND(client_ttft_s_p90, 3) AS ttft_p90_s,\n    ROUND(client_output_token_per_s_per_request_p50, 1) AS tok_s_per_req_p50,\n    ROUND(client_end_to_end_latency_s_p50, 2) AS e2e_p50_s,\n    ROUND(client_total_output_throughput, 1) AS total_tok_s,\n    ROUND(error_rate * 100, 2) AS error_pct,\n    num_requests AS requests,\n    run_id\nFROM latest\nWHERE rn = 1\nORDER BY model, provider, tool",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 1010,
+          "title": "TTFT p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 35
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "s",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'kit'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_ttft_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_ttft_s_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 1011,
+          "title": "Output tok/s per request p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 35
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "none",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'kit'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_output_token_per_s_per_request_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_output_token_per_s_per_request_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 1012,
+          "title": "End-to-end latency p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 43
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "s",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'kit'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_end_to_end_latency_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_end_to_end_latency_s_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 1013,
+          "title": "Total output throughput (tok/s)",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 43
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "none",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'kit'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_total_output_throughput, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_total_output_throughput IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 2000,
+      "title": "vLLM, per model",
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "panels": [
+        {
+          "type": "table",
+          "id": 2001,
+          "title": "Latest results per model (vLLM)",
+          "description": "Latest run per model, provider and tool at or before the End date variable.",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 28
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                }
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error_pct"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 1
+                        },
+                        {
+                          "color": "red",
+                          "value": 5
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "run_ts"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 180
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "cellHeight": "sm",
+            "showHeader": true,
+            "footer": {
+              "show": false
+            }
+          },
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'vllm'\n)\nSELECT\n    model_name AS model,\n    provider,\n    tool,\n    workload_mode,\n    num_concurrent_requests AS concurrency,\n    run_time AS run_ts,\n    ROUND(client_ttft_s_p50, 3) AS ttft_p50_s,\n    ROUND(client_ttft_s_p90, 3) AS ttft_p90_s,\n    ROUND(client_output_token_per_s_per_request_p50, 1) AS tok_s_per_req_p50,\n    ROUND(client_end_to_end_latency_s_p50, 2) AS e2e_p50_s,\n    ROUND(client_total_output_throughput, 1) AS total_tok_s,\n    ROUND(error_rate * 100, 2) AS error_pct,\n    num_requests AS requests,\n    run_id\nFROM latest\nWHERE rn = 1\nORDER BY model, provider, tool",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 2010,
+          "title": "TTFT p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 36
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "s",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'vllm'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_ttft_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_ttft_s_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 2011,
+          "title": "Output tok/s per request p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 36
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "none",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'vllm'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_output_token_per_s_per_request_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_output_token_per_s_per_request_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 2012,
+          "title": "End-to-end latency p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 44
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "s",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'vllm'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_end_to_end_latency_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_end_to_end_latency_s_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 2013,
+          "title": "Total output throughput (tok/s)",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 44
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "none",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'vllm'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_total_output_throughput, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_total_output_throughput IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 3000,
+      "title": "aiperf, per model",
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "panels": [
+        {
+          "type": "table",
+          "id": 3001,
+          "title": "Latest results per model (aiperf)",
+          "description": "Latest run per model, provider and tool at or before the End date variable.",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 29
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                }
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "error_pct"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 1
+                        },
+                        {
+                          "color": "red",
+                          "value": 5
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "run_ts"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 180
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "cellHeight": "sm",
+            "showHeader": true,
+            "footer": {
+              "show": false
+            }
+          },
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'aiperf'\n)\nSELECT\n    model_name AS model,\n    provider,\n    tool,\n    workload_mode,\n    num_concurrent_requests AS concurrency,\n    run_time AS run_ts,\n    ROUND(client_ttft_s_p50, 3) AS ttft_p50_s,\n    ROUND(client_ttft_s_p90, 3) AS ttft_p90_s,\n    ROUND(client_output_token_per_s_per_request_p50, 1) AS tok_s_per_req_p50,\n    ROUND(client_end_to_end_latency_s_p50, 2) AS e2e_p50_s,\n    ROUND(client_total_output_throughput, 1) AS total_tok_s,\n    ROUND(error_rate * 100, 2) AS error_pct,\n    num_requests AS requests,\n    run_id\nFROM latest\nWHERE rn = 1\nORDER BY model, provider, tool",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 3010,
+          "title": "TTFT p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 37
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "s",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'aiperf'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_ttft_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_ttft_s_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 3011,
+          "title": "Output tok/s per request p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 37
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "none",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'aiperf'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_output_token_per_s_per_request_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_output_token_per_s_per_request_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 3012,
+          "title": "End-to-end latency p50",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 45
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "s",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'aiperf'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_end_to_end_latency_s_p50, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_end_to_end_latency_s_p50 IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "barchart",
+          "id": 3013,
+          "title": "Total output throughput (tok/s)",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 45
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 1,
+                "axisPlacement": "auto"
+              },
+              "unit": "none",
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "sambanova"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#5B2C6F",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "groq"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E74C3C",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cerebras"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#E67E22",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "together"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#3498DB",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "novita"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#27AE60",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "fireworks"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "#C39BD3",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "vertical",
+            "showValue": "auto",
+            "groupWidth": 0.7,
+            "barWidth": 0.8,
+            "xTickLabelRotation": -45,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "series",
+                "rowField": "model",
+                "valueField": "value"
+              }
+            }
+          ],
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 1,
+              "rawSQL": "WITH latest AS (\n    SELECT r.*, COALESCE(mn.normalized_model, r.model) AS model_name, CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS run_time,\n           ROW_NUMBER() OVER (PARTITION BY COALESCE(mn.normalized_model, r.model), r.provider, r.tool ORDER BY r.run_ts DESC) AS rn\n    FROM bkit_perf_runs r\n    LEFT JOIN model_normalization mn ON r.model = mn.raw_model\n    WHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n      AND r.tool = 'aiperf'\n)\nSELECT model_name AS model, provider AS series, ROUND(client_total_output_throughput, 3) AS value\nFROM latest\nWHERE rn = 1 AND client_total_output_throughput IS NOT NULL\nORDER BY model, series",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 9000,
+      "title": "Trends over time",
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "panels": [
+        {
+          "type": "timeseries",
+          "id": 9001,
+          "title": "TTFT p50 per run",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 30
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "showPoints": "always",
+                "pointSize": 6,
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 0,
+              "rawSQL": "SELECT\n    CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS time,\n    COALESCE(mn.normalized_model, r.model) || ' \u00b7 ' || r.provider || ' \u00b7 ' || r.tool AS series,\n    client_ttft_s_p50 AS value\nFROM bkit_perf_runs r\nLEFT JOIN model_normalization mn ON r.model = mn.raw_model\nWHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n  AND client_ttft_s_p50 IS NOT NULL\nORDER BY time",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "id": 9002,
+          "title": "Output tok/s per request p50 per run",
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 30
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none",
+              "custom": {
+                "drawStyle": "line",
+                "showPoints": "always",
+                "pointSize": 6,
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "connectionArgs": {
+                "catalog": "AwsDataCatalog",
+                "database": "starterkits_db",
+                "region": "us-west-1"
+              },
+              "format": 0,
+              "rawSQL": "SELECT\n    CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) AS time,\n    COALESCE(mn.normalized_model, r.model) || ' \u00b7 ' || r.provider || ' \u00b7 ' || r.tool AS series,\n    client_output_token_per_s_per_request_p50 AS value\nFROM bkit_perf_runs r\nLEFT JOIN model_normalization mn ON r.model = mn.raw_model\nWHERE r.provider IN (${provider:sqlstring})\n      AND COALESCE(mn.normalized_model, r.model) IN (${model:sqlstring})\n      AND r.tool IN (${tool:sqlstring})\n      AND r.workload_mode IN (${workload_mode:sqlstring})\n      AND CAST(from_iso8601_timestamp(r.run_ts) AS timestamp) <= CAST('${end_date}' AS TIMESTAMP)\n  AND client_output_token_per_s_per_request_p50 IS NOT NULL\nORDER BY time",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
