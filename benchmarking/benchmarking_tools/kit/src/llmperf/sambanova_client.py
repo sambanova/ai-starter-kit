@@ -25,6 +25,17 @@ from benchmarking.utils import SAMBANOVA_API_BASE
 
 warnings.filterwarnings('ignore')
 
+# Delta fields that carry generated text. Reasoning models stream their reasoning separately from
+# the answer, under `reasoning` (e.g. SambaNova) or `reasoning_content` (e.g. Fireworks, DeepSeek,
+# vLLM); both count as output for timing, the same as `content`.
+DELTA_TEXT_FIELDS = ('reasoning', 'reasoning_content', 'content')
+
+
+def delta_text(delta: Dict[str, Any]) -> str:
+    """Returns all generated text in one streamed delta (reasoning and answer), or '' if none."""
+    pieces = [delta.get(field) for field in DELTA_TEXT_FIELDS]
+    return ''.join(piece for piece in pieces if isinstance(piece, str))
+
 
 class BaseAPIEndpoint(abc.ABC):
     def __init__(self, request_config: RequestConfig, tokenizer: PreTrainedTokenizerBase) -> None:
@@ -369,8 +380,9 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
 
         # Set variables
         generated_text = ''
-        events_received = []
-        events_timings = []
+        events_received: List[str] = []
+        events_timings: List[float] = []
+        response_dict: Dict[str, Any] = {}
 
         # Start measuring time
         metrics[common_metrics.REQ_START_TIME] = datetime.now().strftime('%H:%M:%S.%f')
@@ -388,27 +400,22 @@ class SambaNovaCloudAPI(BaseAPIEndpoint):
                     # check streaming events before last stream returns DONE
                     if event.data != '[DONE]':
                         data = json.loads(event.data)
-                        # if events don't contain "usage" key, which only shows up in stream returning
-                        # performance metrics
-                        if data.get('usage') is None:
-                            # if streams still don't hit a finish reason
-                            if data['choices'][0].get('finish_reason') is None:
-                                if (data['choices'][0]['delta'].get('content') is not None) or (
-                                    data['choices'][0]['delta'].get('reasoning') is not None
-                                ):
-                                    # log s timings
-                                    events_timings.append(time.monotonic() - event_start_time)
-                                    event_start_time = time.monotonic()
-                                    # concatenate streaming text pieces
-                                    if data['choices'][0]['delta'].get('content') is not None:
-                                        stream_content = data['choices'][0]['delta']['content']
-                                    elif data['choices'][0]['delta'].get('reasoning') is not None:
-                                        stream_content = data['choices'][0]['delta']['reasoning']
-                                    events_received.append(stream_content)
-                                    generated_text += stream_content
-                        # process streaming chunk when performance usage is provided
-                        else:
+                        # Usage and text are read independently: some endpoints send usage only on
+                        # the final chunk, others (e.g. Fireworks) on every chunk alongside the text.
+                        # The last usage seen is the complete one.
+                        if data.get('usage') is not None:
                             response_dict = data['usage']
+                        choices = data.get('choices') or []
+                        delta = (choices[0].get('delta') or {}) if choices else {}
+                        # Only chunks carrying actual text count as token events, so an empty
+                        # `"content": ""` chunk (e.g. a role-only first chunk) can't start the TTFT
+                        # clock early. Text on the chunk that carries finish_reason counts too.
+                        stream_content = delta_text(delta)
+                        if stream_content:
+                            events_timings.append(time.monotonic() - event_start_time)
+                            event_start_time = time.monotonic()
+                            events_received.append(stream_content)
+                            generated_text += stream_content
                 except Exception as e:
                     raise Exception(f'Error: {e} at streamed event: {event.data}')
         # print(f'Complete generated text: {generated_text}')  # for debugging purposes
