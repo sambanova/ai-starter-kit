@@ -25,6 +25,16 @@ from benchmarking.utils import SAMBANOVA_API_BASE
 
 warnings.filterwarnings('ignore')
 
+# Client-side output throughput is only meaningful when the response text is spread over enough
+# streamed chunks, and enough time, to time the generation from the client. Some endpoints batch
+# a whole short reply into two or three chunks that arrive within a millisecond of each other;
+# dividing the token count by that near-zero window reports absurd rates (e.g. 200,000 tokens/s).
+# Below either threshold the per-request client throughput falls back to the server-reported
+# figure when there is one (or None), and the source is recorded per request in
+# `extra['client_output_token_per_s_source']`.
+MIN_TEXT_CHUNKS_FOR_CLIENT_THROUGHPUT = 3
+MIN_TEXT_WINDOW_S_FOR_CLIENT_THROUGHPUT = 0.05
+
 # Delta fields that carry generated text. Reasoning models stream their reasoning separately from
 # the answer, under `reasoning` (e.g. SambaNova) or `reasoning_content` (e.g. Fireworks, DeepSeek,
 # vLLM); both count as output for timing, the same as `content`.
@@ -184,16 +194,32 @@ class BaseAPIEndpoint(abc.ABC):
             total_request_time - e2e_lat_server if e2e_lat_server is not None else None
         )
 
+        # Time from the first text chunk to the last one, as the client saw it.
+        text_window = sum(events_timings[1:])
+        throughput_source: str | None
         if number_chunks_received == 1:
             metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
                 metrics[common_metrics.NUM_OUTPUT_TOKENS] / total_request_time
             )
-        else:
-            metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = (
-                metrics[common_metrics.NUM_OUTPUT_TOKENS] / (total_request_time - ttft)
-                if not isclose(ttft, total_request_time, abs_tol=1e-8)
-                else None
+            throughput_source = 'client_end_to_end'
+        elif (
+            number_chunks_received >= MIN_TEXT_CHUNKS_FOR_CLIENT_THROUGHPUT
+            and text_window >= MIN_TEXT_WINDOW_S_FOR_CLIENT_THROUGHPUT
+            and not isclose(ttft, total_request_time, abs_tol=1e-8)
+        ):
+            metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = metrics[common_metrics.NUM_OUTPUT_TOKENS] / (
+                total_request_time - ttft
             )
+            throughput_source = 'client'
+        else:
+            # Too few chunks, or all text within a few ms: the client can't time the generation.
+            server_throughput = metrics.get(common_metrics.REQ_OUTPUT_THROUGHPUT_SERVER)
+            metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = server_throughput
+            throughput_source = 'server' if server_throughput is not None else None
+        extra = metrics.get('extra')
+        if not isinstance(extra, dict):
+            extra = metrics['extra'] = {}
+        extra['client_output_token_per_s_source'] = throughput_source
 
         metrics[common_metrics.TOTAL_TOKEN_THROUGHPUT] = (prompt_len + num_output_tokens) / total_request_time
 
