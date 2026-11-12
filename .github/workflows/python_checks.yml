@@ -51,6 +51,13 @@ jobs:
       - name: MyPy
         run: mypy --explicit-package-bases .
 
+      # Benchmarking kit unit tests. Fake SSE streams and a fake clock, so no
+      # network and no API key: unlike the Docker workflow's live API tests,
+      # these also run on a pull request from a fork, where GitHub does not
+      # pass repository secrets.
+      - name: Benchmarking streaming tests
+        run: python benchmarking/tests/test_kit_streaming.py
+
       # Set PYTHONPATH
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
