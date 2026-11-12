@@ -192,10 +192,10 @@ def include_pdf_report() -> None:
 
             if len(files) > 0:
                 # Display files horizontally using Streamlit columns
-                cols = streamlit.columns(len(files))
+                file_cols = streamlit.columns(len(files))
 
                 for idx, file in enumerate(files):
-                    with cols[idx]:
+                    with file_cols[idx]:
                         if streamlit.button(
                             label=f':green[{file}]' if file in streamlit.session_state.selected_files else file,
                             key=f'file-{idx}',
