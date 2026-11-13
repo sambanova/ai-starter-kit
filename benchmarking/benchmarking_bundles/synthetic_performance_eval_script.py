@@ -437,6 +437,7 @@ class ResultsConsolidator:
             'client_output_token_per_s_p50',
             'client_output_token_per_s_max',
             'client_total_output_throughput',
+            'client_total_input_throughput',
             'num_requests_started',
             'num_completed_requests',
             'num_completed_requests_per_min',

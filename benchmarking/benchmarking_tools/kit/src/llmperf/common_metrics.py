@@ -20,6 +20,7 @@ E2E_LAT = 'client_end_to_end_latency_s'
 REQ_OUTPUT_THROUGHPUT = 'client_output_token_per_s_per_request'
 TOTAL_TOKEN_THROUGHPUT = 'client_total_tokens_per_s_per_request'
 OUTPUT_THROUGHPUT = 'client_total_output_throughput'
+INPUT_THROUGHPUT = 'client_total_input_throughput'  # input (prefill) tokens / wall-clock run time
 NUM_INPUT_TOKENS = 'number_input_tokens'
 NUM_OUTPUT_TOKENS = 'number_output_tokens'
 NUM_TOTAL_TOKENS = 'number_total_tokens'

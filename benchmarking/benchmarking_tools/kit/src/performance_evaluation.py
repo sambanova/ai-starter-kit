@@ -500,6 +500,13 @@ class BasePerformanceEvaluator(BaseExecutorMixin, abc.ABC):
         )
         metrics_summary[common_metrics.OUTPUT_THROUGHPUT] = overall_output_throughput
 
+        # Record overall input (prefill) throughput over the same window and successful requests
+        overall_input_throughput = round(
+            metrics_df[common_metrics.NUM_INPUT_TOKENS].sum() / (end_time - start_time),
+            4,
+        )
+        metrics_summary[common_metrics.INPUT_THROUGHPUT] = overall_input_throughput
+
         # Calculate mean output throughput (average of per-request throughputs)
         mean_output_throughput = round(
             metrics_df[common_metrics.REQ_OUTPUT_THROUGHPUT].mean(),
@@ -513,6 +520,7 @@ class BasePerformanceEvaluator(BaseExecutorMixin, abc.ABC):
 
         if self.show_results_in_terminal:
             logger.info(f'Overall Output Throughput: {overall_output_throughput}')
+            logger.info(f'Overall Input Throughput: {overall_input_throughput}')
             logger.info(f'Number Of Completed Requests: {num_completed_requests}')
         if self.num_concurrent_requests:
             if self.show_results_in_terminal:
@@ -673,6 +681,7 @@ class BasePerformanceEvaluator(BaseExecutorMixin, abc.ABC):
             number_errors=scalar_fields.get('number_errors'),
             error_code_frequency=scalar_fields.get('error_code_frequency'),
             client_total_output_throughput=scalar_fields.get('client_total_output_throughput'),
+            client_total_input_throughput=scalar_fields.get('client_total_input_throughput'),
             mean_output_throughput_token_per_s=scalar_fields.get('mean_output_throughput_token_per_s'),
             additional_sampling_params=additional_sampling_params,
             extra=extra,

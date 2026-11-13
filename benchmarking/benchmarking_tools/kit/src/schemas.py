@@ -175,6 +175,7 @@ class BenchmarkSummary(BaseModel):
     number_errors: Optional[int] = None
     error_code_frequency: Optional[str] = None
     client_total_output_throughput: Optional[float] = None
+    client_total_input_throughput: Optional[float] = None
     mean_output_throughput_token_per_s: Optional[float] = None
     request_throughput: Optional[float] = None  # req/s — natively reported by some tools (vLLM, aiperf)
 
@@ -229,7 +230,7 @@ class BenchmarkSummary(BaseModel):
         for field_name in (
             'num_requests_started', 'num_completed_requests', 'num_completed_requests_per_min',
             'error_rate', 'number_errors', 'error_code_frequency', 'client_total_output_throughput',
-            'mean_output_throughput_token_per_s',
+            'client_total_input_throughput', 'mean_output_throughput_token_per_s',
         ):
             value = getattr(self, field_name)
             if value is not None:
@@ -288,7 +289,7 @@ class BenchmarkSummary(BaseModel):
         for field_name in (
             'num_requests_started', 'num_completed_requests', 'num_completed_requests_per_min',
             'error_rate', 'number_errors', 'error_code_frequency', 'client_total_output_throughput',
-            'mean_output_throughput_token_per_s',
+            'client_total_input_throughput', 'mean_output_throughput_token_per_s',
         ):
             key = f'results_{field_name}'
             if key in remaining:
