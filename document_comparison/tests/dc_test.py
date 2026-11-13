@@ -45,6 +45,18 @@ TEST_DATA_PATH = os.path.join(kit_dir, 'tests', 'data')
 CONFIG_PATH = os.path.join(kit_dir, 'config.yaml')
 TEST_CASE_FILE_PATH = os.path.join(TEST_DATA_PATH, 'test_case.yaml')
 
+# Parsing, prompt building and the tmp-folder check all run locally; only the two
+# tests that read the model's answer need a key. Having none is the normal case on a
+# pull request from a fork: GitHub does not pass repository secrets to those runs, so
+# the workflow writes an empty SAMBANOVA_API_KEY into .env. Skip just those two, with
+# a reason, and keep reporting the rest.
+SAMBANOVA_API_KEY = os.environ.get('SAMBANOVA_API_KEY', '').strip()
+NO_API_KEY_REASON = (
+    "SAMBANOVA_API_KEY is empty or unset, so the tests that read the model's answer "
+    'cannot run. This is expected on a pull request from a fork, where GitHub does not '
+    'pass repository secrets to the workflow. Set SAMBANOVA_API_KEY to run them.'
+)
+
 
 class DCTestCase(unittest.TestCase):
     time_start: float
@@ -63,7 +75,7 @@ class DCTestCase(unittest.TestCase):
         if not os.path.exists(PERSIST_DIRECTORY):
             os.makedirs(PERSIST_DIRECTORY)
         cls.time_start = time.time()
-        cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+        cls.sambanova_api_key = SAMBANOVA_API_KEY
         cls.document_analyzer = DocumentAnalyzer(sambanova_api_key=cls.sambanova_api_key)
         with open(TEST_CASE_FILE_PATH, 'r') as yaml_file:
             cls.test_case = yaml.safe_load(yaml_file)
@@ -77,7 +89,12 @@ class DCTestCase(unittest.TestCase):
             'document2',
             cls.document2_text,
         )
-        cls.llm_output, cls.llm_usage = cls.document_analyzer.get_analysis(cls.prompt_messages)
+        # Without a key this call cannot succeed, and the two tests that read its
+        # result are skipped below, so don't make it at all.
+        if SAMBANOVA_API_KEY:
+            cls.llm_output, cls.llm_usage = cls.document_analyzer.get_analysis(cls.prompt_messages)
+        else:
+            cls.llm_output, cls.llm_usage = '', ''
 
     @classmethod
     def parse_document(cls: Type['DCTestCase'], document_name: str = 'document1') -> str:
@@ -106,6 +123,7 @@ class DCTestCase(unittest.TestCase):
             len(self.prompt_messages), 3, 'Generated prompt messages should contain at least 3 entries'
         )
 
+    @unittest.skipIf(not SAMBANOVA_API_KEY, NO_API_KEY_REASON)
     def test_llm_response(self) -> None:
         self.assertEqual(
             self.test_case['expected_output'].strip(),
@@ -114,6 +132,7 @@ class DCTestCase(unittest.TestCase):
                  '{self.test_case['expected_output'].strip()}'",
         )
 
+    @unittest.skipIf(not SAMBANOVA_API_KEY, NO_API_KEY_REASON)
     def test_llm_usage(self) -> None:
         self.assertIn('completion_tokens_per_sec', self.llm_usage, 'LLM usage does not completion_tokens_per_sec')
         self.assertIn('time_to_first_token', self.llm_usage, 'LLM usage does not time_to_first_token')
@@ -149,6 +168,10 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addError(test, err)
         self.test_results.append({'name': self._get_test_name(test), 'status': 'ERROR', 'message': str(err[1])})
 
+    def addSkip(self, test: unittest.TestCase, reason: str) -> None:
+        super().addSkip(test, reason)
+        self.test_results.append({'name': self._get_test_name(test), 'status': 'SKIPPED', 'message': reason})
+
 
 def main() -> int:
     suite = unittest.TestLoader().loadTestsFromTestCase(DCTestCase)
@@ -163,7 +186,11 @@ def main() -> int:
             logger.info(f'  Message: {result["message"]}')
 
     failed_tests = len(test_result.failures) + len(test_result.errors)
-    logger.info(f'\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}')
+    skipped_tests = len(test_result.skipped)
+    passed_tests = test_result.testsRun - failed_tests - skipped_tests
+    logger.info(f'\nTests passed: {passed_tests}/{test_result.testsRun}')
+    if skipped_tests:
+        logger.info(f'Tests skipped: {skipped_tests}')
 
     if failed_tests:
         logger.error(f'Number of failed tests: {failed_tests}')
