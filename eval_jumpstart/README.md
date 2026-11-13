@@ -37,15 +37,15 @@ eval_dataset:
   path: data/eval_data.csv
 
 llms:
-  - name: sncloud-llama3.1-405
+  - name: sncloud-gpt-oss-120b
     model_type: "sncloud"
-    model_name: "Meta-Llama-3.1-405B-Instruct"
+    model_name: "gpt-oss-120b"
     max_tokens: 1024
     temperature: 0.0
 
-  - name: sncloud-llama3.2-1
+  - name: sncloud-gemma-4-31b
     model_type: "sncloud"
-    model_name: "Meta-Llama-3.2-1B-Instruct"
+    model_name: "gemma-4-31B-it"
     max_tokens: 1024
     temperature: 0.0
 
@@ -55,9 +55,9 @@ llms:
     max_tokens: 1024
     temperature: 0.0
 
-  - name: sncloud-llama3.2-3
+  - name: sncloud-glm-5.3
     model_type: "sncloud"
-    model_name: "Meta-Llama-3.2-3B-Instruct"
+    model_name: "GLM-5.3"
     max_tokens: 1024
     temperature: 0.0
 
@@ -73,15 +73,15 @@ rag:
     select_expert: "e5-mistral-7b-instruct"
 
   llm:
-    name: sncloud-llama3.1-405-chroma-rag
+    name: sncloud-gpt-oss-120b-chroma-rag
     type: "sncloud"
-    model: "Meta-Llama-3.1-405B-Instruct"
+    model: "gpt-oss-120b"
     max_tokens: 1024
     temperature: 0.0
 
 eval_llm:
   model_type: "sncloud"
-  model_name: "Meta-Llama-3.1-405B-Instruct"
+  model_name: "gpt-oss-120b"
   max_tokens: 1024
   temperature: 0.0
 ```
