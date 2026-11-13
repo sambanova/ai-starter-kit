@@ -80,7 +80,7 @@ This overview should help users understand the strengths and limitations of the 
 # Before you begin
 
 This starter kit, you need both a LVLM and a LLM. 
-* We use the Llama4 Maverick as LVLM.
+* We use gemma-4-31B-it as LVLM.
 * You can use a LLM of your choice from SambaNova.
 
 ## Clone this repository

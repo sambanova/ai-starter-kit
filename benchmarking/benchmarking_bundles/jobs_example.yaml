@@ -6,23 +6,23 @@
 # are optional per job, defaulting from this bundle's config.yaml when omitted.
 
 jobs:
-  # --- MiniMax-M3: synthetic concurrency ramp + a real_workload (QPS-based) example ---
+  # --- MiniMax-M3.1-Flash: synthetic concurrency ramp + a real_workload (QPS-based) example ---
   - mode: synthetic
-    model_name: MiniMax-M3
+    model_name: MiniMax-M3.1-Flash
     num_input_tokens: 1000
     num_output_tokens: 1000
     num_requests: 1
     num_concurrent_requests: 1
 
   - mode: synthetic
-    model_name: MiniMax-M3
+    model_name: MiniMax-M3.1-Flash
     num_input_tokens: 1000
     num_output_tokens: 1000
     num_requests: 8
     num_concurrent_requests: 8
 
   - mode: real_workload
-    model_name: MiniMax-M3
+    model_name: MiniMax-M3.1-Flash
     num_input_tokens: 1000
     num_output_tokens: 1000
     num_requests: 20

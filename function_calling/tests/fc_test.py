@@ -37,6 +37,18 @@ from function_calling.src.tools import QueryDb, calculator, get_time, python_rep
 
 tools = ['get_time', 'calculator', 'python_repl', 'query_db']
 
+# The tool tests below run locally, but anything that reaches the LLM needs a key.
+# Having none is the normal case on a pull request from a fork: GitHub does not pass
+# repository secrets to those runs, so the workflow writes an empty SAMBANOVA_API_KEY
+# into .env. Skip just the tests that need it, with a reason, instead of erroring --
+# the local tool tests still run and still report.
+SAMBANOVA_API_KEY = os.environ.get('SAMBANOVA_API_KEY', '').strip()
+NO_API_KEY_REASON = (
+    'SAMBANOVA_API_KEY is empty or unset, so the tests that call the model cannot run. '
+    'This is expected on a pull request from a fork, where GitHub does not pass '
+    'repository secrets to the workflow. Set SAMBANOVA_API_KEY to run them.'
+)
+
 
 class FCTestCase(unittest.TestCase):
     time_start: float
@@ -71,12 +83,14 @@ class FCTestCase(unittest.TestCase):
         logger.info(result)
         self.assertTrue(result, "python_repl result shouldn't be empty")
 
+    @unittest.skipIf(not SAMBANOVA_API_KEY, NO_API_KEY_REASON)
     def test_query_db_tool(self) -> None:
         result = QueryDb().get_tool().invoke({'query': 'How many genres of music are in the chinook db'})
         logger.info('\nInvoking query_db:')
         logger.info(result)
         self.assertTrue(result, "query_db result shouldn't be empty")
 
+    @unittest.skipIf(not SAMBANOVA_API_KEY, NO_API_KEY_REASON)
     def test_fc_pipeline(self) -> None:
         response = self.fc.function_call_llm('what time is it?', max_it=5)
         logger.info('\nFunction calling pipeline with get_time:')
@@ -129,6 +143,11 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
+    def addSkip(self, test: unittest.TestCase, reason: str) -> None:
+        super().addSkip(test, reason)
+        name = getattr(test, '_testMethodName', None) or test.id()
+        self.test_results.append({'name': name, 'status': 'SKIPPED', 'message': reason})
+
 
 def main() -> int:
     suite = unittest.TestLoader().loadTestsFromTestCase(FCTestCase)
@@ -142,7 +161,11 @@ def main() -> int:
             logger.info(f'  Message: {result["message"]}')
 
     failed_tests = len(test_result.failures) + len(test_result.errors)
-    logger.info(f'\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}')
+    skipped_tests = len(test_result.skipped)
+    passed_tests = test_result.testsRun - failed_tests - skipped_tests
+    logger.info(f'\nTests passed: {passed_tests}/{test_result.testsRun}')
+    if skipped_tests:
+        logger.info(f'Tests skipped: {skipped_tests}')
 
     if failed_tests:
         logger.error(f'Number of failed tests: {failed_tests}')

@@ -43,14 +43,14 @@ Modify `<PATH TO AISK REPO HERE>/benchmarking/benchmarking_bundles/jobs_example.
 ```yaml
 jobs:
   - mode: synthetic                            # workload shape: 'custom' | 'synthetic' | 'real_workload'
-    model_name: MiniMax-M3
+    model_name: MiniMax-M3.1-Flash
     num_input_tokens: 1000
     num_output_tokens: 1000
     num_requests: 8
     num_concurrent_requests: 8
 
   - mode: real_workload
-    model_name: MiniMax-M3
+    model_name: MiniMax-M3.1-Flash
     num_input_tokens: 1000
     num_output_tokens: 1000
     num_requests: 20
@@ -66,7 +66,7 @@ jobs:
     multimodal_image_size: large
 
   - mode: custom
-    model_name: DeepSeek-V3.2
+    model_name: GLM-5.3
     input_file_path: ../prompts/custom_prompt_example.jsonl
     num_concurrent_requests: 8
     num_output_tokens: 1000

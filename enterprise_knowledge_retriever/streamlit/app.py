@@ -36,8 +36,8 @@ LLM_MODELS = [
     'gpt-oss-120b',
     'gemma-4-31B-it',
     'Meta-Llama-3.3-70B-Instruct',
-    'DeepSeek-V3.1',
-    'MiniMax-M2.5',
+    'GLM-5.3',
+    'MiniMax-M3.1-Flash',
 ]
 # Minutes for scheduled cache deletion
 EXIT_TIME_DELTA = 30
