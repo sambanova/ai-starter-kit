@@ -70,7 +70,23 @@ text_prompt = 'Translate this sentence from English to French: I love programmin
 image_prompt = 'What is in this image?'
 audio_prompt = 'what is the previous audio about?'
 
+# Every test here calls the live SambaNova API, so it needs a key. Having none is
+# the normal case on a pull request from a fork: GitHub does not pass repository
+# secrets to those runs, so the workflow writes an empty SAMBANOVA_API_KEY into
+# .env and every request comes back 401. Skip with a reason that says so, rather
+# than reporting six errors that look like the API is broken.
+NO_API_KEY_REASON = (
+    'SAMBANOVA_API_KEY is empty or unset, so the live API tests cannot run. '
+    'This is expected on a pull request from a fork, where GitHub does not pass '
+    'repository secrets to the workflow. Set SAMBANOVA_API_KEY to run them.'
+)
+# Read once, after load_dotenv() above, so the decorator below can see it. Skipping
+# per test rather than from setUpClass is deliberate: a skip raised in setUpClass is
+# reported against the class as a whole, and the per-test names never appear.
+SAMBANOVA_API_KEY = os.environ.get('SAMBANOVA_API_KEY', '').strip()
 
+
+@unittest.skipIf(not SAMBANOVA_API_KEY, NO_API_KEY_REASON)
 class TestAPIModel(unittest.TestCase):
     time_start: float
     client: OpenAI
@@ -79,7 +95,7 @@ class TestAPIModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls: Type['TestAPIModel']) -> None:
         cls.time_start = time.time()
-        cls.sambanova_api_key = os.environ.get('SAMBANOVA_API_KEY', '')
+        cls.sambanova_api_key = SAMBANOVA_API_KEY
         cls.client = cls.setup_client()
 
     @classmethod
@@ -296,6 +312,13 @@ class CustomTextTestResult(unittest.TextTestResult):
         super().addError(test, err)
         self.test_results.append({'name': test._testMethodName, 'status': 'ERROR', 'message': str(err[1])})
 
+    def addSkip(self, test: unittest.TestCase, reason: str) -> None:
+        super().addSkip(test, reason)
+        # A skip raised in setUpClass arrives as an _ErrorHolder, which has no
+        # _testMethodName. Fall back to its id() so this can never raise.
+        name = getattr(test, '_testMethodName', None) or test.id()
+        self.test_results.append({'name': name, 'status': 'SKIPPED', 'message': reason})
+
 
 def main() -> int:
     suite = unittest.TestLoader().loadTestsFromTestCase(TestAPIModel)
@@ -309,11 +332,20 @@ def main() -> int:
             logger.info(f'  Message: {result["message"]}')
 
     failed_tests = len(test_result.failures) + len(test_result.errors)
-    logger.info(f'\nTests passed: {test_result.testsRun - failed_tests}/{test_result.testsRun}')
+    skipped_tests = len(test_result.skipped)
+    passed_tests = test_result.testsRun - failed_tests - skipped_tests
+    logger.info(f'\nTests passed: {passed_tests}/{test_result.testsRun}')
+    if skipped_tests:
+        logger.info(f'Tests skipped: {skipped_tests}')
 
     if failed_tests:
         logger.error(f'Number of failed tests: {failed_tests}')
         return failed_tests
+    elif skipped_tests and not passed_tests:
+        # Nothing ran, but nothing is broken either. Say so and exit clean, so a
+        # run without a key does not read as a failure.
+        logger.info('No tests ran: every test was skipped.')
+        return 0
     else:
         logger.info('All tests passed successfully!')
         return 0

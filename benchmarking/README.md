@@ -21,6 +21,7 @@ Benchmarking
         - [Deploy the starter kit GUI](#deploy-the-starter-kit-gui)
         - [Full Walkthrough](#full-walkthrough)
     - [CLI Option](#cli-option)
+- [Reading streamed responses](#reading-streamed-responses)
 - [Third-party tools and data sources](#third-party-tools-and-data-sources)
 - [TroubleShooting](#troubleshooting)
 
@@ -333,6 +334,7 @@ python benchmarking_tools/kit/src/evaluator.py \
   - **`--input-file-path`**: your dataset — see [example](./prompts/custom_prompt_example.jsonl).
   - **`--num-output-tokens`** (_default_: 150): same field as Synthetic/Real Workload — the API requires a concrete value, so this can't be left uncapped. An explicit `--sampling-params '{"max_tokens_to_generate": ...}'` overrides it if both are given.
   - **`--save-llm-responses`**, **`--use-debugging-mode`** — same as Synthetic.
+  - **`--sampling-params`**: extra request fields as JSON, e.g. `'{"max_tokens_to_generate": 1500, "reasoning_effort": "low", "ignore_eos": false}'`. See [Reading streamed responses](#reading-streamed-responses) for `ignore_eos`.
 
 2. Run it — edit [`quickstart_custom.sh`](./benchmarking_tools/kit/quickstart_custom.sh) and `sh quickstart_custom.sh`, or call directly:
 ```shell
@@ -352,6 +354,24 @@ python benchmarking_tools/kit/src/evaluator.py \
    ![summary_output_image](./imgs/custom_summary_ouput.png)
 
 </details>
+
+# Reading streamed responses
+
+How the Kit's own evaluator (`--llm-api sncloud`) turns a streamed chat completion into metrics. It works with any OpenAI-compatible endpoint set in `SAMBANOVA_API_BASE`.
+
+- **Text and usage are read independently.** Text is taken from every chunk that has a delta, whether or not that chunk also carries `usage`. Some endpoints send `usage` only on the last chunk; others send it on every chunk. Server-side figures come from the last `usage` seen.
+- **Reasoning counts as output.** `reasoning` and `reasoning_content` deltas are counted with `content`, so TTFT for reasoning models is the first reasoning token, not the first answer word.
+- **Empty chunks don't count.** A chunk with no text, such as a role-only first chunk with `"content": ""`, doesn't start the TTFT clock and isn't counted as a token event.
+- **`ignore_eos` is sent as `true` by default**, so every request generates the full `max_tokens`. Not every endpoint honours it. When comparing endpoints, pass `"ignore_eos": false` in `--sampling-params` so all replies end naturally, and compare output lengths.
+- **Client-side output throughput needs a timeable stream.** `client_output_token_per_s_per_request` is output tokens ÷ (end-to-end latency − TTFT). Some endpoints deliver a short reply in two or three chunks that arrive within a millisecond of each other, and that formula then reports nonsense (e.g. 200,000 tokens/s). So if the text arrives in fewer than 3 chunks, or within less than 50 ms from first to last chunk, the Kit reports the server's figure instead (`server_output_token_per_s_per_request`) or nothing if there isn't one. Each request records which it used in `extra.client_output_token_per_s_source`:
+  - `client`: measured client-side;
+  - `client_end_to_end`: one chunk only, so output tokens ÷ end-to-end latency (unchanged);
+  - `server`: the server-reported figure;
+  - `null`: not measurable.
+
+  The thresholds are `MIN_TEXT_CHUNKS_FOR_CLIENT_THROUGHPUT` and `MIN_TEXT_WINDOW_S_FOR_CLIENT_THROUGHPUT` in [`sambanova_client.py`](./benchmarking_tools/kit/src/llmperf/sambanova_client.py).
+
+Tests for this behaviour use fake streams and need no API key: `python benchmarking/tests/test_kit_streaming.py` from the repo root.
 
 # Third-party tools and data sources
 

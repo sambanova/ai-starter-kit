@@ -36,6 +36,11 @@ peft==0.17.1
 # Data processing and storage
 pandas==1.5.3
 numpy==1.26.4
+# pyarrow arrives transitively (streamlit, datasets), and 26.0.0 dropped NumPy 1.x:
+# it raises "pyarrow requires NumPy 2.0 or newer" at import time. pandas 1.5.3 above
+# is binary-incompatible with NumPy 2, so the ceiling on numpy has to stay until pandas
+# is upgraded. Hold pyarrow on the last line that still supports NumPy 1.x instead.
+pyarrow>=15.0.0,<26
 sqlitedict==2.1.0
 faiss-cpu==1.12.0
 pymupdf==1.26.5

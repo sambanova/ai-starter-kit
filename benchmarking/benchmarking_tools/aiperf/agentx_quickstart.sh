@@ -11,7 +11,7 @@ set -euo pipefail
 # Parameters -- edit these
 # ================================================================================================
 
-MODEL_NAME="MiniMax-M3"  # Model name as exposed by the endpoint (--model)
+MODEL_NAME="MiniMax-M3.1-Flash"  # Model name as exposed by the endpoint (--model)
 
 MAX_CONTEXT_LENGTH=131072       # REQUIRED -- the endpoint/model's max context length (--max-context-length)
 NUM_CONCURRENT_REQUESTS=8       # --concurrency

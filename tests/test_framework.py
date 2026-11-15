@@ -48,6 +48,11 @@ STARTER_KITS: List[str] = [
     'chat_templates',
 ]
 
+# Kits whose CLI test is a live API run from start to finish, with no offline part.
+LIVE_API_CLI_TESTS: List[str] = [
+    'benchmarking',
+]
+
 # Dictionary to store CLI test commands for each kit
 CLI_TEST_COMMANDS: Dict[str, str] = {
     'benchmarking': (
@@ -235,7 +240,7 @@ class StarterKitTest(unittest.TestCase):
     def write_test_result(cls, result: TestResult) -> None:
         """Write a test result to the CSV file and store it."""
         cls.test_results.append(result)
-        if result.status != 'PASSED':
+        if result.status not in ('PASSED', 'SKIPPED'):
             cls.any_test_failed = True
         if cls.csv_writer and cls.csv_file:
             cls.csv_writer.writerow(
@@ -347,6 +352,32 @@ class StarterKitTest(unittest.TestCase):
             logging.info(f'Skipping CLI test for {kit}')
             return
 
+        # Some kits' CLI tests are a live benchmark or pipeline run from end to end:
+        # there is no part of them that works without credentials, so there is nothing
+        # to run rather than skip. Having no key is the normal case on a pull request
+        # from a fork, where GitHub does not pass repository secrets to the workflow.
+        # Kits that only need a key for some of their tests skip those inside their own
+        # test file instead, and keep reporting the rest.
+        if kit in LIVE_API_CLI_TESTS and not os.environ.get('SAMBANOVA_API_KEY', '').strip():
+            reason = (
+                f'SAMBANOVA_API_KEY is empty or unset, so the {kit} CLI test cannot run. '
+                'This is expected on a pull request from a fork.'
+            )
+            logging.info(f'Skipping CLI test for {kit}: {reason}')
+            self.write_test_result(
+                TestResult(
+                    kit,
+                    'CLI',
+                    'SKIPPED',
+                    0.0,
+                    reason,
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3],
+                    commit_hash=self.commit_hash,
+                    commit_url=self.commit_url,
+                )
+            )
+            return
+
         start_time = time.time()
         logging.info(f'\nRunning CLI test for {kit}...')
         kit_dir = os.path.join(self.root_dir, kit)
@@ -436,11 +467,15 @@ class StarterKitTest(unittest.TestCase):
                 message = match.group(3).strip()
 
                 if message.startswith('test_'):
-                    # Remove ': PASSED' or ': FAILED' suffix from the test name
-                    test_name = re.sub(r':\s*(PASSED|FAILED)$', '', message)
+                    # Remove the ': PASSED', ': FAILED' or ': SKIPPED' suffix from the name
+                    test_name = re.sub(r':\s*(PASSED|FAILED|SKIPPED)$', '', message)
 
-                    # Determine status based on log level
-                    status = 'PASSED' if log_level == 'INFO' else 'FAILED'
+                    # Determine status based on log level, except for a skip, which the
+                    # kit logs at INFO and which must not be recorded as a pass.
+                    if message.endswith('SKIPPED'):
+                        status = 'SKIPPED'
+                    else:
+                        status = 'PASSED' if log_level == 'INFO' else 'FAILED'
 
                     result = TestResult(
                         kit,
