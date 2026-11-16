@@ -171,6 +171,11 @@ def build_summary(
         benchmark_duration_s=raw.get('duration'),
         request_throughput=raw.get('request_throughput'),
         client_total_output_throughput=raw.get('output_throughput'),
+        client_total_input_throughput=(
+            raw['total_input_tokens'] / raw['duration']
+            if raw.get('total_input_tokens') is not None and raw.get('duration')
+            else None
+        ),
         # vLLM doesn't echo the served/API model name back into its own output (only the
         # tokenizer id, under model_id) -- keep the tokenizer id + a couple of other tool-native
         # fields for reference, rather than silently dropping them.
